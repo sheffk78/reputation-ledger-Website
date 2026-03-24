@@ -1,0 +1,141 @@
+{
+  "theme": "dark",
+  "archetype": "Swiss High-Contrast combined with Retro-Futurism/Technical Look",
+  "design_philosophy": "RepLedger is a calm, technical, infrastructure-like application. It establishes trust not through playful marketing, but through objective truth, sharp edges, and transparent grids. The tagline is 'Every agent earns its record.'",
+  "typography": {
+    "fonts": {
+      "heading": "Space Grotesk",
+      "body": "Inter",
+      "code": "JetBrains Mono"
+    },
+    "rules": {
+      "headings": "MUST use tight letter spacing (tracking-tight or tracking-tighter). Font weight should vary between Light (font-light) for elegance and Bold (font-bold) for punchy marketing lines.",
+      "overline": "Uppercase + Tiny + Wide Spacing (tracking-[0.2em]). Used for small metadata or labels.",
+      "body": "Loose line-height (leading-relaxed) for scannability. Use left-aligned text for paragraphs and data.",
+      "general": "Never use generic 'Inter' for Headings. Stick to the user's choice: Space Grotesk. Use JetBrains Mono for API keys, JSON payloads, and technical data."
+    }
+  },
+  "colors": {
+    "background": {
+      "default": "#050709",
+      "surface": "#0C1014",
+      "glass": "rgba(5, 7, 9, 0.7)"
+    },
+    "primary": {
+      "default": "#01696F",
+      "hover": "#028C94",
+      "active": "#014D52",
+      "foreground": "#FFFFFF"
+    },
+    "tiers": {
+      "unrated": "#4B5563",
+      "bronze": "#CD7F32",
+      "silver": "#C0C0C0",
+      "gold": "#FFD700",
+      "platinum": "#01696F"
+    },
+    "text": {
+      "primary": "#F8FAFC",
+      "secondary": "#94A3B8",
+      "muted": "#475569",
+      "code": "#38BDF8"
+    },
+    "borders": {
+      "default": "rgba(255, 255, 255, 0.1)",
+      "focus": "#01696F"
+    }
+  },
+  "visual_enhancers": {
+    "textures": "Use subtle grain/noise overlays (opacity 3-5%) across the dark background to kill digital flatness and give an 'industrial' feel.",
+    "borders": "Expose the skeleton. Make the grid visible using border-collapse style layouts for feature sections. Containers MUST have inner padding (p-6 or p-8).",
+    "glassmorphism": "Use heavy blur (backdrop-blur-xl) with a 1px delicate inner stroke (border-white/10). DO NOT use complete transparent backgrounds in headers/overlays.",
+    "shadows": "Replace soft shadows with 1px solid strokes or 2px 'Inner Glow' highlights to match the tactical, infrastructure look."
+  },
+  "grids_and_layouts": {
+    "marketing": {
+      "mode": "The 'Tetris' Grid",
+      "description": "Asymmetry and visual tension. Base grid: grid-cols-1 md:grid-cols-12. Gap: gap-8 to gap-12. Mix spans: col-span-8 row-span-2 for heroes, col-span-4 for squares."
+    },
+    "dashboard": {
+      "mode": "High Density Grid with Strict Hierarchy",
+      "description": "Density and scanability. Base grid: grid-cols-1 md:grid-cols-4. Gap: gap-4 or gap-6. Every pixel utilized. Go cardless or use sharp rectangular flat styles with 1px border. NO heavy shadows, NO rounded-xl (use rounded-sm or rounded-none)."
+    },
+    "general_spacing": "Generous Spacing Philosophy. Use 2-3x more spacing (p-8, p-12, py-24). Containers with borders must have internal padding."
+  },
+  "motion": {
+    "marketing": "Smooth scrolling via Lenis. Framer Motion for scroll-triggered micro-interactions and staggered list entrances. Do not use 'transition: all'. Use specific properties (e.g. transition: transform 0.2s ease).",
+    "dashboard": "Minimalist. Hover states (-translate-y-1, border color darken), focus rings, crisp interactive feedback.",
+    "accessibility": "MUST respect prefers-reduced-motion. Animations should convey information without being purely decorative unless aria-hidden is true."
+  },
+  "components": {
+    "strategy": "Marketing = Pure HTML/Tailwind for creative asymmetry. Dashboard/Forms = Shadcn (customized to remove generic Vercel look).",
+    "buttons": "Sharp pill-shaped or strictly rectangular buttons. ONLY use primary color (#01696F) for true CTAs. Use subtle border buttons for secondary actions.",
+    "inputs": "Flat, 1px border (border-white/10), dark background (#0C1014), crisp focus rings (ring-1 ring-[#01696F]).",
+    "tables": "Dense, highly scannable. Left-aligned text. 1px bottom borders for rows, no vertical dividers.",
+    "badges": "SVG badges for agent tiers. Must be embeddable via URL.",
+    "toasts": "Sonner (customized to dark theme with 1px borders, located at /app/src/components/ui/sonner.tsx)."
+  },
+  "accessibility": {
+    "contrast": "Ensure minimum 4.5:1 ratio for body text. All hovers must explicitly define text colors (e.g., hover:bg-[#01696F] hover:text-white). Focus states must have higher contrast.",
+    "testing": "All interactive elements MUST include a 'data-testid' attribute (kebab-case, role-based)."
+  },
+  "media": {
+    "images": [
+      {
+        "url": "https://customer-assets.emergentagent.com/job_ac636d4a-6ca2-497e-8615-5b0c10a94a77/artifacts/vcawrcg8_repledger-logo-dark.svg",
+        "category": "logo",
+        "description": "Main RepLedger logo for dark theme",
+        "placement": "Navbar, Footer, Auth pages"
+      },
+      {
+        "url": "https://customer-assets.emergentagent.com/job_ac636d4a-6ca2-497e-8615-5b0c10a94a77/artifacts/waldk2o2_repledger-icon.svg",
+        "category": "icon",
+        "description": "RepLedger icon",
+        "placement": "Favicon, small avatars, collapsed sidebar"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1667264501379-c1537934c7ab?crop=entropy&cs=srgb&fm=jpg&q=85",
+        "category": "hero/infrastructure",
+        "description": "Dark server room nodes, representing agent infrastructure.",
+        "placement": "Marketing Hero Section, Abstract Accents"
+      },
+      {
+        "url": "https://images.pexels.com/photos/30766684/pexels-photo-30766684.png?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+        "category": "abstract/data",
+        "description": "3D geometric structure with dark polygons. Represents the ledger and complex agent networks.",
+        "placement": "How it works section, Auth background, or Hero background overlay"
+      }
+    ],
+    "icons_library": "lucide-react"
+  },
+  "3d_libraries_and_visuals": {
+    "recommendation": "Use ASCII art for loading states and 404s to amplify the 'infrastructure/technical' feel. Use pure CSS grid-backgrounds with subtle radial-gradient masks to create glowing grid floors.",
+    "libraries": ["framer-motion", "lucide-react"]
+  },
+  "copy_and_tone": {
+    "vocabulary": "Use 'record', 'ledger', 'outcomes', 'evidence-backed', 'infrastructure'. Avoid 'reviews', 'stars', 'likes', 'feed'.",
+    "tone": "Calm, objective, technical. No exclamation marks. 'Every agent earns its record.'"
+  },
+  "instructions_to_main_agent": [
+    "Follow the 'Tinted Grey' rule: the background is #050709. Do not use pure black.",
+    "Avoid the 'Vercel-look'. Remove soft rounded corners from Shadcn components. Use rounded-sm or rounded-none for a sharper, more serious infrastructure feel.",
+    "Never use generic sans for marketing headings; strictly use Space Grotesk with tracking-tighter.",
+    "Never center-align the main App container.",
+    "Use data-testid attributes on all interactive elements.",
+    "Never use AI assistant emojis. Use Lucide icons.",
+    "Ensure all glassmorphism has a delicate 1px border to separate it from the background.",
+    "Adhere strictly to the requested trust tier colors for the SVGs/badges."
+  ],
+  "universal_guidelines_for_main_agent": [
+    "Create depth through layered design elements with z-index hierarchy.",
+    "Use glass-morphism effects with backdrop filters (12-24px blur).",
+    "You MUST NOT apply universal transition (transition: all). Always add transitions for specific interactive elements.",
+    "You MUST NOT center align the app container, do not add .App { text-align: center; }.",
+    "Always use modern button styles with interaction animations.",
+    "NEVER use AI assistant Emoji characters.",
+    "Every interaction needs micro-animations - hover states, transitions, etc.",
+    "Use 2-3x more spacing than feels comfortable.",
+    "Prioritize using pre-existing components from src/components/ui. Export conventions: named for components, default for pages.",
+    "Use 'sonner' for toasts."
+  ]
+}
