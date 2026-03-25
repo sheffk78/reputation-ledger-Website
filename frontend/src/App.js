@@ -5,14 +5,9 @@ import { Toaster } from "sonner";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 
 // Pages
-import HomePage from "./pages/HomePage";
 import LoginPage from "./pages/LoginPage";
 import SignupPage from "./pages/SignupPage";
 import DashboardPage from "./pages/DashboardPage";
-import AgentsPage from "./pages/AgentsPage";
-import AgentDetailPage from "./pages/AgentDetailPage";
-import ApiKeyPage from "./pages/ApiKeyPage";
-import DocsPage from "./pages/DocsPage";
 
 // Protected route wrapper
 function ProtectedRoute({ children }) {
@@ -55,10 +50,6 @@ function PublicRoute({ children }) {
 function AppRoutes() {
   return (
     <Routes>
-      {/* Public routes */}
-      <Route path="/" element={<HomePage />} />
-      <Route path="/docs" element={<DocsPage />} />
-      
       {/* Auth routes */}
       <Route
         path="/login"
@@ -86,33 +77,10 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
-      <Route
-        path="/dashboard/agents"
-        element={
-          <ProtectedRoute>
-            <AgentsPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/dashboard/agents/:agentId"
-        element={
-          <ProtectedRoute>
-            <AgentDetailPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/dashboard/api-key"
-        element={
-          <ProtectedRoute>
-            <ApiKeyPage />
-          </ProtectedRoute>
-        }
-      />
 
-      {/* Catch all */}
-      <Route path="*" element={<Navigate to="/" replace />} />
+      {/* Default redirect */}
+      <Route path="/" element={<Navigate to="/dashboard" replace />} />
+      <Route path="*" element={<Navigate to="/dashboard" replace />} />
     </Routes>
   );
 }
@@ -122,9 +90,6 @@ function App() {
     <AuthProvider>
       <BrowserRouter>
         <div className="min-h-screen bg-[#050709]">
-          {/* Noise texture overlay */}
-          <div className="noise-overlay" />
-          
           <AppRoutes />
           
           <Toaster
