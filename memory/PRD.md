@@ -9,6 +9,7 @@ Build a Phase 1 MVP of Agent Reputation Ledger (RepLedger) - a track record API 
 - Outcome submission via API
 - Scoring with trust tiers (Unrated, Bronze, Silver, Gold, Platinum)
 - Embeddable SVG badges
+- Developer documentation
 
 ## User Personas
 1. **Independent Agent Builders** - Build on OpenClaw, n8n, CrewAI; need to prove agent reliability
@@ -31,21 +32,19 @@ Build a Phase 1 MVP of Agent Reputation Ledger (RepLedger) - a track record API 
 - ✅ API key generation and regeneration
 - ✅ POST /api/v1/agents - Register agent
 - ✅ GET /api/v1/agents - List user's agents
-- ✅ GET /api/v1/agents/{agent_id} - Get agent details
+- ✅ GET /api/v1/agents/{agent_id} - Get agent details with score
 - ✅ POST /api/v1/agents/{agent_id}/outcomes - Submit outcome
-- ✅ GET /api/v1/agents/{agent_id}/outcomes - List outcomes with pagination
+- ✅ GET /api/v1/agents/{agent_id}/outcomes - List outcomes
 - ✅ GET /api/v1/agents/{agent_id}/score - Get score and tier
 - ✅ GET /api/v1/agents/{agent_id}/badge.svg - Public SVG badge
 
 ### Frontend (React)
-- ✅ Marketing homepage with hero, how it works, use cases
-- ✅ Login/Signup pages
-- ✅ Dashboard with stats overview
-- ✅ API key display with copy/regenerate
-- ✅ Agents list with create dialog
-- ✅ Agent detail page with outcomes table
-- ✅ Badge preview and embed code
-- ✅ Documentation/quickstart page
+- ✅ Marketing homepage with hero, how it works, who it's for, why not reviews, CTA
+- ✅ Developers/docs page with quickstart (4 steps) and API reference
+- ✅ Login/Signup pages with RepLedger branding
+- ✅ Dashboard with API key block, agents table (tier, score, outcomes)
+- ✅ Agent detail page with score card, badge embed, outcomes table
+- ✅ Brand styling: dark #050709, teal #01696F, Space Grotesk/Inter/JetBrains Mono
 
 ### Scoring Logic
 - Score = (successful / total) * 100
@@ -58,14 +57,14 @@ Build a Phase 1 MVP of Agent Reputation Ledger (RepLedger) - a track record API 
 
 ## Prioritized Backlog
 
-### P0 (Critical - Not in Phase 1)
-- None remaining
+### P0 (Critical - Completed)
+- ✅ All Phase 1 features implemented
 
 ### P1 (High Priority - Phase 2)
 - Password reset flow (email integration)
 - Webhooks for outcome events
 - Agent deletion
-- Outcome filtering in UI
+- Outcome filtering/pagination in UI
 
 ### P2 (Medium Priority)
 - Flags/incident system
@@ -73,7 +72,6 @@ Build a Phase 1 MVP of Agent Reputation Ledger (RepLedger) - a track record API 
 - Safe-Spend integration
 - Multi-tenant organizations/teams
 - GitHub/domain identity verification
-- Score breakdown by dimension
 
 ### P3 (Low Priority)
 - Public agent profiles
@@ -81,8 +79,21 @@ Build a Phase 1 MVP of Agent Reputation Ledger (RepLedger) - a track record API 
 - Leaderboards
 - Advanced analytics dashboard
 
-## Next Tasks
-1. Add email service integration for password reset
-2. Implement outcome pagination in the UI
-3. Add agent deletion capability
-4. Consider webhooks for real-time notifications
+## Routes
+- `/` - Marketing homepage (public)
+- `/developers` - API documentation (public)
+- `/login` - Sign in (public)
+- `/signup` - Create account (public)
+- `/dashboard` - Main dashboard (protected)
+- `/agents/:agentId` - Agent detail (protected)
+
+## API Endpoints
+| Endpoint | Method | Auth | Description |
+|----------|--------|------|-------------|
+| /api/v1/agents | POST | API Key | Register agent |
+| /api/v1/agents | GET | API Key | List agents |
+| /api/v1/agents/{id} | GET | API Key | Get agent |
+| /api/v1/agents/{id}/outcomes | POST | API Key | Submit outcome |
+| /api/v1/agents/{id}/outcomes | GET | API Key | List outcomes |
+| /api/v1/agents/{id}/score | GET | API Key | Get score |
+| /api/v1/agents/{id}/badge.svg | GET | Public | SVG badge |
