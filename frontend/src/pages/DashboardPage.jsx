@@ -789,14 +789,15 @@ export default function DashboardPage() {
                   </div>
                 )}
                 <div className="card-surface overflow-hidden">
+                <div className="overflow-x-auto">
                 <table className="data-table" data-testid="agents-table">
                   <thead>
                     <tr>
                       <th>Agent</th>
                       <th>Tier</th>
-                      <th>Score</th>
-                      <th>Outcomes</th>
-                      <th>Success Rate</th>
+                      <th className="hidden sm:table-cell">Score</th>
+                      <th className="hidden md:table-cell">Outcomes</th>
+                      <th className="hidden md:table-cell">Success Rate</th>
                       <th></th>
                     </tr>
                   </thead>
@@ -806,7 +807,7 @@ export default function DashboardPage() {
                         <td>
                           <div>
                             <div className="text-white font-medium text-[13px]">{agent.name}</div>
-                            <code className="text-[11px] text-[#6B7280] font-mono">
+                            <code className="text-[10px] sm:text-[11px] text-[#6B7280] font-mono break-all">
                               {agent.agent_id}
                             </code>
                           </div>
@@ -814,17 +815,17 @@ export default function DashboardPage() {
                         <td>
                           <TierBadge tier={agent.tier} />
                         </td>
-                        <td>
+                        <td className="hidden sm:table-cell">
                           <span className="score-display-md">
                             {agent.score}
                           </span>
                         </td>
-                        <td>
+                        <td className="hidden md:table-cell">
                           <span className="text-[#9CA3AF] font-mono text-[13px]">
                             {agent.outcome_count}
                           </span>
                         </td>
-                        <td>
+                        <td className="hidden md:table-cell">
                           <span className="text-[#9CA3AF] font-mono text-[13px]">
                             {agent.success_rate}%
                           </span>
@@ -842,6 +843,7 @@ export default function DashboardPage() {
                     ))}
                   </tbody>
                 </table>
+              </div>
               </div>
               </>
             )}

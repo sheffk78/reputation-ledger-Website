@@ -92,7 +92,33 @@
   }
 }
 
-/* Custom scrollbar */
+/* ============================================
+   LAYOUT & CONTAINER
+   ============================================ */
+
+.container-app {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 16px;
+}
+
+@media (min-width: 640px) {
+  .container-app {
+    padding: 0 24px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .container-app {
+    padding: 0 32px;
+  }
+}
+
+/* ============================================
+   CUSTOM SCROLLBAR
+   ============================================ */
+
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -111,7 +137,10 @@
   background: rgba(255, 255, 255, 0.15);
 }
 
-/* Trust tier badge styles */
+/* ============================================
+   TRUST TIER BADGES
+   ============================================ */
+
 .tier-badge {
   display: inline-flex;
   align-items: center;
@@ -123,6 +152,7 @@
   font-size: 10px;
   text-transform: uppercase;
   letter-spacing: 0.05em;
+  white-space: nowrap;
 }
 
 .tier-unrated {
@@ -150,7 +180,10 @@
   color: #ECFEFF;
 }
 
-/* Loading spinner */
+/* ============================================
+   LOADING SPINNER
+   ============================================ */
+
 .spinner {
   width: 20px;
   height: 20px;
@@ -166,7 +199,314 @@
   }
 }
 
-/* Reduced motion */
+/* ============================================
+   CARDS & SURFACES
+   ============================================ */
+
+.card-surface {
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: 2px;
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  text-align: center;
+}
+
+.empty-state-icon {
+  width: 40px;
+  height: 40px;
+  color: var(--text-muted);
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+
+.empty-state-title {
+  font-family: var(--font-heading);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+}
+
+.empty-state-description {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-bottom: 16px;
+  max-width: 320px;
+}
+
+/* ============================================
+   FORMS
+   ============================================ */
+
+.form-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+}
+
+.form-input {
+  width: 100%;
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: 2px;
+  padding: 10px 12px;
+  font-size: 13px;
+  color: var(--text-primary);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.form-input::placeholder {
+  color: var(--text-muted);
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 1px var(--accent-primary);
+}
+
+.form-input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ============================================
+   DATA TABLES - RESPONSIVE
+   ============================================ */
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.data-table th {
+  text-align: left;
+  padding: 12px 16px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid var(--border-default);
+  white-space: nowrap;
+}
+
+.data-table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  vertical-align: middle;
+}
+
+.data-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.data-table tbody tr:hover {
+  background-color: rgba(255, 255, 255, 0.02);
+}
+
+/* Mobile table responsiveness */
+@media (max-width: 768px) {
+  .data-table th,
+  .data-table td {
+    padding: 10px 12px;
+    font-size: 12px;
+  }
+  
+  .data-table th:first-child,
+  .data-table td:first-child {
+    padding-left: 16px;
+  }
+  
+  .data-table th:last-child,
+  .data-table td:last-child {
+    padding-right: 16px;
+  }
+}
+
+/* Table scroll container */
+.table-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* ============================================
+   CODE BLOCKS - RESPONSIVE
+   ============================================ */
+
+.code-block {
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: 2px;
+  padding: 16px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.code-block code {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 1.6;
+  color: #E5E7EB;
+  white-space: pre;
+}
+
+@media (max-width: 640px) {
+  .code-block {
+    padding: 12px;
+  }
+  
+  .code-block code {
+    font-size: 11px;
+  }
+}
+
+/* ============================================
+   BUTTONS - CONSISTENT STYLES
+   ============================================ */
+
+/* Primary button (teal) */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 36px;
+  padding: 0 16px;
+  background-color: var(--accent-primary);
+  color: white;
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 500;
+  border-radius: 2px;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background-color: var(--accent-hover);
+}
+
+.btn-primary:active:not(:disabled) {
+  background-color: var(--accent-active);
+}
+
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Ghost button */
+.btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 36px;
+  padding: 0 16px;
+  background-color: transparent;
+  color: var(--text-secondary);
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 500;
+  border-radius: 2px;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.btn-ghost:hover:not(:disabled) {
+  background-color: rgba(255, 255, 255, 0.05);
+  color: var(--text-primary);
+}
+
+/* Outline button */
+.btn-outline {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 36px;
+  padding: 0 16px;
+  background-color: transparent;
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 500;
+  border-radius: 2px;
+  border: 1px solid var(--border-default);
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.btn-outline:hover:not(:disabled) {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+/* ============================================
+   RESPONSIVE HERO SECTION
+   ============================================ */
+
+@media (max-width: 1024px) {
+  .hero-title {
+    font-size: 32px !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .hero-title {
+    font-size: 28px !important;
+  }
+  
+  .hero-subtitle {
+    font-size: 14px !important;
+  }
+}
+
+/* ============================================
+   RESPONSIVE NAVIGATION
+   ============================================ */
+
+.nav-mobile-menu {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .nav-desktop {
+    display: none !important;
+  }
+  
+  .nav-mobile-menu {
+    display: flex;
+  }
+}
+
+/* ============================================
+   UTILITY CLASSES
+   ============================================ */
+
+.text-truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.break-word {
+  word-wrap: break-word;
+  word-break: break-word;
+}
+
+/* ============================================
+   REDUCED MOTION
+   ============================================ */
+
 @media (prefers-reduced-motion: reduce) {
   * {
     animation-duration: 0.01ms !important;

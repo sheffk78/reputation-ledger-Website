@@ -56,34 +56,34 @@ export default function HomePage() {
       </header>
 
       {/* Hero Section */}
-      <section className="pt-32 pb-24 relative overflow-hidden">
+      <section className="pt-24 sm:pt-32 pb-16 sm:pb-24 relative overflow-hidden">
         {/* Subtle gradient background */}
         <div className="absolute inset-0 bg-gradient-to-b from-[#01696F]/5 via-transparent to-transparent pointer-events-none" />
         
         <div className="container-app relative">
-          <div className="grid lg:grid-cols-2 gap-16 items-center">
+          <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
             {/* Left: Copy */}
-            <div>
+            <div className="text-center lg:text-left">
               <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-sm bg-[#01696F]/10 border border-[#01696F]/20 text-[11px] font-medium text-[#01696F] uppercase tracking-wider mb-6">
                 <Shield className="w-3.5 h-3.5" />
                 AgenticTrust Stack
               </div>
               
-              <h1 className="text-[40px] lg:text-[48px] font-bold text-white leading-[1.1] tracking-tight mb-6">
+              <h1 className="text-[32px] sm:text-[40px] lg:text-[48px] font-bold text-white leading-[1.1] tracking-tight mb-6">
                 Every agent earns its record.
               </h1>
               
-              <p className="text-[16px] text-[#9CA3AF] leading-relaxed mb-8 max-w-lg">
+              <p className="text-[14px] sm:text-[16px] text-[#9CA3AF] leading-relaxed mb-8 max-w-lg mx-auto lg:mx-0">
                 RepLedger is the track record API for autonomous agents.
                 Log your agent's outcomes, get a portable reputation score and trust tier,
                 and show a verifiable badge anywhere you publish your agent.
               </p>
 
-              <div className="flex flex-wrap items-center gap-4">
+              <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4">
                 <Link to="/signup">
                   <Button 
                     size="lg"
-                    className="bg-[#01696F] hover:bg-[#028C94] text-white h-11 px-6 text-[14px]"
+                    className="bg-[#01696F] hover:bg-[#028C94] text-white h-11 px-6 text-[14px] w-full sm:w-auto"
                     data-testid="hero-cta-btn"
                   >
                     Start free
@@ -144,25 +144,25 @@ export default function HomePage() {
       </section>
 
       {/* How It Works Section */}
-      <section id="how-it-works" className="py-24 border-t border-white/[0.04]">
+      <section id="how-it-works" className="py-16 sm:py-24 border-t border-white/[0.04]">
         <div className="container-app">
-          <div className="text-center mb-16">
-            <h2 className="text-[28px] font-semibold text-white tracking-tight mb-3">
+          <div className="text-center mb-12 sm:mb-16">
+            <h2 className="text-[24px] sm:text-[28px] font-semibold text-white tracking-tight mb-3">
               How RepLedger works
             </h2>
-            <p className="text-[15px] text-[#6B7280]">
+            <p className="text-[14px] sm:text-[15px] text-[#6B7280]">
               Three steps to a verifiable track record
             </p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-8">
             {/* Step 1 */}
             <div className="relative">
               <div className="w-10 h-10 rounded-sm bg-[#01696F]/15 flex items-center justify-center mb-5">
                 <span className="text-[#01696F] font-mono font-bold text-[14px]">1</span>
               </div>
-              <h3 className="text-[16px] font-semibold text-white mb-3">Register your agent</h3>
-              <p className="text-[14px] text-[#9CA3AF] leading-relaxed">
+              <h3 className="text-[15px] sm:text-[16px] font-semibold text-white mb-3">Register your agent</h3>
+              <p className="text-[13px] sm:text-[14px] text-[#9CA3AF] leading-relaxed">
                 Create an agent in RepLedger with a name and optional owner handle
                 (like a GitHub username or domain) to anchor its identity.
               </p>
@@ -173,20 +173,20 @@ export default function HomePage() {
               <div className="w-10 h-10 rounded-sm bg-[#01696F]/15 flex items-center justify-center mb-5">
                 <span className="text-[#01696F] font-mono font-bold text-[14px]">2</span>
               </div>
-              <h3 className="text-[16px] font-semibold text-white mb-3">Log outcomes to the ledger</h3>
-              <p className="text-[14px] text-[#9CA3AF] leading-relaxed">
+              <h3 className="text-[15px] sm:text-[16px] font-semibold text-white mb-3">Log outcomes to the ledger</h3>
+              <p className="text-[13px] sm:text-[14px] text-[#9CA3AF] leading-relaxed">
                 Send simple JSON events every time your agent completes a task.
                 RepLedger keeps an append-only history of successes, failures, and incidents.
               </p>
             </div>
 
             {/* Step 3 */}
-            <div className="relative">
+            <div className="relative sm:col-span-2 md:col-span-1">
               <div className="w-10 h-10 rounded-sm bg-[#01696F]/15 flex items-center justify-center mb-5">
                 <span className="text-[#01696F] font-mono font-bold text-[14px]">3</span>
               </div>
-              <h3 className="text-[16px] font-semibold text-white mb-3">Get a score and badge</h3>
-              <p className="text-[14px] text-[#9CA3AF] leading-relaxed">
+              <h3 className="text-[15px] sm:text-[16px] font-semibold text-white mb-3">Get a score and badge</h3>
+              <p className="text-[13px] sm:text-[14px] text-[#9CA3AF] leading-relaxed">
                 RepLedger turns your outcomes into a 0–100 reputation score and trust tier
                 (Unrated → Bronze → Silver → Gold → Platinum), plus an embeddable SVG badge.
               </p>
@@ -196,46 +196,46 @@ export default function HomePage() {
       </section>
 
       {/* Who It's For Section */}
-      <section id="who-its-for" className="py-24 border-t border-white/[0.04]">
+      <section id="who-its-for" className="py-16 sm:py-24 border-t border-white/[0.04]">
         <div className="container-app">
-          <div className="text-center mb-16">
-            <h2 className="text-[28px] font-semibold text-white tracking-tight mb-3">
+          <div className="text-center mb-12 sm:mb-16">
+            <h2 className="text-[24px] sm:text-[28px] font-semibold text-white tracking-tight mb-3">
               Who RepLedger is for
             </h2>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-6 sm:gap-8">
             {/* Card 1 */}
-            <div className="bg-[#0C1116] border border-white/[0.08] rounded-sm p-6">
+            <div className="bg-[#0C1116] border border-white/[0.08] rounded-sm p-5 sm:p-6">
               <div className="w-10 h-10 rounded-sm bg-[#01696F]/15 flex items-center justify-center mb-5">
                 <FileText className="w-5 h-5 text-[#01696F]" />
               </div>
-              <h3 className="text-[16px] font-semibold text-white mb-3">Independent agent builders</h3>
-              <p className="text-[14px] text-[#9CA3AF] leading-relaxed">
+              <h3 className="text-[15px] sm:text-[16px] font-semibold text-white mb-3">Independent agent builders</h3>
+              <p className="text-[13px] sm:text-[14px] text-[#9CA3AF] leading-relaxed">
                 Prove your agent works with a verifiable record of what it has done,
                 not just a README claim or a couple of screenshots.
               </p>
             </div>
 
             {/* Card 2 */}
-            <div className="bg-[#0C1116] border border-white/[0.08] rounded-sm p-6">
+            <div className="bg-[#0C1116] border border-white/[0.08] rounded-sm p-5 sm:p-6">
               <div className="w-10 h-10 rounded-sm bg-[#01696F]/15 flex items-center justify-center mb-5">
                 <Users className="w-5 h-5 text-[#01696F]" />
               </div>
-              <h3 className="text-[16px] font-semibold text-white mb-3">Agent marketplaces & platforms</h3>
-              <p className="text-[14px] text-[#9CA3AF] leading-relaxed">
+              <h3 className="text-[15px] sm:text-[16px] font-semibold text-white mb-3">Agent marketplaces & platforms</h3>
+              <p className="text-[13px] sm:text-[14px] text-[#9CA3AF] leading-relaxed">
                 Show real scores and trust tiers on agent listings so users can
                 filter out unreliable agents and fake reviews.
               </p>
             </div>
 
             {/* Card 3 */}
-            <div className="bg-[#0C1116] border border-white/[0.08] rounded-sm p-6">
+            <div className="bg-[#0C1116] border border-white/[0.08] rounded-sm p-5 sm:p-6 sm:col-span-2 md:col-span-1">
               <div className="w-10 h-10 rounded-sm bg-[#01696F]/15 flex items-center justify-center mb-5">
                 <Building2 className="w-5 h-5 text-[#01696F]" />
               </div>
-              <h3 className="text-[16px] font-semibold text-white mb-3">Teams & enterprises</h3>
-              <p className="text-[14px] text-[#9CA3AF] leading-relaxed">
+              <h3 className="text-[15px] sm:text-[16px] font-semibold text-white mb-3">Teams & enterprises</h3>
+              <p className="text-[13px] sm:text-[14px] text-[#9CA3AF] leading-relaxed">
                 Use reputation scores and outcome logs to support internal governance,
                 compliance reports, and vendor risk reviews.
               </p>

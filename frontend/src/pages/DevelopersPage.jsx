@@ -21,12 +21,13 @@ function CodeBlock({ code, language = "bash" }) {
 
   return (
     <div className="relative group">
-      <pre className="bg-[#0C1116] border border-white/[0.08] rounded-sm p-4 overflow-x-auto text-[13px] font-mono text-[#E5E7EB] leading-relaxed">
-        <code>{code}</code>
+      <pre className="bg-[#0C1116] border border-white/[0.08] rounded-sm p-3 sm:p-4 overflow-x-auto text-[11px] sm:text-[13px] font-mono text-[#E5E7EB] leading-relaxed">
+        <code className="whitespace-pre">{code}</code>
       </pre>
       <button
         onClick={handleCopy}
-        className="absolute top-3 right-3 p-1.5 rounded-sm bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-white/10"
+        className="absolute top-2 sm:top-3 right-2 sm:right-3 p-1.5 rounded-sm bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-white/10"
+        aria-label="Copy code"
       >
         {copied ? (
           <Check className="w-3.5 h-3.5 text-[#22C55E]" />
@@ -78,34 +79,34 @@ export default function DevelopersPage() {
         </div>
       </header>
 
-      <main className="pt-24 pb-16">
+      <main className="pt-20 sm:pt-24 pb-12 sm:pb-16">
         <div className="container-app">
           <div className="max-w-3xl mx-auto">
             {/* Intro */}
-            <section className="mb-16">
-              <h1 className="text-[32px] font-bold text-white tracking-tight mb-4">
+            <section className="mb-12 sm:mb-16">
+              <h1 className="text-[28px] sm:text-[32px] font-bold text-white tracking-tight mb-4">
                 Developers
               </h1>
-              <p className="text-[15px] text-[#9CA3AF] leading-relaxed mb-6">
+              <p className="text-[14px] sm:text-[15px] text-[#9CA3AF] leading-relaxed mb-6">
                 RepLedger is an API-first service.
                 All you need is an API key, an agent_id, and a few HTTP calls to start logging outcomes and getting scores.
               </p>
               
-              <div className="bg-[#0C1116] border border-white/[0.08] rounded-sm p-4 space-y-2">
-                <p className="text-[13px] text-[#9CA3AF]">
+              <div className="bg-[#0C1116] border border-white/[0.08] rounded-sm p-3 sm:p-4 space-y-2">
+                <p className="text-[12px] sm:text-[13px] text-[#9CA3AF]">
                   <span className="text-white font-medium">Auth:</span>{" "}
-                  <code className="text-[#01696F] font-mono">Authorization: Bearer {"{API_KEY}"}</code>
+                  <code className="text-[#01696F] font-mono break-all">Authorization: Bearer {"{API_KEY}"}</code>
                 </p>
-                <p className="text-[13px] text-[#9CA3AF]">
+                <p className="text-[12px] sm:text-[13px] text-[#9CA3AF]">
                   <span className="text-white font-medium">Base URL:</span>{" "}
-                  <code className="text-[#01696F] font-mono">{BASE_URL}</code>
+                  <code className="text-[#01696F] font-mono break-all">{BASE_URL}</code>
                 </p>
               </div>
             </section>
 
             {/* Quickstart */}
-            <section className="mb-16">
-              <h2 className="text-[24px] font-semibold text-white tracking-tight mb-8">
+            <section className="mb-12 sm:mb-16">
+              <h2 className="text-[20px] sm:text-[24px] font-semibold text-white tracking-tight mb-6 sm:mb-8">
                 Quickstart
               </h2>
 
@@ -264,81 +265,83 @@ export default function DevelopersPage() {
             </section>
 
             {/* Reference Summary */}
-            <section className="mb-16">
-              <h2 className="text-[24px] font-semibold text-white tracking-tight mb-6">
+            <section className="mb-12 sm:mb-16">
+              <h2 className="text-[20px] sm:text-[24px] font-semibold text-white tracking-tight mb-6">
                 API Reference
               </h2>
-              <p className="text-[13px] text-[#6B7280] mb-6">
+              <p className="text-[12px] sm:text-[13px] text-[#6B7280] mb-6">
                 All endpoints require <code className="text-[#01696F] font-mono">Authorization: Bearer {"{API_KEY}"}</code>
               </p>
               
               <div className="bg-[#0C1116] border border-white/[0.08] rounded-sm overflow-hidden">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b border-white/[0.06]">
-                      <th className="text-left px-5 py-3 text-[11px] font-medium text-[#6B7280] uppercase tracking-wider">Endpoint</th>
-                      <th className="text-left px-5 py-3 text-[11px] font-medium text-[#6B7280] uppercase tracking-wider">Description</th>
-                    </tr>
-                  </thead>
-                  <tbody className="text-[13px]">
-                    <tr className="border-b border-white/[0.04]">
-                      <td className="px-5 py-3">
-                        <code className="text-[#22C55E] font-mono">POST</code>
-                        <code className="text-white font-mono ml-2">/v1/agents</code>
-                      </td>
-                      <td className="px-5 py-3 text-[#9CA3AF]">Register a new agent for the authenticated user.</td>
-                    </tr>
-                    <tr className="border-b border-white/[0.04]">
-                      <td className="px-5 py-3">
-                        <code className="text-[#3B82F6] font-mono">GET</code>
-                        <code className="text-white font-mono ml-2">/v1/agents</code>
-                      </td>
-                      <td className="px-5 py-3 text-[#9CA3AF]">List all agents for the authenticated user.</td>
-                    </tr>
-                    <tr className="border-b border-white/[0.04]">
-                      <td className="px-5 py-3">
-                        <code className="text-[#22C55E] font-mono">POST</code>
-                        <code className="text-white font-mono ml-2">/v1/agents/{"{agent_id}"}/outcomes</code>
-                      </td>
-                      <td className="px-5 py-3 text-[#9CA3AF]">Log an outcome to the agent's ledger.</td>
-                    </tr>
-                    <tr className="border-b border-white/[0.04]">
-                      <td className="px-5 py-3">
-                        <code className="text-[#3B82F6] font-mono">GET</code>
-                        <code className="text-white font-mono ml-2">/v1/agents/{"{agent_id}"}/score</code>
-                      </td>
-                      <td className="px-5 py-3 text-[#9CA3AF]">Get the current reputation score, trust tier, and stats.</td>
-                    </tr>
-                    <tr className="border-b border-white/[0.04]">
-                      <td className="px-5 py-3">
-                        <code className="text-[#3B82F6] font-mono">GET</code>
-                        <code className="text-white font-mono ml-2">/v1/agents/{"{agent_id}"}/badge.svg</code>
-                      </td>
-                      <td className="px-5 py-3 text-[#9CA3AF]">Get an embeddable SVG badge (public, no auth).</td>
-                    </tr>
-                    <tr className="border-b border-white/[0.04]">
-                      <td className="px-5 py-3">
-                        <code className="text-[#22C55E] font-mono">POST</code>
-                        <code className="text-white font-mono ml-2">/v1/webhooks</code>
-                      </td>
-                      <td className="px-5 py-3 text-[#9CA3AF]">Create a webhook subscription for outcome events.</td>
-                    </tr>
-                    <tr className="border-b border-white/[0.04]">
-                      <td className="px-5 py-3">
-                        <code className="text-[#3B82F6] font-mono">GET</code>
-                        <code className="text-white font-mono ml-2">/v1/webhooks</code>
-                      </td>
-                      <td className="px-5 py-3 text-[#9CA3AF]">List all active webhooks for the authenticated user.</td>
-                    </tr>
-                    <tr>
-                      <td className="px-5 py-3">
-                        <code className="text-[#EF4444] font-mono">DELETE</code>
-                        <code className="text-white font-mono ml-2">/v1/webhooks/{"{webhook_id}"}</code>
-                      </td>
-                      <td className="px-5 py-3 text-[#9CA3AF]">Delete a webhook subscription.</td>
-                    </tr>
-                  </tbody>
-                </table>
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[500px]">
+                    <thead>
+                      <tr className="border-b border-white/[0.06]">
+                        <th className="text-left px-4 sm:px-5 py-3 text-[10px] sm:text-[11px] font-medium text-[#6B7280] uppercase tracking-wider">Endpoint</th>
+                        <th className="text-left px-4 sm:px-5 py-3 text-[10px] sm:text-[11px] font-medium text-[#6B7280] uppercase tracking-wider">Description</th>
+                      </tr>
+                    </thead>
+                    <tbody className="text-[12px] sm:text-[13px]">
+                      <tr className="border-b border-white/[0.04]">
+                        <td className="px-4 sm:px-5 py-3 whitespace-nowrap">
+                          <code className="text-[#22C55E] font-mono">POST</code>
+                          <code className="text-white font-mono ml-2">/v1/agents</code>
+                        </td>
+                        <td className="px-4 sm:px-5 py-3 text-[#9CA3AF]">Register a new agent for the authenticated user.</td>
+                      </tr>
+                      <tr className="border-b border-white/[0.04]">
+                        <td className="px-4 sm:px-5 py-3 whitespace-nowrap">
+                          <code className="text-[#3B82F6] font-mono">GET</code>
+                          <code className="text-white font-mono ml-2">/v1/agents</code>
+                        </td>
+                        <td className="px-4 sm:px-5 py-3 text-[#9CA3AF]">List all agents for the authenticated user.</td>
+                      </tr>
+                      <tr className="border-b border-white/[0.04]">
+                        <td className="px-4 sm:px-5 py-3 whitespace-nowrap">
+                          <code className="text-[#22C55E] font-mono">POST</code>
+                          <code className="text-white font-mono ml-2">/v1/agents/{"{agent_id}"}/outcomes</code>
+                        </td>
+                        <td className="px-4 sm:px-5 py-3 text-[#9CA3AF]">Log an outcome to the agent's ledger.</td>
+                      </tr>
+                      <tr className="border-b border-white/[0.04]">
+                        <td className="px-4 sm:px-5 py-3 whitespace-nowrap">
+                          <code className="text-[#3B82F6] font-mono">GET</code>
+                          <code className="text-white font-mono ml-2">/v1/agents/{"{agent_id}"}/score</code>
+                        </td>
+                        <td className="px-4 sm:px-5 py-3 text-[#9CA3AF]">Get the current reputation score, trust tier, and stats.</td>
+                      </tr>
+                      <tr className="border-b border-white/[0.04]">
+                        <td className="px-4 sm:px-5 py-3 whitespace-nowrap">
+                          <code className="text-[#3B82F6] font-mono">GET</code>
+                          <code className="text-white font-mono ml-2">/v1/agents/{"{agent_id}"}/badge.svg</code>
+                        </td>
+                        <td className="px-4 sm:px-5 py-3 text-[#9CA3AF]">Get an embeddable SVG badge (public, no auth).</td>
+                      </tr>
+                      <tr className="border-b border-white/[0.04]">
+                        <td className="px-4 sm:px-5 py-3 whitespace-nowrap">
+                          <code className="text-[#22C55E] font-mono">POST</code>
+                          <code className="text-white font-mono ml-2">/v1/webhooks</code>
+                        </td>
+                        <td className="px-4 sm:px-5 py-3 text-[#9CA3AF]">Create a webhook subscription for outcome events.</td>
+                      </tr>
+                      <tr className="border-b border-white/[0.04]">
+                        <td className="px-4 sm:px-5 py-3 whitespace-nowrap">
+                          <code className="text-[#3B82F6] font-mono">GET</code>
+                          <code className="text-white font-mono ml-2">/v1/webhooks</code>
+                        </td>
+                        <td className="px-4 sm:px-5 py-3 text-[#9CA3AF]">List all active webhooks for the authenticated user.</td>
+                      </tr>
+                      <tr>
+                        <td className="px-4 sm:px-5 py-3 whitespace-nowrap">
+                          <code className="text-[#EF4444] font-mono">DELETE</code>
+                          <code className="text-white font-mono ml-2">/v1/webhooks/{"{webhook_id}"}</code>
+                        </td>
+                        <td className="px-4 sm:px-5 py-3 text-[#9CA3AF]">Delete a webhook subscription.</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </section>
 
