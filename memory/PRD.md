@@ -112,15 +112,30 @@ Build a Phase 1 MVP of Agent Reputation Ledger (RepLedger) - a track record API 
 - ✅ Button hidden after demo agent created
 - ✅ Demo Data banner explains this is sample data
 - ✅ Demo agent shows in agents table with score/tier
-- ✅ Webhook delivery on outcome.created events
-- ✅ Webhook delivery logging
 
-#### Frontend (Webhooks)
-- ✅ Webhooks management section on Dashboard
-- ✅ Add Webhook dialog with URL input
-- ✅ Webhook list display with event tags
-- ✅ Delete webhook with confirmation
-- ✅ API docs updated with webhook endpoints
+### Phase 1.5 - Flags System (March 2025)
+#### Backend
+- ✅ POST /api/v1/agents/{agent_id}/flags - Create flag for agent or specific outcome
+- ✅ GET /api/v1/agents/{agent_id}/flags - List flags for agent
+- ✅ Flags stored with: id, agent_id, outcome_id (optional), reason, notes, created_by_user_id, created_at
+
+#### Frontend
+- ✅ Flags card on Agent Detail page showing count
+- ✅ "Add Flag" button to create general agent flag
+- ✅ Flag icon button on each outcome row to flag specific outcome
+- ✅ Create Flag dialog with reason (required) and notes (optional)
+- ✅ "View flags" button and dialog showing all flags with details
+- ✅ Toast notification on flag creation
+
+### Phase 1.6 - Backend Refactoring (March 2025)
+#### Code Architecture Improvement
+- ✅ Refactored server.py (1395 lines) into modular structure
+- ✅ Created `/app/backend/core/` - Configuration, database, dependencies, exceptions
+- ✅ Created `/app/backend/models/` - Pydantic models (auth, agents, outcomes, webhooks, flags)
+- ✅ Created `/app/backend/routes/` - Route handlers (auth, agents, webhooks)
+- ✅ Created `/app/backend/services/` - Business logic (score_service, webhook_service, email_service)
+- ✅ Created `/app/backend/utils/` - Utilities (password hashing)
+- ✅ Main server.py now ~170 lines - entry point only
 
 ### Scoring Logic
 - Score = (successful / total) * 100
@@ -137,25 +152,59 @@ Build a Phase 1 MVP of Agent Reputation Ledger (RepLedger) - a track record API 
 - ✅ All Phase 1 features implemented
 - ✅ Postmark email integration
 - ✅ Webhook system for outcome events
+- ✅ Flags system for problematic outcomes
+- ✅ Backend code refactoring
 
 ### P1 (High Priority - Phase 2)
+- ⬜ Outcome filtering by result type (success/failure/partial/timeout)
+- ⬜ Email notification preferences (toggle on/off in settings)
 - ⬜ Password reset UI page (backend complete, need frontend page)
 - ⬜ Agent deletion
-- ✅ Outcome pagination in API and UI
-- ⬜ Email notification preferences (toggle on/off)
 
 ### P2 (Medium Priority)
-- ⬜ Flags/incident system
+- ⬜ Public agent profiles
 - ⬜ AAV (Agent Authority Vault) integration
 - ⬜ Safe-Spend integration
 - ⬜ Multi-tenant organizations/teams
 - ⬜ GitHub/domain identity verification
 
 ### P3 (Low Priority)
-- ⬜ Public agent profiles
 - ⬜ Agent comparison tools
 - ⬜ Leaderboards
 - ⬜ Advanced analytics dashboard
+
+## Code Architecture
+
+```
+/app/backend/
+├── server.py              # Main entry point (~170 lines)
+├── core/
+│   ├── __init__.py
+│   ├── config.py          # Settings (JWT, MongoDB, CORS)
+│   ├── database.py        # MongoDB connection
+│   ├── dependencies.py    # Auth dependencies (get_current_user, get_user_from_api_key)
+│   └── exceptions.py      # APIError, ErrorCodes, error handlers
+├── models/
+│   ├── __init__.py
+│   ├── auth.py            # UserCreate, TokenResponse, etc.
+│   ├── agents.py          # AgentCreate, AgentListResponse, etc.
+│   ├── outcomes.py        # OutcomeCreate, PaginatedOutcomesResponse, etc.
+│   ├── webhooks.py        # WebhookCreate, WebhookResponse, etc.
+│   └── flags.py           # FlagCreate, FlagResponse, etc.
+├── routes/
+│   ├── __init__.py
+│   ├── auth.py            # /api/auth/* routes
+│   ├── agents.py          # /api/v1/agents/* routes (incl. outcomes, flags)
+│   └── webhooks.py        # /api/v1/webhooks/* routes
+├── services/
+│   ├── __init__.py
+│   ├── email_service.py   # Postmark email sending
+│   ├── score_service.py   # Score/tier calculation, badge SVG generation
+│   └── webhook_service.py # Webhook triggering logic
+└── utils/
+    ├── __init__.py
+    └── password.py        # Password hashing utilities
+```
 
 ## Routes
 - `/` - Marketing homepage (public)
@@ -170,17 +219,25 @@ Build a Phase 1 MVP of Agent Reputation Ledger (RepLedger) - a track record API 
 |----------|--------|------|-------------|
 | /api/v1/agents | POST | API Key | Register agent |
 | /api/v1/agents | GET | API Key | List agents |
+| /api/v1/agents/demo | POST | API Key | Create demo agent |
 | /api/v1/agents/{id} | GET | API Key | Get agent |
 | /api/v1/agents/{id}/outcomes | POST | API Key | Submit outcome |
-| /api/v1/agents/{id}/outcomes | GET | API Key | List outcomes |
+| /api/v1/agents/{id}/outcomes | GET | API Key | List outcomes (paginated) |
 | /api/v1/agents/{id}/score | GET | API Key | Get score |
 | /api/v1/agents/{id}/badge.svg | GET | Public | SVG badge |
+| /api/v1/agents/{id}/flags | POST | API Key | Create flag |
+| /api/v1/agents/{id}/flags | GET | API Key | List flags |
 | /api/v1/webhooks | POST | API Key | Create webhook |
 | /api/v1/webhooks | GET | API Key | List webhooks |
 | /api/v1/webhooks/{id} | GET | API Key | Get webhook |
 | /api/v1/webhooks/{id} | DELETE | API Key | Delete webhook |
+| /api/auth/signup | POST | Public | Create account |
+| /api/auth/login | POST | Public | Sign in |
+| /api/auth/me | GET | JWT | Get current user |
 | /api/auth/password-reset/request | POST | Public | Request password reset |
 | /api/auth/password-reset/confirm | POST | Public | Confirm password reset |
+| /api/api-key | GET | JWT | Get API key |
+| /api/api-key/regenerate | POST | JWT | Regenerate API key |
 
 ## Third-Party Integrations
 - **Postmark**: Transactional emails (welcome, password reset, outcome notifications)
