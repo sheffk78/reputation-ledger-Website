@@ -67,6 +67,34 @@ Build a Phase 1 MVP of Agent Reputation Ledger (RepLedger) - a track record API 
 - ✅ Webhook list display with event tags
 - ✅ Delete webhook with confirmation
 - ✅ API docs updated with webhook endpoints
+- ✅ API Quickstart panel with pre-filled code examples
+
+### Phase 1.2 - Validation & Error Handling (December 2025)
+#### Backend
+- ✅ Standardized JSON error format: `{error: {code, message, details}}`
+- ✅ Error codes: INVALID_CREDENTIALS, EMAIL_ALREADY_EXISTS, AGENT_NOT_FOUND, WEBHOOK_NOT_FOUND, VALIDATION_ERROR, etc.
+- ✅ Custom APIError exception class
+- ✅ RequestValidationError handler with field-specific messages
+- ✅ HTTPException handler converting to standardized format
+- ✅ User-friendly messages: "Please enter a valid email address", "Password must be at least 6 characters"
+
+#### Frontend
+- ✅ Inline form validation on blur
+- ✅ Red border + error message below invalid fields
+- ✅ Signup form: email, password length, password match validation
+- ✅ Login form: email/password required, error alert for invalid credentials
+- ✅ Dashboard agent form: name required validation
+- ✅ Dashboard webhook form: URL format validation
+- ✅ parseApiError utility for consistent error handling
+- ✅ Webhook delivery on outcome.created events
+- ✅ Webhook delivery logging
+
+#### Frontend
+- ✅ Webhooks management section on Dashboard
+- ✅ Add Webhook dialog with URL input
+- ✅ Webhook list display with event tags
+- ✅ Delete webhook with confirmation
+- ✅ API docs updated with webhook endpoints
 
 ### Scoring Logic
 - Score = (successful / total) * 100
