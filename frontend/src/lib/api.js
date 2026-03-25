@@ -97,6 +97,11 @@ export const agentsAPI = {
     return response.data;
   },
 
+  createDemo: async () => {
+    const response = await apiClientV1.post("/agents/demo");
+    return response.data;
+  },
+
   getScore: async (agentId) => {
     const response = await apiClientV1.get(`/agents/${agentId}/score`);
     return response.data;

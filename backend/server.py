@@ -11,7 +11,7 @@ from pathlib import Path
 from pydantic import BaseModel, Field, EmailStr, field_validator
 from typing import List, Optional, Dict, Any
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 import bcrypt
 import jwt
 import secrets
@@ -657,6 +657,123 @@ async def list_agents(user: dict = Depends(get_user_from_api_key)):
         ))
     
     return result
+
+# Demo agent response model
+class DemoAgentResponse(BaseModel):
+    agent: AgentListResponse
+    message: str
+    is_new: bool
+
+@v1_router.post("/agents/demo", response_model=DemoAgentResponse, status_code=201)
+async def create_demo_agent(user: dict = Depends(get_user_from_api_key)):
+    """Create a demo agent with sample outcomes for onboarding (idempotent - one per user)"""
+    import random
+    
+    # Check if user already has a demo agent
+    existing_demo = await db.agents.find_one(
+        {"user_id": user["id"], "is_demo": True},
+        {"_id": 0}
+    )
+    
+    if existing_demo:
+        # Return existing demo agent
+        outcomes = await db.outcomes.find(
+            {"agent_id": existing_demo["agent_id"]}, 
+            {"_id": 0}
+        ).to_list(10000)
+        
+        score, tier, success_rate = calculate_score_and_tier(outcomes)
+        
+        return DemoAgentResponse(
+            agent=AgentListResponse(
+                agent_id=existing_demo["agent_id"],
+                name=existing_demo["name"],
+                description=existing_demo.get("description"),
+                owner_handle=existing_demo.get("owner_handle"),
+                created_at=existing_demo["created_at"],
+                score=score,
+                tier=tier,
+                outcome_count=len(outcomes),
+                success_rate=success_rate
+            ),
+            message="Demo agent already exists for your account.",
+            is_new=False
+        )
+    
+    # Create new demo agent
+    agent_id = f"agt_{secrets.token_hex(12)}"
+    now = datetime.now(timezone.utc).isoformat()
+    
+    agent_doc = {
+        "agent_id": agent_id,
+        "user_id": user["id"],
+        "name": "Sample Support Bot",
+        "description": "Demo agent with sample outcomes - shows how RepLedger tracks agent performance",
+        "owner_handle": "@demo",
+        "created_at": now,
+        "is_demo": True
+    }
+    
+    await db.agents.insert_one(agent_doc)
+    
+    # Create sample outcomes with realistic distribution
+    # 15 outcomes: ~73% success rate to get Silver/Gold tier
+    sample_outcomes = [
+        {"result": "success", "task_type": "ticket-resolution", "submitter_type": "self"},
+        {"result": "success", "task_type": "ticket-resolution", "submitter_type": "self"},
+        {"result": "success", "task_type": "faq-response", "submitter_type": "self"},
+        {"result": "success", "task_type": "faq-response", "submitter_type": "self"},
+        {"result": "success", "task_type": "escalation-check", "submitter_type": "operator"},
+        {"result": "failure", "task_type": "ticket-resolution", "submitter_type": "self"},
+        {"result": "success", "task_type": "sentiment-analysis", "submitter_type": "self"},
+        {"result": "success", "task_type": "ticket-resolution", "submitter_type": "self"},
+        {"result": "partial", "task_type": "complex-query", "submitter_type": "operator"},
+        {"result": "success", "task_type": "faq-response", "submitter_type": "self"},
+        {"result": "success", "task_type": "ticket-resolution", "submitter_type": "self"},
+        {"result": "failure", "task_type": "escalation-check", "submitter_type": "operator"},
+        {"result": "success", "task_type": "sentiment-analysis", "submitter_type": "self"},
+        {"result": "success", "task_type": "ticket-resolution", "submitter_type": "self"},
+        {"result": "timeout", "task_type": "complex-query", "submitter_type": "self"},
+    ]
+    
+    # Insert outcomes with staggered timestamps
+    base_time = datetime.now(timezone.utc)
+    for i, outcome_data in enumerate(sample_outcomes):
+        # Space outcomes over the last 7 days
+        outcome_time = base_time - timedelta(hours=i * 12 + random.randint(0, 6))
+        outcome_doc = {
+            "id": str(uuid.uuid4()),
+            "agent_id": agent_id,
+            "result": outcome_data["result"],
+            "task_type": outcome_data["task_type"],
+            "submitter_type": outcome_data["submitter_type"],
+            "created_at": outcome_time.isoformat()
+        }
+        await db.outcomes.insert_one(outcome_doc)
+    
+    # Calculate score for response
+    outcomes = await db.outcomes.find(
+        {"agent_id": agent_id}, 
+        {"_id": 0}
+    ).to_list(100)
+    
+    score, tier, success_rate = calculate_score_and_tier(outcomes)
+    
+    return DemoAgentResponse(
+        agent=AgentListResponse(
+            agent_id=agent_id,
+            name=agent_doc["name"],
+            description=agent_doc["description"],
+            owner_handle=agent_doc["owner_handle"],
+            created_at=now,
+            score=score,
+            tier=tier,
+            outcome_count=len(outcomes),
+            success_rate=success_rate
+        ),
+        message="Demo agent created with 15 sample outcomes!",
+        is_new=True
+    )
 
 @v1_router.get("/agents/{agent_id}", response_model=AgentListResponse)
 async def get_agent(agent_id: str, user: dict = Depends(get_user_from_api_key)):

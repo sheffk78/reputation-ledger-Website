@@ -47,7 +47,9 @@ import {
   ChevronDown,
   ChevronUp,
   Terminal,
-  AlertCircle
+  AlertCircle,
+  FlaskConical,
+  Sparkles
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -314,6 +316,8 @@ export default function DashboardPage() {
   const [webhookDialogOpen, setWebhookDialogOpen] = useState(false);
   const [creatingWebhook, setCreatingWebhook] = useState(false);
   const [deletingWebhook, setDeletingWebhook] = useState(null);
+  const [creatingDemo, setCreatingDemo] = useState(false);
+  const [hasDemoAgent, setHasDemoAgent] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     description: "",
@@ -340,6 +344,9 @@ export default function DashboardPage() {
       setApiKey(apiKeyData);
       setAgents(agentsData);
       setWebhooks(webhooksData.webhooks || []);
+      // Check if user already has a demo agent
+      const demoExists = agentsData.some(a => a.name === "Sample Support Bot");
+      setHasDemoAgent(demoExists);
     } catch (error) {
       console.error("Failed to load data:", error);
       const parsed = parseApiError(error);
@@ -470,6 +477,27 @@ export default function DashboardPage() {
       toast.error(parsed.message);
     } finally {
       setDeletingWebhook(null);
+    }
+  };
+
+  const handleCreateDemoAgent = async () => {
+    setCreatingDemo(true);
+    try {
+      const result = await agentsAPI.createDemo();
+      if (result.is_new) {
+        toast.success("Demo agent created with sample outcomes!");
+      } else {
+        toast.info("You already have a demo agent.");
+      }
+      // Refresh agents list
+      const agentsData = await agentsAPI.list();
+      setAgents(agentsData);
+      setHasDemoAgent(true);
+    } catch (error) {
+      const parsed = parseApiError(error);
+      toast.error(parsed.message);
+    } finally {
+      setCreatingDemo(false);
     }
   };
 
@@ -711,17 +739,56 @@ export default function DashboardPage() {
                 <p className="empty-state-description">
                   Register your first agent to start building its track record
                 </p>
-                <Button
-                  onClick={() => setDialogOpen(true)}
-                  data-testid="create-first-agent-btn"
-                  className="bg-[#01696F] hover:bg-[#028C94] text-white h-9 px-4 text-[13px]"
-                >
-                  <Plus className="w-3.5 h-3.5 mr-1.5" />
-                  Register First Agent
-                </Button>
+                <div className="flex flex-col sm:flex-row items-center gap-3 mt-2">
+                  <Button
+                    onClick={() => setDialogOpen(true)}
+                    data-testid="create-first-agent-btn"
+                    className="bg-[#01696F] hover:bg-[#028C94] text-white h-9 px-4 text-[13px]"
+                  >
+                    <Plus className="w-3.5 h-3.5 mr-1.5" />
+                    Register First Agent
+                  </Button>
+                  {!hasDemoAgent && (
+                    <Button
+                      onClick={handleCreateDemoAgent}
+                      disabled={creatingDemo}
+                      variant="outline"
+                      data-testid="create-demo-agent-btn"
+                      className="border-white/[0.08] bg-transparent text-white hover:bg-white/5 h-9 px-4 text-[13px]"
+                    >
+                      {creatingDemo ? (
+                        <>
+                          <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+                          Creating...
+                        </>
+                      ) : (
+                        <>
+                          <FlaskConical className="w-3.5 h-3.5 mr-1.5" />
+                          Try with Demo Agent
+                        </>
+                      )}
+                    </Button>
+                  )}
+                </div>
               </div>
             ) : (
-              <div className="card-surface overflow-hidden">
+              <>
+                {/* Demo Agent Banner */}
+                {agents.some(a => a.name === "Sample Support Bot") && (
+                  <div 
+                    className="mb-4 p-3 bg-[#01696F]/10 border border-[#01696F]/20 rounded-md flex items-start gap-2"
+                    data-testid="demo-agent-banner"
+                  >
+                    <Sparkles className="w-4 h-4 text-[#01696F] flex-shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-[13px] text-[#01696F] font-medium">Demo Data</p>
+                      <p className="text-[12px] text-[#6B7280]">
+                        "Sample Support Bot" is a demo agent with sample outcomes. Feel free to explore and then register your own agents!
+                      </p>
+                    </div>
+                  </div>
+                )}
+                <div className="card-surface overflow-hidden">
                 <table className="data-table" data-testid="agents-table">
                   <thead>
                     <tr>
@@ -776,6 +843,7 @@ export default function DashboardPage() {
                   </tbody>
                 </table>
               </div>
+              </>
             )}
           </section>
 

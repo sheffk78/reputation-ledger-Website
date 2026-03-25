@@ -99,6 +99,19 @@ Build a Phase 1 MVP of Agent Reputation Ledger (RepLedger) - a track record API 
 - ✅ "Page X of Y" indicator
 - ✅ Total outcomes count in header
 - ✅ Loading state while fetching pages
+
+### Phase 1.4 - Demo Agent for Onboarding (December 2025)
+#### Backend
+- ✅ POST /v1/agents/demo creates demo agent with 15 sample outcomes
+- ✅ Idempotent - returns existing demo agent on repeated calls
+- ✅ Sample outcomes with realistic distribution (73% success rate → Silver tier)
+- ✅ Varied task types: ticket-resolution, faq-response, sentiment-analysis, etc.
+
+#### Frontend
+- ✅ "Try with Demo Agent" button in empty state
+- ✅ Button hidden after demo agent created
+- ✅ Demo Data banner explains this is sample data
+- ✅ Demo agent shows in agents table with score/tier
 - ✅ Webhook delivery on outcome.created events
 - ✅ Webhook delivery logging
 
