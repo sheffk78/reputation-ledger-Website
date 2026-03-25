@@ -152,6 +152,25 @@ class PaginatedOutcomesResponse(BaseModel):
     limit: int
     total: int
 
+# Flag models
+class FlagCreate(BaseModel):
+    outcome_id: Optional[str] = None
+    reason: str = Field(..., min_length=1, max_length=100)
+    notes: Optional[str] = Field(default=None, max_length=1000)
+
+class FlagResponse(BaseModel):
+    id: str
+    agent_id: str
+    outcome_id: Optional[str] = None
+    reason: str
+    notes: Optional[str] = None
+    created_by_user_id: str
+    created_at: str
+
+class FlagListResponse(BaseModel):
+    flags: List[FlagResponse]
+    total: int
+
 # Password Reset models
 class PasswordResetRequest(BaseModel):
     email: EmailStr
@@ -195,6 +214,8 @@ class ErrorCodes:
     WEBHOOK_NOT_FOUND = "WEBHOOK_NOT_FOUND"
     USER_NOT_FOUND = "USER_NOT_FOUND"
     RESOURCE_NOT_FOUND = "RESOURCE_NOT_FOUND"
+    FLAG_NOT_FOUND = "FLAG_NOT_FOUND"
+    OUTCOME_NOT_FOUND = "OUTCOME_NOT_FOUND"
     
     # Business logic errors
     WEBHOOK_LIMIT_REACHED = "WEBHOOK_LIMIT_REACHED"
@@ -997,6 +1018,105 @@ async def get_agent_score(agent_id: str, user: dict = Depends(get_user_from_api_
         tier=tier,
         outcome_count=len(outcomes),
         success_rate=success_rate
+    )
+
+# ============== FLAG ROUTES ==============
+
+@v1_router.post("/agents/{agent_id}/flags", response_model=FlagResponse, status_code=201)
+async def create_flag(agent_id: str, data: FlagCreate, user: dict = Depends(get_user_from_api_key)):
+    """Create a flag for an agent or specific outcome"""
+    # Verify agent belongs to user
+    agent = await db.agents.find_one(
+        {"agent_id": agent_id, "user_id": user["id"]}, 
+        {"_id": 0}
+    )
+    if not agent:
+        exists = await db.agents.find_one({"agent_id": agent_id}, {"_id": 0})
+        if exists:
+            raise APIError(
+                code=ErrorCodes.AGENT_NOT_FOUND,
+                message="This agent does not belong to your account.",
+                status_code=404,
+                details={"agent_id": agent_id}
+            )
+        raise APIError(
+            code=ErrorCodes.AGENT_NOT_FOUND,
+            message=f"Agent '{agent_id}' not found.",
+            status_code=404,
+            details={"agent_id": agent_id}
+        )
+    
+    # If outcome_id provided, verify it exists and belongs to this agent
+    if data.outcome_id:
+        outcome = await db.outcomes.find_one(
+            {"id": data.outcome_id, "agent_id": agent_id},
+            {"_id": 0}
+        )
+        if not outcome:
+            raise APIError(
+                code=ErrorCodes.OUTCOME_NOT_FOUND,
+                message="Outcome not found or does not belong to this agent.",
+                status_code=404,
+                details={"outcome_id": data.outcome_id, "agent_id": agent_id}
+            )
+    
+    flag_id = str(uuid.uuid4())
+    now = datetime.now(timezone.utc).isoformat()
+    
+    flag_doc = {
+        "id": flag_id,
+        "agent_id": agent_id,
+        "outcome_id": data.outcome_id,
+        "reason": data.reason,
+        "notes": data.notes,
+        "created_by_user_id": user["id"],
+        "created_at": now
+    }
+    
+    await db.flags.insert_one(flag_doc)
+    
+    return FlagResponse(
+        id=flag_id,
+        agent_id=agent_id,
+        outcome_id=data.outcome_id,
+        reason=data.reason,
+        notes=data.notes,
+        created_by_user_id=user["id"],
+        created_at=now
+    )
+
+@v1_router.get("/agents/{agent_id}/flags", response_model=FlagListResponse)
+async def list_flags(agent_id: str, user: dict = Depends(get_user_from_api_key)):
+    """List all flags for an agent"""
+    # Verify agent belongs to user
+    agent = await db.agents.find_one(
+        {"agent_id": agent_id, "user_id": user["id"]}, 
+        {"_id": 0}
+    )
+    if not agent:
+        exists = await db.agents.find_one({"agent_id": agent_id}, {"_id": 0})
+        if exists:
+            raise APIError(
+                code=ErrorCodes.AGENT_NOT_FOUND,
+                message="This agent does not belong to your account.",
+                status_code=404,
+                details={"agent_id": agent_id}
+            )
+        raise APIError(
+            code=ErrorCodes.AGENT_NOT_FOUND,
+            message=f"Agent '{agent_id}' not found.",
+            status_code=404,
+            details={"agent_id": agent_id}
+        )
+    
+    flags = await db.flags.find(
+        {"agent_id": agent_id},
+        {"_id": 0}
+    ).sort("created_at", -1).to_list(1000)
+    
+    return FlagListResponse(
+        flags=[FlagResponse(**f) for f in flags],
+        total=len(flags)
     )
 
 def generate_badge_svg(tier: str, score: float) -> str:

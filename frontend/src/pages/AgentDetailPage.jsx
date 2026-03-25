@@ -1,10 +1,20 @@
 import React, { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { agentsAPI, outcomesAPI } from "../lib/api";
-import { formatDateTime, getTierColorClass, getResultColorClass, copyToClipboard } from "../lib/utils";
+import { agentsAPI, outcomesAPI, flagsAPI } from "../lib/api";
+import { formatDateTime, getTierColorClass, getResultColorClass, copyToClipboard, parseApiError } from "../lib/utils";
 import { Button } from "../components/ui/button";
-import { ArrowLeft, RefreshCw, LogOut, Copy, Check, ExternalLink, ChevronLeft, ChevronRight } from "lucide-react";
+import { Input } from "../components/ui/input";
+import { Label } from "../components/ui/label";
+import { Textarea } from "../components/ui/textarea";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "../components/ui/dialog";
+import { ArrowLeft, RefreshCw, LogOut, Copy, Check, ExternalLink, ChevronLeft, ChevronRight, Flag, AlertTriangle, X, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 const LOGO_URL = "https://customer-assets.emergentagent.com/job_ac636d4a-6ca2-497e-8615-5b0c10a94a77/artifacts/vcawrcg8_repledger-logo-dark.svg";
@@ -33,6 +43,7 @@ export default function AgentDetailPage() {
   
   const [agent, setAgent] = useState(null);
   const [outcomes, setOutcomes] = useState([]);
+  const [flags, setFlags] = useState([]);
   const [loading, setLoading] = useState(true);
   const [copiedField, setCopiedField] = useState(null);
   
@@ -40,6 +51,13 @@ export default function AgentDetailPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalOutcomes, setTotalOutcomes] = useState(0);
   const [outcomesLoading, setOutcomesLoading] = useState(false);
+  
+  // Flags state
+  const [showFlagsDialog, setShowFlagsDialog] = useState(false);
+  const [showCreateFlagDialog, setShowCreateFlagDialog] = useState(false);
+  const [flaggingOutcome, setFlaggingOutcome] = useState(null);
+  const [creatingFlag, setCreatingFlag] = useState(false);
+  const [flagForm, setFlagForm] = useState({ reason: "", notes: "" });
 
   const badgeUrl = `${BACKEND_URL}/api/v1/agents/${agentId}/badge.svg`;
   const embedSnippet = `<img src="${badgeUrl}" alt="RepLedger score badge" />`;
@@ -58,13 +76,15 @@ export default function AgentDetailPage() {
 
   const loadData = async () => {
     try {
-      const [agentData, outcomesData] = await Promise.all([
+      const [agentData, outcomesData, flagsData] = await Promise.all([
         agentsAPI.get(agentId),
         outcomesAPI.list(agentId, 1, PAGE_SIZE),
+        flagsAPI.list(agentId),
       ]);
       setAgent(agentData);
       setOutcomes(outcomesData.data || []);
       setTotalOutcomes(outcomesData.total || 0);
+      setFlags(flagsData.flags || []);
       setCurrentPage(1);
     } catch (error) {
       console.error("Failed to load agent:", error);
@@ -89,6 +109,15 @@ export default function AgentDetailPage() {
     }
   };
 
+  const loadFlags = async () => {
+    try {
+      const flagsData = await flagsAPI.list(agentId);
+      setFlags(flagsData.flags || []);
+    } catch (error) {
+      console.error("Failed to load flags:", error);
+    }
+  };
+
   const handlePreviousPage = () => {
     if (currentPage > 1) {
       setCurrentPage(currentPage - 1);
@@ -103,6 +132,39 @@ export default function AgentDetailPage() {
 
   const handleRefresh = () => {
     loadOutcomes(currentPage);
+  };
+
+  const openFlagDialog = (outcomeId = null) => {
+    setFlaggingOutcome(outcomeId);
+    setFlagForm({ reason: "", notes: "" });
+    setShowCreateFlagDialog(true);
+  };
+
+  const handleCreateFlag = async (e) => {
+    e.preventDefault();
+    if (!flagForm.reason.trim()) {
+      toast.error("Reason is required");
+      return;
+    }
+    
+    setCreatingFlag(true);
+    try {
+      await flagsAPI.create(agentId, {
+        outcome_id: flaggingOutcome || null,
+        reason: flagForm.reason.trim(),
+        notes: flagForm.notes.trim() || null,
+      });
+      toast.success("Flag created");
+      setShowCreateFlagDialog(false);
+      setFlagForm({ reason: "", notes: "" });
+      setFlaggingOutcome(null);
+      await loadFlags();
+    } catch (error) {
+      const parsed = parseApiError(error);
+      toast.error(parsed.message);
+    } finally {
+      setCreatingFlag(false);
+    }
   };
 
   const handleCopy = async (text, field) => {
@@ -304,6 +366,49 @@ export default function AgentDetailPage() {
             </div>
           </div>
 
+          {/* Flags Card */}
+          <div className="card-surface p-5">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-sm bg-[#F59E0B]/15 flex items-center justify-center">
+                  <Flag className="w-4 h-4 text-[#F59E0B]" />
+                </div>
+                <div>
+                  <h2 className="text-[14px] font-semibold text-white">Flags</h2>
+                  <p className="text-[12px] text-[#6B7280]">
+                    {flags.length === 0 
+                      ? "No flags reported" 
+                      : `${flags.length} flag${flags.length === 1 ? '' : 's'} reported`
+                    }
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                {flags.length > 0 && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowFlagsDialog(true)}
+                    data-testid="view-flags-btn"
+                    className="border-white/[0.08] bg-transparent text-white hover:bg-white/5 h-8 px-3 text-[12px]"
+                  >
+                    View flags
+                  </Button>
+                )}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => openFlagDialog(null)}
+                  data-testid="add-flag-btn"
+                  className="border-[#F59E0B]/30 bg-transparent text-[#F59E0B] hover:bg-[#F59E0B]/10 h-8 px-3 text-[12px]"
+                >
+                  <Flag className="w-3 h-3 mr-1.5" />
+                  Add Flag
+                </Button>
+              </div>
+            </div>
+          </div>
+
           {/* Outcomes table */}
           <section>
             <div className="flex items-center justify-between mb-4">
@@ -336,13 +441,14 @@ export default function AgentDetailPage() {
             ) : (
               <div className="card-surface overflow-hidden">
                 <div className={`overflow-x-auto ${outcomesLoading ? 'opacity-50 pointer-events-none' : ''}`}>
-                  <table className="data-table min-w-[400px]" data-testid="outcomes-table">
+                  <table className="data-table min-w-[450px]" data-testid="outcomes-table">
                     <thead>
                       <tr>
                         <th>Timestamp</th>
                         <th>Task Type</th>
                         <th>Result</th>
                         <th className="hidden sm:table-cell">Submitter</th>
+                        <th className="w-[60px]"></th>
                       </tr>
                     </thead>
                     <tbody>
@@ -365,6 +471,16 @@ export default function AgentDetailPage() {
                             <span className="text-[#9CA3AF] text-[13px] capitalize">
                               {outcome.submitter_type}
                             </span>
+                          </td>
+                          <td>
+                            <button
+                              onClick={() => openFlagDialog(outcome.id)}
+                              className="p-1.5 rounded-sm text-[#6B7280] hover:text-[#F59E0B] hover:bg-[#F59E0B]/10 transition-colors"
+                              title="Flag this outcome"
+                              data-testid={`flag-outcome-${outcome.id}`}
+                            >
+                              <Flag className="w-3.5 h-3.5" />
+                            </button>
                           </td>
                         </tr>
                       ))}
@@ -409,6 +525,154 @@ export default function AgentDetailPage() {
           </section>
         </div>
       </main>
+
+      {/* View Flags Dialog */}
+      <Dialog open={showFlagsDialog} onOpenChange={setShowFlagsDialog}>
+        <DialogContent className="bg-[#0C1116] border-white/[0.08] text-white max-w-lg max-h-[80vh] overflow-hidden flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="text-white text-[16px] flex items-center gap-2">
+              <Flag className="w-4 h-4 text-[#F59E0B]" />
+              Flags ({flags.length})
+            </DialogTitle>
+            <DialogDescription className="text-[#9CA3AF] text-[13px]">
+              Flags reported for this agent
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="flex-1 overflow-y-auto mt-4 -mx-6 px-6">
+            {flags.length === 0 ? (
+              <div className="text-center py-8">
+                <p className="text-[#6B7280] text-[13px]">No flags reported</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {flags.map((flag) => (
+                  <div 
+                    key={flag.id} 
+                    className="p-3 bg-[#1F2933]/50 rounded-sm border border-white/[0.04]"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <AlertTriangle className="w-3.5 h-3.5 text-[#F59E0B] flex-shrink-0" />
+                          <span className="text-[13px] font-medium text-white">
+                            {flag.reason}
+                          </span>
+                        </div>
+                        {flag.notes && (
+                          <p className="text-[12px] text-[#9CA3AF] mt-1 ml-5">
+                            {flag.notes}
+                          </p>
+                        )}
+                        <div className="flex items-center gap-3 mt-2 ml-5 text-[11px] text-[#6B7280]">
+                          <span>{formatDateTime(flag.created_at)}</span>
+                          {flag.outcome_id && (
+                            <span className="px-1.5 py-0.5 bg-[#01696F]/20 text-[#01696F] rounded text-[10px] font-mono">
+                              Outcome: {flag.outcome_id.substring(0, 8)}...
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Create Flag Dialog */}
+      <Dialog open={showCreateFlagDialog} onOpenChange={setShowCreateFlagDialog}>
+        <DialogContent className="bg-[#0C1116] border-white/[0.08] text-white max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-white text-[16px] flex items-center gap-2">
+              <Flag className="w-4 h-4 text-[#F59E0B]" />
+              Create Flag
+            </DialogTitle>
+            <DialogDescription className="text-[#9CA3AF] text-[13px]">
+              {flaggingOutcome 
+                ? "Flag this specific outcome for review." 
+                : "Flag this agent for general review."
+              }
+            </DialogDescription>
+          </DialogHeader>
+          
+          <form onSubmit={handleCreateFlag} className="space-y-4 mt-4">
+            {flaggingOutcome && (
+              <div className="p-2 bg-[#1F2933]/50 rounded-sm">
+                <span className="text-[11px] text-[#6B7280]">Flagging outcome:</span>
+                <code className="ml-2 text-[11px] text-[#01696F] font-mono">
+                  {flaggingOutcome.substring(0, 16)}...
+                </code>
+              </div>
+            )}
+            
+            <div className="space-y-1">
+              <Label htmlFor="flag-reason" className="form-label">
+                Reason <span className="text-red-400">*</span>
+              </Label>
+              <Input
+                id="flag-reason"
+                value={flagForm.reason}
+                onChange={(e) => setFlagForm({ ...flagForm, reason: e.target.value })}
+                placeholder="e.g., unsafe output, policy violation"
+                maxLength={100}
+                data-testid="flag-reason-input"
+                className="form-input"
+              />
+              <p className="text-[10px] text-[#6B7280]">
+                Brief description of the issue (max 100 chars)
+              </p>
+            </div>
+            
+            <div className="space-y-1">
+              <Label htmlFor="flag-notes" className="form-label">
+                Notes (optional)
+              </Label>
+              <Textarea
+                id="flag-notes"
+                value={flagForm.notes}
+                onChange={(e) => setFlagForm({ ...flagForm, notes: e.target.value })}
+                placeholder="Additional details about the issue..."
+                maxLength={1000}
+                rows={3}
+                data-testid="flag-notes-input"
+                className="form-input min-h-[80px] resize-none"
+              />
+            </div>
+            
+            <div className="flex justify-end gap-3 pt-2">
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => setShowCreateFlagDialog(false)}
+                className="text-[#9CA3AF] hover:text-white hover:bg-white/5 text-[13px]"
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                disabled={creatingFlag || !flagForm.reason.trim()}
+                data-testid="submit-flag-btn"
+                className="bg-[#F59E0B] hover:bg-[#D97706] text-black text-[13px]"
+              >
+                {creatingFlag ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+                    Creating...
+                  </>
+                ) : (
+                  <>
+                    <Flag className="w-3.5 h-3.5 mr-1.5" />
+                    Create Flag
+                  </>
+                )}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

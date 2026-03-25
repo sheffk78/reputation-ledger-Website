@@ -146,6 +146,19 @@ export const webhooksAPI = {
   },
 };
 
+// Flags API (v1)
+export const flagsAPI = {
+  list: async (agentId) => {
+    const response = await apiClientV1.get(`/agents/${agentId}/flags`);
+    return response.data;
+  },
+
+  create: async (agentId, data) => {
+    const response = await apiClientV1.post(`/agents/${agentId}/flags`, data);
+    return response.data;
+  },
+};
+
 // Password Reset API
 export const passwordResetAPI = {
   request: async (email) => {
