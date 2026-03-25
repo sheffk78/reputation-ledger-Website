@@ -14,7 +14,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "../components/ui/dialog";
-import { ArrowLeft, RefreshCw, LogOut, Copy, Check, ExternalLink, ChevronLeft, ChevronRight, Flag, AlertTriangle, X, Loader2 } from "lucide-react";
+import { ArrowLeft, RefreshCw, LogOut, Copy, Check, ExternalLink, ChevronLeft, ChevronRight, Flag, AlertTriangle, X, Loader2, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 const LOGO_URL = "https://customer-assets.emergentagent.com/job_ac636d4a-6ca2-497e-8615-5b0c10a94a77/artifacts/vcawrcg8_repledger-logo-dark.svg";
@@ -58,6 +58,11 @@ export default function AgentDetailPage() {
   const [showFlagsDialog, setShowFlagsDialog] = useState(false);
   const [showCreateFlagDialog, setShowCreateFlagDialog] = useState(false);
   const [flaggingOutcome, setFlaggingOutcome] = useState(null);
+  
+  // Delete state
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
+  const [deleting, setDeleting] = useState(false);
   const [creatingFlag, setCreatingFlag] = useState(false);
   const [flagForm, setFlagForm] = useState({ reason: "", notes: "" });
   
@@ -162,6 +167,25 @@ export default function AgentDetailPage() {
 
   const handleRefresh = () => {
     loadOutcomes(currentPage, resultFilter);
+  };
+
+  const handleDeleteAgent = async () => {
+    if (deleteConfirmText !== agent.name) {
+      toast.error("Please type the agent name to confirm");
+      return;
+    }
+
+    setDeleting(true);
+    try {
+      await agentsAPI.delete(agentId);
+      toast.success("Agent deleted successfully");
+      navigate("/dashboard");
+    } catch (error) {
+      const parsed = parseApiError(error);
+      toast.error(parsed.message || "Failed to delete agent");
+    } finally {
+      setDeleting(false);
+    }
   };
 
   const openFlagDialog = (outcomeId = null) => {
@@ -575,6 +599,33 @@ export default function AgentDetailPage() {
             </div>
           </div>
 
+          {/* Danger Zone */}
+          <div className="card-surface p-5 border border-red-500/20">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-sm bg-red-500/15 flex items-center justify-center">
+                  <Trash2 className="w-4 h-4 text-red-500" />
+                </div>
+                <div>
+                  <h2 className="text-[14px] font-semibold text-white">Danger Zone</h2>
+                  <p className="text-[12px] text-[#6B7280]">
+                    Permanently delete this agent and all its data
+                  </p>
+                </div>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowDeleteDialog(true)}
+                data-testid="delete-agent-btn"
+                className="border-red-500/30 bg-transparent text-red-500 hover:bg-red-500/10 h-8 px-3 text-[12px]"
+              >
+                <Trash2 className="w-3 h-3 mr-1.5" />
+                Delete Agent
+              </Button>
+            </div>
+          </div>
+
           {/* Outcomes table */}
           <section>
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
@@ -870,6 +921,74 @@ export default function AgentDetailPage() {
               </Button>
             </div>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <DialogContent className="bg-[#0C1116] border-white/[0.08] text-white max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-semibold flex items-center gap-2 text-red-500">
+              <Trash2 className="w-5 h-5" />
+              Delete Agent
+            </DialogTitle>
+            <DialogDescription className="text-[#9CA3AF]">
+              This action cannot be undone. This will permanently delete the agent <span className="text-white font-medium">{agent?.name}</span> and all associated data including:
+              <ul className="list-disc list-inside mt-2 space-y-1 text-[#6B7280]">
+                <li>All {totalOutcomes} outcomes</li>
+                <li>All {flags.length} flags</li>
+                <li>Score history and tier data</li>
+              </ul>
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 pt-4">
+            <div className="space-y-2">
+              <Label className="text-[13px] text-[#9CA3AF]">
+                Type <span className="text-white font-mono">{agent?.name}</span> to confirm:
+              </Label>
+              <Input
+                type="text"
+                value={deleteConfirmText}
+                onChange={(e) => setDeleteConfirmText(e.target.value)}
+                placeholder={agent?.name}
+                data-testid="delete-confirm-input"
+                className="form-input"
+              />
+            </div>
+            
+            <div className="flex justify-end gap-3">
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => {
+                  setShowDeleteDialog(false);
+                  setDeleteConfirmText("");
+                }}
+                className="text-[#9CA3AF] hover:text-white hover:bg-white/5 text-[13px]"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleDeleteAgent}
+                disabled={deleting || deleteConfirmText !== agent?.name}
+                data-testid="confirm-delete-btn"
+                className="bg-red-600 hover:bg-red-700 text-white text-[13px] disabled:opacity-50"
+              >
+                {deleting ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+                    Deleting...
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="w-3.5 h-3.5 mr-1.5" />
+                    Delete Agent
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </div>

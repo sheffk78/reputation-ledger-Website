@@ -9,6 +9,8 @@ import HomePage from "./pages/HomePage";
 import DevelopersPage from "./pages/DevelopersPage";
 import LoginPage from "./pages/LoginPage";
 import SignupPage from "./pages/SignupPage";
+import ForgotPasswordPage from "./pages/ForgotPasswordPage";
+import ResetPasswordPage from "./pages/ResetPasswordPage";
 import DashboardPage from "./pages/DashboardPage";
 import AgentDetailPage from "./pages/AgentDetailPage";
 import PublicAgentPage from "./pages/PublicAgentPage";
@@ -82,6 +84,8 @@ function AppRoutes() {
           </PublicRoute>
         }
       />
+      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+      <Route path="/reset-password" element={<ResetPasswordPage />} />
 
       {/* Protected routes */}
       <Route

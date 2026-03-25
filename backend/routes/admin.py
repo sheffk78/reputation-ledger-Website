@@ -14,6 +14,7 @@ from typing import List, Optional
 
 from core.database import db
 from core.dependencies import get_admin_user
+from core.exceptions import APIError, ErrorCodes
 from services.score_service import calculate_score_and_tier
 from models.audit import AuditLogEntry, AuditLogListResponse
 
@@ -476,6 +477,33 @@ async def get_admin_me(admin: dict = Depends(get_admin_user)):
         "email": admin["email"],
         "is_admin": True
     }
+
+
+@router.delete("/agents/{agent_id}", status_code=204)
+async def admin_delete_agent(
+    agent_id: str,
+    admin: dict = Depends(get_admin_user)
+):
+    """Delete any agent (admin only)"""
+    # Verify agent exists
+    agent = await db.agents.find_one({"agent_id": agent_id}, {"_id": 0})
+    
+    if not agent:
+        raise APIError(
+            code=ErrorCodes.AGENT_NOT_FOUND,
+            message=f"Agent '{agent_id}' not found.",
+            status_code=404,
+            details={"agent_id": agent_id}
+        )
+    
+    # Delete associated data
+    await db.outcomes.delete_many({"agent_id": agent_id})
+    await db.flags.delete_many({"agent_id": agent_id})
+    
+    # Delete the agent
+    await db.agents.delete_one({"agent_id": agent_id})
+    
+    return None
 
 
 @router.get("/audit-logs", response_model=AuditLogListResponse)

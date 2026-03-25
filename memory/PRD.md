@@ -262,8 +262,8 @@ db.users.updateOne({email: "admin@example.com"}, {$set: {is_admin: true}})
 ### P1 (High Priority - Phase 2)
 - ✅ Outcome filtering by result type (success/failure/partial/timeout)
 - ✅ Email notification preferences (toggle on/off in settings)
-- ⬜ Password reset UI page (backend complete, need frontend page)
-- ⬜ Agent deletion
+- ✅ Password reset UI (forgot password + reset password pages)
+- ✅ Agent deletion (user can delete own agents with confirmation)
 
 ### P2 (Medium Priority)
 - ⬜ AAV (Agent Authority Vault) integration
@@ -315,9 +315,15 @@ db.users.updateOne({email: "admin@example.com"}, {$set: {is_admin: true}})
 - `/developers` - API documentation (public)
 - `/login` - Sign in (public)
 - `/signup` - Create account (public)
+- `/forgot-password` - Request password reset (public)
+- `/reset-password` - Set new password with token (public)
 - `/dashboard` - Main dashboard (protected)
 - `/agents/:agentId` - Agent detail (protected)
+- `/settings` - User settings (protected)
 - `/a/:agentId` - Public agent profile (public, read-only)
+- `/admin` - Admin dashboard (admin only)
+- `/admin/users/:userId` - Admin user detail (admin only)
+- `/admin/agents/:agentId` - Admin agent detail (admin only)
 
 ## API Endpoints
 | Endpoint | Method | Auth | Description |
@@ -326,6 +332,7 @@ db.users.updateOne({email: "admin@example.com"}, {$set: {is_admin: true}})
 | /api/v1/agents | GET | API Key | List agents |
 | /api/v1/agents/demo | POST | API Key | Create demo agent |
 | /api/v1/agents/{id} | GET | API Key | Get agent |
+| /api/v1/agents/{id} | DELETE | API Key | Delete agent |
 | /api/v1/agents/{id}/public | PATCH | API Key | Toggle public visibility |
 | /api/v1/agents/{id}/outcomes | POST | API Key | Submit outcome |
 | /api/v1/agents/{id}/outcomes | GET | API Key | List outcomes (paginated) |
@@ -354,6 +361,7 @@ db.users.updateOne({email: "admin@example.com"}, {$set: {is_admin: true}})
 | /api/admin/users/{id} | GET | Admin | Get user details |
 | /api/admin/agents | GET | Admin | List all agents |
 | /api/admin/agents/{id} | GET | Admin | Get agent details |
+| /api/admin/agents/{id} | DELETE | Admin | Delete any agent |
 | /api/admin/api-keys | GET | Admin | List all API keys |
 | /api/admin/audit-logs | GET | Admin | List audit logs (paginated) |
 

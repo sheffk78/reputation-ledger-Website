@@ -248,6 +248,44 @@ async def get_agent(agent_id: str, user: dict = Depends(get_user_from_api_key)):
     )
 
 
+@router.delete("/{agent_id}", status_code=204)
+async def delete_agent(
+    agent_id: str,
+    user: dict = Depends(get_user_from_api_key)
+):
+    """Delete an agent and all its associated data (outcomes, flags)"""
+    # Verify agent exists and belongs to user
+    agent = await db.agents.find_one(
+        {"agent_id": agent_id, "user_id": user["id"]},
+        {"_id": 0}
+    )
+    
+    if not agent:
+        exists = await db.agents.find_one({"agent_id": agent_id}, {"_id": 0})
+        if exists:
+            raise APIError(
+                code=ErrorCodes.AGENT_NOT_FOUND,
+                message="This agent does not belong to your account.",
+                status_code=404,
+                details={"agent_id": agent_id}
+            )
+        raise APIError(
+            code=ErrorCodes.AGENT_NOT_FOUND,
+            message=f"Agent '{agent_id}' not found.",
+            status_code=404,
+            details={"agent_id": agent_id}
+        )
+    
+    # Delete associated data
+    await db.outcomes.delete_many({"agent_id": agent_id})
+    await db.flags.delete_many({"agent_id": agent_id})
+    
+    # Delete the agent
+    await db.agents.delete_one({"agent_id": agent_id})
+    
+    return None
+
+
 @router.patch("/{agent_id}/public", response_model=AgentListResponse)
 async def toggle_agent_public(
     agent_id: str, 

@@ -133,7 +133,7 @@ async def request_password_reset(data: PasswordResetRequest, background_tasks: B
     })
     
     # Send reset email
-    reset_url = f"https://repledger.agentictrust.app/reset-password?token={reset_token}"
+    reset_url = f"https://rep-ledger-mvp.preview.emergentagent.com/reset-password?token={reset_token}"
     background_tasks.add_task(send_password_reset_email, data.email.lower(), reset_token, reset_url)
     
     return {"message": "If an account exists with this email, a reset link has been sent."}

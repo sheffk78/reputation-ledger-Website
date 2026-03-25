@@ -65,6 +65,19 @@ export const authAPI = {
     const response = await apiClient.get("/auth/me");
     return response.data;
   },
+
+  requestPasswordReset: async (email) => {
+    const response = await apiClient.post("/auth/password-reset/request", { email });
+    return response.data;
+  },
+
+  confirmPasswordReset: async (token, newPassword) => {
+    const response = await apiClient.post("/auth/password-reset/confirm", { 
+      token, 
+      new_password: newPassword 
+    });
+    return response.data;
+  },
 };
 
 // API Key API
@@ -131,6 +144,10 @@ export const agentsAPI = {
   togglePublic: async (agentId, isPublic) => {
     const response = await apiClientV1.patch(`/agents/${agentId}/public`, { is_public: isPublic });
     return response.data;
+  },
+
+  delete: async (agentId) => {
+    await apiClientV1.delete(`/agents/${agentId}`);
   },
 
   getPublicProfile: async (agentId) => {
@@ -236,6 +253,10 @@ export const adminAPI = {
   getAgent: async (agentId) => {
     const response = await apiClient.get(`/admin/agents/${agentId}`);
     return response.data;
+  },
+
+  deleteAgent: async (agentId) => {
+    await apiClient.delete(`/admin/agents/${agentId}`);
   },
 
   getApiKeys: async (limit = 50, skip = 0, status = null) => {
