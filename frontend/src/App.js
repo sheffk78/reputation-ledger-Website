@@ -5,6 +5,8 @@ import { Toaster } from "sonner";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 
 // Pages
+import HomePage from "./pages/HomePage";
+import DevelopersPage from "./pages/DevelopersPage";
 import LoginPage from "./pages/LoginPage";
 import SignupPage from "./pages/SignupPage";
 import DashboardPage from "./pages/DashboardPage";
@@ -51,6 +53,10 @@ function PublicRoute({ children }) {
 function AppRoutes() {
   return (
     <Routes>
+      {/* Public marketing pages */}
+      <Route path="/" element={<HomePage />} />
+      <Route path="/developers" element={<DevelopersPage />} />
+
       {/* Auth routes */}
       <Route
         path="/login"
@@ -87,9 +93,8 @@ function AppRoutes() {
         }
       />
 
-      {/* Default redirect */}
-      <Route path="/" element={<Navigate to="/dashboard" replace />} />
-      <Route path="*" element={<Navigate to="/dashboard" replace />} />
+      {/* Catch all */}
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
 }
@@ -106,7 +111,7 @@ function App() {
             toastOptions={{
               style: {
                 background: "#0C1116",
-                border: "1px solid rgba(255, 255, 255, 0.1)",
+                border: "1px solid rgba(255, 255, 255, 0.08)",
                 color: "#F9FAFB",
               },
             }}

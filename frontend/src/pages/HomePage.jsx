@@ -1,47 +1,43 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { Button } from "../components/ui/button";
-import { 
-  Bot, 
-  FileText, 
-  Shield, 
-  ArrowRight, 
-  CheckCircle2, 
-  Building2, 
-  Code2,
-  Layers
-} from "lucide-react";
+import { ArrowRight, CheckCircle2, Shield, FileText, Users, Building2 } from "lucide-react";
 
 const LOGO_URL = "https://customer-assets.emergentagent.com/job_ac636d4a-6ca2-497e-8615-5b0c10a94a77/artifacts/vcawrcg8_repledger-logo-dark.svg";
-const HERO_IMAGE = "https://images.unsplash.com/photo-1667264501379-c1537934c7ab?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200";
+
+// Mock outcomes for the hero illustration
+const mockOutcomes = [
+  { task: "research_query", result: "success", time: "2m ago" },
+  { task: "data_extraction", result: "success", time: "5m ago" },
+  { task: "summarization", result: "failure", time: "12m ago" },
+  { task: "code_review", result: "success", time: "18m ago" },
+];
 
 export default function HomePage() {
   return (
     <div className="min-h-screen bg-[#050709]">
       {/* Navigation */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-[#050709]/80 backdrop-blur-xl border-b border-white/5">
-        <div className="container-main flex items-center justify-between h-16">
-          <Link to="/" className="flex items-center">
-            <img src={LOGO_URL} alt="RepLedger" className="h-7" />
-          </Link>
+      <header className="h-14 border-b border-white/[0.06] bg-[#050709]/90 backdrop-blur-sm fixed top-0 left-0 right-0 z-50">
+        <div className="container-app flex items-center justify-between h-full">
+          <img src={LOGO_URL} alt="RepLedger" className="h-6" />
           
           <nav className="hidden md:flex items-center gap-8">
-            <Link to="/docs" className="text-sm text-[#9CA3AF] hover:text-white transition-colors">
-              Docs
-            </Link>
-            <a href="#how-it-works" className="text-sm text-[#9CA3AF] hover:text-white transition-colors">
+            <a href="#how-it-works" className="text-[13px] text-[#9CA3AF] hover:text-white transition-colors">
               How it works
             </a>
-            <a href="#use-cases" className="text-sm text-[#9CA3AF] hover:text-white transition-colors">
-              Use cases
+            <a href="#who-its-for" className="text-[13px] text-[#9CA3AF] hover:text-white transition-colors">
+              Who it's for
             </a>
+            <Link to="/developers" className="text-[13px] text-[#9CA3AF] hover:text-white transition-colors">
+              Developers
+            </Link>
           </nav>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
             <Link to="/login">
               <Button 
                 variant="ghost" 
-                className="text-[#9CA3AF] hover:text-white hover:bg-white/5"
+                className="text-[13px] text-[#9CA3AF] hover:text-white hover:bg-white/5 h-9"
                 data-testid="nav-login-btn"
               >
                 Sign in
@@ -49,7 +45,7 @@ export default function HomePage() {
             </Link>
             <Link to="/signup">
               <Button 
-                className="bg-[#01696F] hover:bg-[#028C94] text-white"
+                className="bg-[#01696F] hover:bg-[#028C94] text-white h-9 px-4 text-[13px]"
                 data-testid="nav-signup-btn"
               >
                 Start free
@@ -60,96 +56,86 @@ export default function HomePage() {
       </header>
 
       {/* Hero Section */}
-      <section className="pt-32 pb-24 hero-gradient">
-        <div className="container-main">
+      <section className="pt-32 pb-24 relative overflow-hidden">
+        {/* Subtle gradient background */}
+        <div className="absolute inset-0 bg-gradient-to-b from-[#01696F]/5 via-transparent to-transparent pointer-events-none" />
+        
+        <div className="container-app relative">
           <div className="grid lg:grid-cols-2 gap-16 items-center">
+            {/* Left: Copy */}
             <div>
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#01696F]/20 border border-[#01696F]/30 text-[#0BA9B5] text-sm mb-6">
-                <Shield className="w-4 h-4" />
-                Agent Trust Infrastructure
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-sm bg-[#01696F]/10 border border-[#01696F]/20 text-[11px] font-medium text-[#01696F] uppercase tracking-wider mb-6">
+                <Shield className="w-3.5 h-3.5" />
+                AgenticTrust Stack
               </div>
               
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tighter text-white leading-tight mb-6">
+              <h1 className="text-[40px] lg:text-[48px] font-bold text-white leading-[1.1] tracking-tight mb-6">
                 Every agent earns its record.
               </h1>
               
-              <p className="text-lg text-[#9CA3AF] leading-relaxed mb-8 max-w-lg">
-                RepLedger is the track record API for autonomous agents. Build verifiable reputation through outcomes, not claims.
+              <p className="text-[16px] text-[#9CA3AF] leading-relaxed mb-8 max-w-lg">
+                RepLedger is the track record API for autonomous agents.
+                Log your agent's outcomes, get a portable reputation score and trust tier,
+                and show a verifiable badge anywhere you publish your agent.
               </p>
 
-              <div className="flex flex-wrap gap-4">
+              <div className="flex flex-wrap items-center gap-4">
                 <Link to="/signup">
                   <Button 
                     size="lg"
-                    className="bg-[#01696F] hover:bg-[#028C94] text-white h-12 px-8"
+                    className="bg-[#01696F] hover:bg-[#028C94] text-white h-11 px-6 text-[14px]"
                     data-testid="hero-cta-btn"
                   >
-                    Get API Key
+                    Start free
                     <ArrowRight className="w-4 h-4 ml-2" />
                   </Button>
                 </Link>
-                <Link to="/docs">
-                  <Button 
-                    variant="outline" 
-                    size="lg"
-                    className="border-white/10 text-white hover:bg-white/5 h-12 px-8"
-                  >
-                    View Docs
-                  </Button>
+                <Link 
+                  to="/developers" 
+                  className="text-[14px] text-[#01696F] hover:text-[#028C94] font-medium transition-colors"
+                >
+                  View API quickstart →
                 </Link>
               </div>
-
-              <div className="flex items-center gap-6 mt-10 pt-10 border-t border-white/10">
-                <div>
-                  <div className="text-2xl font-bold text-white">API-first</div>
-                  <div className="text-sm text-[#6B7280]">Built for agents</div>
-                </div>
-                <div className="w-px h-10 bg-white/10" />
-                <div>
-                  <div className="text-2xl font-bold text-white">Evidence-backed</div>
-                  <div className="text-sm text-[#6B7280]">Real outcomes</div>
-                </div>
-                <div className="w-px h-10 bg-white/10" />
-                <div>
-                  <div className="text-2xl font-bold text-white">Portable</div>
-                  <div className="text-sm text-[#6B7280]">Works anywhere</div>
-                </div>
-              </div>
             </div>
 
-            <div className="relative hidden lg:block">
-              <div className="absolute inset-0 bg-gradient-to-r from-[#050709] via-transparent to-transparent z-10" />
-              <img 
-                src={HERO_IMAGE} 
-                alt="Agent Infrastructure" 
-                className="rounded-sm opacity-60"
-              />
-              <div className="absolute bottom-8 left-8 right-8 glass-card p-6 z-20 rounded-sm">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-sm bg-[#FFD700]/20 flex items-center justify-center">
-                      <Bot className="w-5 h-5 text-[#FFD700]" />
-                    </div>
-                    <div>
-                      <div className="text-white font-medium">research-agent-v2</div>
-                      <code className="text-xs text-[#6B7280]">agt_7f3k9m2x</code>
-                    </div>
+            {/* Right: Mock UI Card */}
+            <div className="hidden lg:block">
+              <div className="bg-[#0C1116] border border-white/[0.08] rounded-sm p-6 shadow-2xl">
+                {/* Agent header */}
+                <div className="flex items-center justify-between mb-6">
+                  <div>
+                    <div className="text-[15px] font-semibold text-white mb-1">research-agent-v2</div>
+                    <code className="text-[11px] text-[#6B7280] font-mono">agt_7f3k9m2x4p1q</code>
                   </div>
                   <div className="text-right">
-                    <div className="text-2xl font-mono font-bold text-white">87</div>
-                    <div className="text-xs text-[#6B7280]">RepLedger Score</div>
+                    <div className="text-[32px] font-mono font-bold text-white">82</div>
+                    <div className="text-[10px] text-[#6B7280] uppercase tracking-wider">Score</div>
                   </div>
                 </div>
-                <div className="flex gap-2">
-                  <span className="px-2 py-1 bg-[#FFD700] text-[#111827] text-xs font-semibold rounded-sm">
-                    GOLD
-                  </span>
-                  <span className="px-2 py-1 bg-white/10 text-white text-xs rounded-sm">
-                    342 outcomes
-                  </span>
-                  <span className="px-2 py-1 bg-white/10 text-white text-xs rounded-sm">
-                    94% success
-                  </span>
+
+                {/* Tier badge */}
+                <div className="flex items-center gap-3 mb-6">
+                  <span className="tier-badge tier-gold">Gold</span>
+                  <span className="text-[12px] text-[#6B7280]">137 outcomes · 86% success</span>
+                </div>
+
+                {/* Mini outcomes table */}
+                <div className="border-t border-white/[0.06] pt-4">
+                  <div className="text-[11px] text-[#6B7280] uppercase tracking-wider mb-3">Recent Outcomes</div>
+                  <div className="space-y-2">
+                    {mockOutcomes.map((o, i) => (
+                      <div key={i} className="flex items-center justify-between text-[12px]">
+                        <span className="text-[#9CA3AF] font-mono">{o.task}</span>
+                        <div className="flex items-center gap-3">
+                          <span className={o.result === "success" ? "text-[#22C55E]" : "text-[#EF4444]"}>
+                            {o.result}
+                          </span>
+                          <span className="text-[#4B5563]">{o.time}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>
@@ -157,184 +143,190 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* How it works */}
-      <section id="how-it-works" className="py-24 border-t border-white/5">
-        <div className="container-main">
+      {/* How It Works Section */}
+      <section id="how-it-works" className="py-24 border-t border-white/[0.04]">
+        <div className="container-app">
           <div className="text-center mb-16">
-            <h2 className="text-3xl sm:text-4xl font-bold tracking-tighter text-white mb-4">
-              How RepLedger Works
+            <h2 className="text-[28px] font-semibold text-white tracking-tight mb-3">
+              How RepLedger works
             </h2>
-            <p className="text-[#9CA3AF] max-w-2xl mx-auto">
-              Three simple steps to build your agent's track record
+            <p className="text-[15px] text-[#6B7280]">
+              Three steps to a verifiable track record
             </p>
           </div>
 
           <div className="grid md:grid-cols-3 gap-8">
-            <div className="bg-[#0C1116] border border-white/10 rounded-sm p-8">
-              <div className="w-12 h-12 rounded-sm bg-[#01696F]/20 flex items-center justify-center mb-6">
-                <span className="text-[#01696F] font-mono font-bold text-xl">01</span>
+            {/* Step 1 */}
+            <div className="relative">
+              <div className="w-10 h-10 rounded-sm bg-[#01696F]/15 flex items-center justify-center mb-5">
+                <span className="text-[#01696F] font-mono font-bold text-[14px]">1</span>
               </div>
-              <h3 className="text-xl font-semibold text-white mb-3">Register Agent</h3>
-              <p className="text-[#9CA3AF] mb-6">
-                Create an agent identity in RepLedger with a name and optional metadata. Get a unique agent_id.
+              <h3 className="text-[16px] font-semibold text-white mb-3">Register your agent</h3>
+              <p className="text-[14px] text-[#9CA3AF] leading-relaxed">
+                Create an agent in RepLedger with a name and optional owner handle
+                (like a GitHub username or domain) to anchor its identity.
               </p>
-              <div className="code-block text-xs">
-                <code>
-                  POST /v1/agents<br />
-                  {"{"} "name": "my-agent" {"}"}
-                </code>
-              </div>
             </div>
 
-            <div className="bg-[#0C1116] border border-white/10 rounded-sm p-8">
-              <div className="w-12 h-12 rounded-sm bg-[#01696F]/20 flex items-center justify-center mb-6">
-                <span className="text-[#01696F] font-mono font-bold text-xl">02</span>
+            {/* Step 2 */}
+            <div className="relative">
+              <div className="w-10 h-10 rounded-sm bg-[#01696F]/15 flex items-center justify-center mb-5">
+                <span className="text-[#01696F] font-mono font-bold text-[14px]">2</span>
               </div>
-              <h3 className="text-xl font-semibold text-white mb-3">Log Outcomes</h3>
-              <p className="text-[#9CA3AF] mb-6">
-                Submit outcomes as your agent completes tasks. Each outcome is recorded in the ledger.
+              <h3 className="text-[16px] font-semibold text-white mb-3">Log outcomes to the ledger</h3>
+              <p className="text-[14px] text-[#9CA3AF] leading-relaxed">
+                Send simple JSON events every time your agent completes a task.
+                RepLedger keeps an append-only history of successes, failures, and incidents.
               </p>
-              <div className="code-block text-xs">
-                <code>
-                  POST /v1/agents/{"{id}"}/outcomes<br />
-                  {"{"} "result": "success" {"}"}
-                </code>
-              </div>
             </div>
 
-            <div className="bg-[#0C1116] border border-white/10 rounded-sm p-8">
-              <div className="w-12 h-12 rounded-sm bg-[#01696F]/20 flex items-center justify-center mb-6">
-                <span className="text-[#01696F] font-mono font-bold text-xl">03</span>
+            {/* Step 3 */}
+            <div className="relative">
+              <div className="w-10 h-10 rounded-sm bg-[#01696F]/15 flex items-center justify-center mb-5">
+                <span className="text-[#01696F] font-mono font-bold text-[14px]">3</span>
               </div>
-              <h3 className="text-xl font-semibold text-white mb-3">Get Score & Badge</h3>
-              <p className="text-[#9CA3AF] mb-6">
-                Query your agent's reputation score and embed the trust tier badge anywhere.
+              <h3 className="text-[16px] font-semibold text-white mb-3">Get a score and badge</h3>
+              <p className="text-[14px] text-[#9CA3AF] leading-relaxed">
+                RepLedger turns your outcomes into a 0–100 reputation score and trust tier
+                (Unrated → Bronze → Silver → Gold → Platinum), plus an embeddable SVG badge.
               </p>
-              <div className="code-block text-xs">
-                <code>
-                  GET /v1/agents/{"{id}"}/score<br />
-                  GET /v1/agents/{"{id}"}/badge.svg
-                </code>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Who It's For Section */}
+      <section id="who-its-for" className="py-24 border-t border-white/[0.04]">
+        <div className="container-app">
+          <div className="text-center mb-16">
+            <h2 className="text-[28px] font-semibold text-white tracking-tight mb-3">
+              Who RepLedger is for
+            </h2>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-8">
+            {/* Card 1 */}
+            <div className="bg-[#0C1116] border border-white/[0.08] rounded-sm p-6">
+              <div className="w-10 h-10 rounded-sm bg-[#01696F]/15 flex items-center justify-center mb-5">
+                <FileText className="w-5 h-5 text-[#01696F]" />
+              </div>
+              <h3 className="text-[16px] font-semibold text-white mb-3">Independent agent builders</h3>
+              <p className="text-[14px] text-[#9CA3AF] leading-relaxed">
+                Prove your agent works with a verifiable record of what it has done,
+                not just a README claim or a couple of screenshots.
+              </p>
+            </div>
+
+            {/* Card 2 */}
+            <div className="bg-[#0C1116] border border-white/[0.08] rounded-sm p-6">
+              <div className="w-10 h-10 rounded-sm bg-[#01696F]/15 flex items-center justify-center mb-5">
+                <Users className="w-5 h-5 text-[#01696F]" />
+              </div>
+              <h3 className="text-[16px] font-semibold text-white mb-3">Agent marketplaces & platforms</h3>
+              <p className="text-[14px] text-[#9CA3AF] leading-relaxed">
+                Show real scores and trust tiers on agent listings so users can
+                filter out unreliable agents and fake reviews.
+              </p>
+            </div>
+
+            {/* Card 3 */}
+            <div className="bg-[#0C1116] border border-white/[0.08] rounded-sm p-6">
+              <div className="w-10 h-10 rounded-sm bg-[#01696F]/15 flex items-center justify-center mb-5">
+                <Building2 className="w-5 h-5 text-[#01696F]" />
+              </div>
+              <h3 className="text-[16px] font-semibold text-white mb-3">Teams & enterprises</h3>
+              <p className="text-[14px] text-[#9CA3AF] leading-relaxed">
+                Use reputation scores and outcome logs to support internal governance,
+                compliance reports, and vendor risk reviews.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Why Not Reviews Section */}
+      <section className="py-24 border-t border-white/[0.04]">
+        <div className="container-app">
+          <div className="max-w-2xl mx-auto">
+            <h2 className="text-[24px] font-semibold text-white tracking-tight mb-8 text-center">
+              Why a ledger, not just reviews
+            </h2>
+
+            <div className="space-y-4">
+              <div className="flex items-start gap-3">
+                <CheckCircle2 className="w-5 h-5 text-[#01696F] mt-0.5 shrink-0" />
+                <p className="text-[14px] text-[#9CA3AF]">
+                  <span className="text-white font-medium">Star ratings are easy to fake.</span>{" "}
+                  A ledger of outcomes is not.
+                </p>
+              </div>
+              <div className="flex items-start gap-3">
+                <CheckCircle2 className="w-5 h-5 text-[#01696F] mt-0.5 shrink-0" />
+                <p className="text-[14px] text-[#9CA3AF]">
+                  <span className="text-white font-medium">RepLedger ties every score to real, timestamped events.</span>{" "}
+                  No guessing, no gaming.
+                </p>
+              </div>
+              <div className="flex items-start gap-3">
+                <CheckCircle2 className="w-5 h-5 text-[#01696F] mt-0.5 shrink-0" />
+                <p className="text-[14px] text-[#9CA3AF]">
+                  <span className="text-white font-medium">Embed the same trusted badge</span>{" "}
+                  across agents, marketplaces, and internal tools.
+                </p>
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Use cases */}
-      <section id="use-cases" className="py-24 border-t border-white/5">
-        <div className="container-main">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl sm:text-4xl font-bold tracking-tighter text-white mb-4">
-              Built for Builders
-            </h2>
-            <p className="text-[#9CA3AF] max-w-2xl mx-auto">
-              Whether you're an indie builder, platform operator, or enterprise team
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-8">
-            <div className="p-8 border border-white/10 rounded-sm hover:border-white/20 transition-colors">
-              <Code2 className="w-10 h-10 text-[#01696F] mb-6" />
-              <h3 className="text-xl font-semibold text-white mb-3">Agent Builders</h3>
-              <ul className="space-y-3">
-                <li className="flex items-start gap-2 text-[#9CA3AF]">
-                  <CheckCircle2 className="w-5 h-5 text-[#22C55E] shrink-0 mt-0.5" />
-                  <span>Prove your agent works with real data</span>
-                </li>
-                <li className="flex items-start gap-2 text-[#9CA3AF]">
-                  <CheckCircle2 className="w-5 h-5 text-[#22C55E] shrink-0 mt-0.5" />
-                  <span>Embed badges in READMEs and docs</span>
-                </li>
-                <li className="flex items-start gap-2 text-[#9CA3AF]">
-                  <CheckCircle2 className="w-5 h-5 text-[#22C55E] shrink-0 mt-0.5" />
-                  <span>Stand out in agent marketplaces</span>
-                </li>
-              </ul>
-            </div>
-
-            <div className="p-8 border border-white/10 rounded-sm hover:border-white/20 transition-colors">
-              <Layers className="w-10 h-10 text-[#01696F] mb-6" />
-              <h3 className="text-xl font-semibold text-white mb-3">Platforms</h3>
-              <ul className="space-y-3">
-                <li className="flex items-start gap-2 text-[#9CA3AF]">
-                  <CheckCircle2 className="w-5 h-5 text-[#22C55E] shrink-0 mt-0.5" />
-                  <span>Surface trust signals on agent listings</span>
-                </li>
-                <li className="flex items-start gap-2 text-[#9CA3AF]">
-                  <CheckCircle2 className="w-5 h-5 text-[#22C55E] shrink-0 mt-0.5" />
-                  <span>Filter agents by reputation tier</span>
-                </li>
-                <li className="flex items-start gap-2 text-[#9CA3AF]">
-                  <CheckCircle2 className="w-5 h-5 text-[#22C55E] shrink-0 mt-0.5" />
-                  <span>Verifiable scores via API</span>
-                </li>
-              </ul>
-            </div>
-
-            <div className="p-8 border border-white/10 rounded-sm hover:border-white/20 transition-colors">
-              <Building2 className="w-10 h-10 text-[#01696F] mb-6" />
-              <h3 className="text-xl font-semibold text-white mb-3">Enterprise</h3>
-              <ul className="space-y-3">
-                <li className="flex items-start gap-2 text-[#9CA3AF]">
-                  <CheckCircle2 className="w-5 h-5 text-[#22C55E] shrink-0 mt-0.5" />
-                  <span>Audit trails for agent activity</span>
-                </li>
-                <li className="flex items-start gap-2 text-[#9CA3AF]">
-                  <CheckCircle2 className="w-5 h-5 text-[#22C55E] shrink-0 mt-0.5" />
-                  <span>Compliance-grade outcome logs</span>
-                </li>
-                <li className="flex items-start gap-2 text-[#9CA3AF]">
-                  <CheckCircle2 className="w-5 h-5 text-[#22C55E] shrink-0 mt-0.5" />
-                  <span>Governance and oversight data</span>
-                </li>
-              </ul>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* CTA Section */}
-      <section className="py-24 border-t border-white/5">
-        <div className="container-main text-center">
-          <h2 className="text-3xl sm:text-4xl font-bold tracking-tighter text-white mb-4">
-            Start building your agent's track record
+      {/* Final CTA Section */}
+      <section className="py-24 border-t border-white/[0.04]">
+        <div className="container-app text-center">
+          <h2 className="text-[28px] font-semibold text-white tracking-tight mb-4">
+            Give your agents a real track record
           </h2>
-          <p className="text-[#9CA3AF] max-w-xl mx-auto mb-8">
-            Get your API key and register your first agent in minutes. Free to start.
+          <p className="text-[15px] text-[#9CA3AF] max-w-lg mx-auto mb-8">
+            Connect your first agent and start building its record in minutes.
+            The Free plan includes one agent and enough outcomes to get a real score.
           </p>
-          <Link to="/signup">
-            <Button 
-              size="lg"
-              className="bg-[#01696F] hover:bg-[#028C94] text-white h-12 px-8"
-              data-testid="footer-cta-btn"
+          <div className="flex flex-wrap items-center justify-center gap-4">
+            <Link to="/signup">
+              <Button 
+                size="lg"
+                className="bg-[#01696F] hover:bg-[#028C94] text-white h-11 px-6 text-[14px]"
+                data-testid="footer-cta-btn"
+              >
+                Start free
+                <ArrowRight className="w-4 h-4 ml-2" />
+              </Button>
+            </Link>
+            <Link 
+              to="/developers" 
+              className="text-[14px] text-[#01696F] hover:text-[#028C94] font-medium transition-colors"
             >
-              Get API Key
-              <ArrowRight className="w-4 h-4 ml-2" />
-            </Button>
-          </Link>
+              View API quickstart →
+            </Link>
+          </div>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="py-12 border-t border-white/5">
-        <div className="container-main flex flex-col md:flex-row items-center justify-between gap-6">
+      <footer className="py-8 border-t border-white/[0.04]">
+        <div className="container-app flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <img src={LOGO_URL} alt="RepLedger" className="h-6" />
-            <span className="text-[#6B7280] text-sm">
-              Part of the AgenticTrust stack
-            </span>
+            <img src={LOGO_URL} alt="RepLedger" className="h-5" />
+            <span className="text-[12px] text-[#4B5563]">Part of the AgenticTrust stack</span>
           </div>
           <div className="flex items-center gap-6">
-            <Link to="/docs" className="text-sm text-[#6B7280] hover:text-white transition-colors">
-              Documentation
+            <Link to="/developers" className="text-[12px] text-[#6B7280] hover:text-white transition-colors">
+              Developers
             </Link>
-            <a href="#" className="text-sm text-[#6B7280] hover:text-white transition-colors">
-              GitHub
-            </a>
-            <a href="#" className="text-sm text-[#6B7280] hover:text-white transition-colors">
-              Twitter
-            </a>
+            <Link to="/login" className="text-[12px] text-[#6B7280] hover:text-white transition-colors">
+              Sign in
+            </Link>
+            <Link to="/signup" className="text-[12px] text-[#6B7280] hover:text-white transition-colors">
+              Start free
+            </Link>
           </div>
         </div>
       </footer>
