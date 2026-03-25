@@ -1,4 +1,4 @@
-from fastapi import FastAPI, APIRouter, Depends, HTTPException, status, Response
+from fastapi import FastAPI, APIRouter, Depends, HTTPException, status, Response, BackgroundTasks
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
@@ -13,6 +13,12 @@ from datetime import datetime, timezone
 import bcrypt
 import jwt
 import secrets
+import httpx
+from services.email_service import (
+    send_welcome_email, 
+    send_password_reset_email, 
+    send_outcome_notification_email
+)
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -116,6 +122,31 @@ class ScoreResponse(BaseModel):
     outcome_count: int
     success_rate: float
 
+# Webhook models
+class WebhookCreate(BaseModel):
+    url: str = Field(..., min_length=10, max_length=500)
+    events: List[str] = Field(default=["outcome.created"])
+    description: Optional[str] = None
+
+class WebhookResponse(BaseModel):
+    id: str
+    url: str
+    events: List[str]
+    description: Optional[str] = None
+    created_at: str
+    is_active: bool = True
+
+class WebhookListResponse(BaseModel):
+    webhooks: List[WebhookResponse]
+
+# Password Reset models
+class PasswordResetRequest(BaseModel):
+    email: EmailStr
+
+class PasswordResetConfirm(BaseModel):
+    token: str
+    new_password: str = Field(min_length=6)
+
 # ============== UTILITY FUNCTIONS ==============
 
 def hash_password(password: str) -> str:
@@ -203,10 +234,59 @@ async def get_user_from_api_key(credentials: HTTPAuthorizationCredentials = Depe
     
     raise HTTPException(status_code=401, detail="Invalid credentials")
 
+async def trigger_webhooks(user_id: str, event_type: str, payload: dict):
+    """Trigger all active webhooks for a user for a specific event"""
+    webhooks = await db.webhooks.find(
+        {"user_id": user_id, "is_active": True},
+        {"_id": 0}
+    ).to_list(100)
+    
+    for webhook in webhooks:
+        if event_type in webhook.get("events", []):
+            try:
+                async with httpx.AsyncClient(timeout=10.0) as client:
+                    webhook_payload = {
+                        "event": event_type,
+                        "timestamp": datetime.now(timezone.utc).isoformat(),
+                        "data": payload
+                    }
+                    response = await client.post(
+                        webhook["url"],
+                        json=webhook_payload,
+                        headers={"Content-Type": "application/json", "X-RepLedger-Event": event_type}
+                    )
+                    
+                    # Log webhook delivery
+                    await db.webhook_logs.insert_one({
+                        "id": str(uuid.uuid4()),
+                        "webhook_id": webhook["id"],
+                        "user_id": user_id,
+                        "event": event_type,
+                        "url": webhook["url"],
+                        "status_code": response.status_code,
+                        "success": 200 <= response.status_code < 300,
+                        "created_at": datetime.now(timezone.utc).isoformat()
+                    })
+                    logger.info(f"Webhook delivered to {webhook['url']} with status {response.status_code}")
+            except Exception as e:
+                # Log failed delivery
+                await db.webhook_logs.insert_one({
+                    "id": str(uuid.uuid4()),
+                    "webhook_id": webhook["id"],
+                    "user_id": user_id,
+                    "event": event_type,
+                    "url": webhook["url"],
+                    "status_code": None,
+                    "success": False,
+                    "error": str(e),
+                    "created_at": datetime.now(timezone.utc).isoformat()
+                })
+                logger.error(f"Failed to deliver webhook to {webhook['url']}: {e}")
+
 # ============== AUTH ROUTES ==============
 
 @api_router.post("/auth/signup", response_model=TokenResponse)
-async def signup(data: UserCreate):
+async def signup(data: UserCreate, background_tasks: BackgroundTasks):
     """Create a new user account"""
     # Check if user exists
     existing = await db.users.find_one({"email": data.email.lower()})
@@ -221,7 +301,8 @@ async def signup(data: UserCreate):
         "id": user_id,
         "email": data.email.lower(),
         "password_hash": hash_password(data.password),
-        "created_at": now
+        "created_at": now,
+        "email_notifications": True  # Default to enabled
     }
     await db.users.insert_one(user_doc)
     
@@ -235,6 +316,9 @@ async def signup(data: UserCreate):
         "revoked_at": None
     }
     await db.api_keys.insert_one(api_key_doc)
+    
+    # Send welcome email in background
+    background_tasks.add_task(send_welcome_email, data.email.lower())
     
     token = create_token(user_id, data.email.lower())
     
@@ -389,7 +473,7 @@ async def get_agent(agent_id: str, user: dict = Depends(get_user_from_api_key)):
     )
 
 @v1_router.post("/agents/{agent_id}/outcomes", response_model=OutcomeResponse, status_code=201)
-async def create_outcome(agent_id: str, data: OutcomeCreate, user: dict = Depends(get_user_from_api_key)):
+async def create_outcome(agent_id: str, data: OutcomeCreate, background_tasks: BackgroundTasks, user: dict = Depends(get_user_from_api_key)):
     """Submit an outcome for an agent"""
     # Verify agent belongs to user
     agent = await db.agents.find_one(
@@ -412,6 +496,44 @@ async def create_outcome(agent_id: str, data: OutcomeCreate, user: dict = Depend
     }
     
     await db.outcomes.insert_one(outcome_doc)
+    
+    # Calculate new score for notifications and webhooks
+    outcomes = await db.outcomes.find(
+        {"agent_id": agent_id}, 
+        {"_id": 0}
+    ).to_list(10000)
+    new_score, new_tier, _ = calculate_score_and_tier(outcomes)
+    
+    # Send outcome notification email if user has notifications enabled
+    if user.get("email_notifications", True):
+        background_tasks.add_task(
+            send_outcome_notification_email,
+            user["email"],
+            agent["name"],
+            agent_id,
+            data.result,
+            data.task_type,
+            new_score,
+            new_tier
+        )
+    
+    # Trigger webhooks for this user
+    background_tasks.add_task(
+        trigger_webhooks,
+        user["id"],
+        "outcome.created",
+        {
+            "outcome_id": outcome_id,
+            "agent_id": agent_id,
+            "agent_name": agent["name"],
+            "result": data.result,
+            "task_type": data.task_type,
+            "submitter_type": data.submitter_type,
+            "score": new_score,
+            "tier": new_tier,
+            "created_at": now
+        }
+    )
     
     return OutcomeResponse(
         id=outcome_id,
@@ -524,6 +646,157 @@ async def get_agent_badge(agent_id: str):
             "Content-Type": "image/svg+xml; charset=utf-8"
         }
     )
+
+# ============== WEBHOOK ROUTES ==============
+
+@v1_router.post("/webhooks", response_model=WebhookResponse, status_code=201)
+async def create_webhook(data: WebhookCreate, user: dict = Depends(get_user_from_api_key)):
+    """Create a new webhook subscription"""
+    # Validate URL format
+    if not data.url.startswith(("http://", "https://")):
+        raise HTTPException(status_code=400, detail="Webhook URL must start with http:// or https://")
+    
+    # Check for duplicate URL
+    existing = await db.webhooks.find_one(
+        {"user_id": user["id"], "url": data.url, "is_active": True}
+    )
+    if existing:
+        raise HTTPException(status_code=400, detail="Webhook URL already registered")
+    
+    # Limit number of webhooks per user
+    count = await db.webhooks.count_documents({"user_id": user["id"], "is_active": True})
+    if count >= 10:
+        raise HTTPException(status_code=400, detail="Maximum of 10 active webhooks allowed")
+    
+    webhook_id = str(uuid.uuid4())
+    now = datetime.now(timezone.utc).isoformat()
+    
+    # Validate event types
+    valid_events = ["outcome.created"]
+    for event in data.events:
+        if event not in valid_events:
+            raise HTTPException(status_code=400, detail=f"Invalid event type: {event}. Valid types: {valid_events}")
+    
+    webhook_doc = {
+        "id": webhook_id,
+        "user_id": user["id"],
+        "url": data.url,
+        "events": data.events,
+        "description": data.description,
+        "is_active": True,
+        "created_at": now
+    }
+    
+    await db.webhooks.insert_one(webhook_doc)
+    
+    return WebhookResponse(
+        id=webhook_id,
+        url=data.url,
+        events=data.events,
+        description=data.description,
+        created_at=now,
+        is_active=True
+    )
+
+@v1_router.get("/webhooks", response_model=WebhookListResponse)
+async def list_webhooks(user: dict = Depends(get_user_from_api_key)):
+    """List all webhooks for the authenticated user"""
+    webhooks = await db.webhooks.find(
+        {"user_id": user["id"], "is_active": True},
+        {"_id": 0}
+    ).sort("created_at", -1).to_list(100)
+    
+    return WebhookListResponse(
+        webhooks=[WebhookResponse(**w) for w in webhooks]
+    )
+
+@v1_router.get("/webhooks/{webhook_id}", response_model=WebhookResponse)
+async def get_webhook(webhook_id: str, user: dict = Depends(get_user_from_api_key)):
+    """Get a specific webhook"""
+    webhook = await db.webhooks.find_one(
+        {"id": webhook_id, "user_id": user["id"], "is_active": True},
+        {"_id": 0}
+    )
+    if not webhook:
+        raise HTTPException(status_code=404, detail="Webhook not found")
+    
+    return WebhookResponse(**webhook)
+
+@v1_router.delete("/webhooks/{webhook_id}", status_code=204)
+async def delete_webhook(webhook_id: str, user: dict = Depends(get_user_from_api_key)):
+    """Delete (deactivate) a webhook"""
+    webhook = await db.webhooks.find_one(
+        {"id": webhook_id, "user_id": user["id"]}
+    )
+    if not webhook:
+        raise HTTPException(status_code=404, detail="Webhook not found")
+    
+    await db.webhooks.update_one(
+        {"id": webhook_id},
+        {"$set": {"is_active": False, "deleted_at": datetime.now(timezone.utc).isoformat()}}
+    )
+    
+    return Response(status_code=204)
+
+# ============== PASSWORD RESET ROUTES ==============
+
+@api_router.post("/auth/password-reset/request")
+async def request_password_reset(data: PasswordResetRequest, background_tasks: BackgroundTasks):
+    """Request a password reset email"""
+    user = await db.users.find_one({"email": data.email.lower()}, {"_id": 0})
+    
+    # Always return success to prevent email enumeration
+    if not user:
+        return {"message": "If an account exists with this email, a reset link has been sent"}
+    
+    # Generate reset token
+    reset_token = secrets.token_urlsafe(32)
+    expires_at = datetime.now(timezone.utc).timestamp() + 3600  # 1 hour
+    
+    # Store reset token
+    await db.password_resets.insert_one({
+        "id": str(uuid.uuid4()),
+        "user_id": user["id"],
+        "token": reset_token,
+        "expires_at": expires_at,
+        "used": False,
+        "created_at": datetime.now(timezone.utc).isoformat()
+    })
+    
+    # Send reset email
+    reset_url = f"https://repledger.agentictrust.app/reset-password?token={reset_token}"
+    background_tasks.add_task(send_password_reset_email, data.email.lower(), reset_token, reset_url)
+    
+    return {"message": "If an account exists with this email, a reset link has been sent"}
+
+@api_router.post("/auth/password-reset/confirm")
+async def confirm_password_reset(data: PasswordResetConfirm):
+    """Confirm password reset with token"""
+    reset_doc = await db.password_resets.find_one(
+        {"token": data.token, "used": False},
+        {"_id": 0}
+    )
+    
+    if not reset_doc:
+        raise HTTPException(status_code=400, detail="Invalid or expired reset token")
+    
+    # Check expiration
+    if datetime.now(timezone.utc).timestamp() > reset_doc["expires_at"]:
+        raise HTTPException(status_code=400, detail="Reset token has expired")
+    
+    # Update password
+    await db.users.update_one(
+        {"id": reset_doc["user_id"]},
+        {"$set": {"password_hash": hash_password(data.new_password)}}
+    )
+    
+    # Mark token as used
+    await db.password_resets.update_one(
+        {"token": data.token},
+        {"$set": {"used": True, "used_at": datetime.now(timezone.utc).isoformat()}}
+    )
+    
+    return {"message": "Password has been reset successfully"}
 
 # ============== BASIC ROUTES ==============
 

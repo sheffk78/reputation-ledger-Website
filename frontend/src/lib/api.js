@@ -112,4 +112,43 @@ export const outcomesAPI = {
   },
 };
 
+// Webhooks API (v1)
+export const webhooksAPI = {
+  list: async () => {
+    const response = await apiClientV1.get("/webhooks");
+    return response.data;
+  },
+
+  get: async (webhookId) => {
+    const response = await apiClientV1.get(`/webhooks/${webhookId}`);
+    return response.data;
+  },
+
+  create: async (data) => {
+    const response = await apiClientV1.post("/webhooks", data);
+    return response.data;
+  },
+
+  delete: async (webhookId) => {
+    const response = await apiClientV1.delete(`/webhooks/${webhookId}`);
+    return response.data;
+  },
+};
+
+// Password Reset API
+export const passwordResetAPI = {
+  request: async (email) => {
+    const response = await apiClient.post("/auth/password-reset/request", { email });
+    return response.data;
+  },
+
+  confirm: async (token, newPassword) => {
+    const response = await apiClient.post("/auth/password-reset/confirm", {
+      token,
+      new_password: newPassword,
+    });
+    return response.data;
+  },
+};
+
 export default apiClient;

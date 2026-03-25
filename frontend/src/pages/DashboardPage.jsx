@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { agentsAPI, apiKeyAPI } from "../lib/api";
+import { agentsAPI, apiKeyAPI, webhooksAPI } from "../lib/api";
 import { copyToClipboard, getTierColorClass } from "../lib/utils";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
@@ -37,7 +37,10 @@ import {
   AlertTriangle,
   Loader2,
   ChevronRight,
-  Zap
+  Zap,
+  Webhook,
+  Trash2,
+  ExternalLink
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -67,15 +70,23 @@ export default function DashboardPage() {
   
   const [apiKey, setApiKey] = useState(null);
   const [agents, setAgents] = useState([]);
+  const [webhooks, setWebhooks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
   const [regenerating, setRegenerating] = useState(false);
   const [creating, setCreating] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [webhookDialogOpen, setWebhookDialogOpen] = useState(false);
+  const [creatingWebhook, setCreatingWebhook] = useState(false);
+  const [deletingWebhook, setDeletingWebhook] = useState(null);
   const [formData, setFormData] = useState({
     name: "",
     description: "",
     owner_handle: "",
+  });
+  const [webhookFormData, setWebhookFormData] = useState({
+    url: "",
+    description: "",
   });
 
   useEffect(() => {
@@ -84,12 +95,14 @@ export default function DashboardPage() {
 
   const loadData = async () => {
     try {
-      const [apiKeyData, agentsData] = await Promise.all([
+      const [apiKeyData, agentsData, webhooksData] = await Promise.all([
         apiKeyAPI.get(),
         agentsAPI.list(),
+        webhooksAPI.list(),
       ]);
       setApiKey(apiKeyData);
       setAgents(agentsData);
+      setWebhooks(webhooksData.webhooks || []);
     } catch (error) {
       console.error("Failed to load data:", error);
       toast.error("Failed to load data");
@@ -146,6 +159,42 @@ export default function DashboardPage() {
   const handleLogout = () => {
     logout();
     navigate("/login");
+  };
+
+  const handleCreateWebhook = async (e) => {
+    e.preventDefault();
+    setCreatingWebhook(true);
+
+    try {
+      await webhooksAPI.create({
+        url: webhookFormData.url,
+        events: ["outcome.created"],
+        description: webhookFormData.description || null,
+      });
+      const webhooksData = await webhooksAPI.list();
+      setWebhooks(webhooksData.webhooks || []);
+      setWebhookDialogOpen(false);
+      setWebhookFormData({ url: "", description: "" });
+      toast.success("Webhook created");
+    } catch (error) {
+      const message = error.response?.data?.detail || "Failed to create webhook";
+      toast.error(message);
+    } finally {
+      setCreatingWebhook(false);
+    }
+  };
+
+  const handleDeleteWebhook = async (webhookId) => {
+    setDeletingWebhook(webhookId);
+    try {
+      await webhooksAPI.delete(webhookId);
+      setWebhooks(webhooks.filter((w) => w.id !== webhookId));
+      toast.success("Webhook deleted");
+    } catch (error) {
+      toast.error("Failed to delete webhook");
+    } finally {
+      setDeletingWebhook(null);
+    }
   };
 
   if (loading) {
@@ -445,6 +494,210 @@ export default function DashboardPage() {
                     ))}
                   </tbody>
                 </table>
+              </div>
+            )}
+          </section>
+
+          {/* Webhooks Section */}
+          <section>
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <Webhook className="w-4 h-4 text-[#01696F]" />
+                <h2 className="text-[15px] font-semibold text-white">Webhooks</h2>
+                <span className="text-[12px] text-[#6B7280] ml-1">({webhooks.length})</span>
+              </div>
+              
+              <Dialog open={webhookDialogOpen} onOpenChange={setWebhookDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button
+                    data-testid="new-webhook-btn"
+                    className="bg-[#01696F] hover:bg-[#028C94] text-white h-9 px-4 text-[13px]"
+                  >
+                    <Plus className="w-3.5 h-3.5 mr-1.5" />
+                    Add Webhook
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="bg-[#0C1116] border-white/[0.08] text-white max-w-md">
+                  <DialogHeader>
+                    <DialogTitle className="text-white text-[16px]">Add Webhook</DialogTitle>
+                    <DialogDescription className="text-[#9CA3AF] text-[13px]">
+                      Receive HTTP POST notifications when outcomes are logged.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <form onSubmit={handleCreateWebhook} className="space-y-5 mt-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="webhook-url" className="form-label">
+                        Webhook URL <span className="text-red-400">*</span>
+                      </Label>
+                      <Input
+                        id="webhook-url"
+                        type="url"
+                        value={webhookFormData.url}
+                        onChange={(e) =>
+                          setWebhookFormData({ ...webhookFormData, url: e.target.value })
+                        }
+                        placeholder="https://your-server.com/webhook"
+                        required
+                        data-testid="webhook-url-input"
+                        className="form-input"
+                      />
+                      <p className="text-[11px] text-[#6B7280]">
+                        We'll POST a JSON payload to this URL for each outcome event.
+                      </p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="webhook-description" className="form-label">
+                        Description
+                      </Label>
+                      <Input
+                        id="webhook-description"
+                        value={webhookFormData.description}
+                        onChange={(e) =>
+                          setWebhookFormData({ ...webhookFormData, description: e.target.value })
+                        }
+                        placeholder="e.g., Production monitoring"
+                        data-testid="webhook-description-input"
+                        className="form-input"
+                      />
+                    </div>
+
+                    <div className="p-3 bg-[#1F2933]/50 rounded-md">
+                      <p className="text-[11px] text-[#9CA3AF] font-medium mb-2">Event Type</p>
+                      <div className="flex items-center gap-2">
+                        <span className="px-2 py-1 bg-[#01696F]/20 text-[#01696F] text-[11px] font-mono rounded">
+                          outcome.created
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="flex justify-end gap-3 pt-2">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        onClick={() => setWebhookDialogOpen(false)}
+                        className="text-[#9CA3AF] hover:text-white hover:bg-white/5 text-[13px]"
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        type="submit"
+                        disabled={creatingWebhook || !webhookFormData.url}
+                        data-testid="submit-webhook-btn"
+                        className="bg-[#01696F] hover:bg-[#028C94] text-white text-[13px]"
+                      >
+                        {creatingWebhook ? (
+                          <>
+                            <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+                            Creating...
+                          </>
+                        ) : (
+                          "Create Webhook"
+                        )}
+                      </Button>
+                    </div>
+                  </form>
+                </DialogContent>
+              </Dialog>
+            </div>
+
+            {webhooks.length === 0 ? (
+              <div className="card-surface empty-state">
+                <Webhook className="empty-state-icon" />
+                <h3 className="empty-state-title">No webhooks configured</h3>
+                <p className="empty-state-description">
+                  Add a webhook to receive real-time notifications when outcomes are logged
+                </p>
+                <Button
+                  onClick={() => setWebhookDialogOpen(true)}
+                  data-testid="create-first-webhook-btn"
+                  className="bg-[#01696F] hover:bg-[#028C94] text-white h-9 px-4 text-[13px]"
+                >
+                  <Plus className="w-3.5 h-3.5 mr-1.5" />
+                  Add First Webhook
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {webhooks.map((webhook) => (
+                  <div
+                    key={webhook.id}
+                    className="card-surface p-4 flex items-center justify-between"
+                    data-testid={`webhook-row-${webhook.id}`}
+                  >
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <code className="text-[13px] text-white font-mono truncate max-w-[400px]">
+                          {webhook.url}
+                        </code>
+                        <a
+                          href={webhook.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-[#6B7280] hover:text-white"
+                        >
+                          <ExternalLink className="w-3.5 h-3.5" />
+                        </a>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        {webhook.description && (
+                          <span className="text-[12px] text-[#6B7280]">
+                            {webhook.description}
+                          </span>
+                        )}
+                        <div className="flex items-center gap-1.5">
+                          {webhook.events?.map((event) => (
+                            <span
+                              key={event}
+                              className="px-1.5 py-0.5 bg-[#01696F]/20 text-[#01696F] text-[10px] font-mono rounded"
+                            >
+                              {event}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <button
+                          data-testid={`delete-webhook-${webhook.id}`}
+                          className="p-2 text-[#6B7280] hover:text-red-400 hover:bg-red-400/10 rounded transition-colors"
+                          disabled={deletingWebhook === webhook.id}
+                        >
+                          {deletingWebhook === webhook.id ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <Trash2 className="w-4 h-4" />
+                          )}
+                        </button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent className="bg-[#0C1116] border-white/[0.08]">
+                        <AlertDialogHeader>
+                          <AlertDialogTitle className="text-white flex items-center gap-2">
+                            <Trash2 className="w-4 h-4 text-red-400" />
+                            Delete Webhook?
+                          </AlertDialogTitle>
+                          <AlertDialogDescription className="text-[#9CA3AF] text-[13px]">
+                            This webhook will stop receiving notifications immediately.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel className="bg-transparent border-white/[0.08] text-white hover:bg-white/5 text-[13px]">
+                            Cancel
+                          </AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={() => handleDeleteWebhook(webhook.id)}
+                            className="bg-red-500 text-white hover:bg-red-600 text-[13px]"
+                            data-testid={`confirm-delete-webhook-${webhook.id}`}
+                          >
+                            Delete
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
+                ))}
               </div>
             )}
           </section>
