@@ -50,6 +50,7 @@ import {
   Terminal,
   AlertCircle,
   FlaskConical,
+  Settings,
 } from "lucide-react";
 import { toast } from "sonner";
 import { changelog } from "../data/changelog";
@@ -525,6 +526,14 @@ export default function DashboardPage() {
           
           <div className="flex items-center gap-5">
             <span className="text-[13px] text-[#6B7280]">{user?.email}</span>
+            <Link
+              to="/settings"
+              data-testid="settings-link"
+              className="flex items-center gap-1.5 text-[13px] text-[#6B7280] hover:text-white transition-colors"
+            >
+              <Settings className="w-3.5 h-3.5" />
+              Settings
+            </Link>
             <button
               onClick={handleLogout}
               data-testid="logout-btn"

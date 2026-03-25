@@ -260,8 +260,8 @@ db.users.updateOne({email: "admin@example.com"}, {$set: {is_admin: true}})
 - ✅ Admin Agents section with filtering and detail pages
 
 ### P1 (High Priority - Phase 2)
-- ⬜ Outcome filtering by result type (success/failure/partial/timeout)
-- ⬜ Email notification preferences (toggle on/off in settings)
+- ✅ Outcome filtering by result type (success/failure/partial/timeout)
+- ✅ Email notification preferences (toggle on/off in settings)
 - ⬜ Password reset UI page (backend complete, need frontend page)
 - ⬜ Agent deletion
 
@@ -346,6 +346,8 @@ db.users.updateOne({email: "admin@example.com"}, {$set: {is_admin: true}})
 | /api/api-key | GET | JWT | Get API key |
 | /api/api-key/regenerate | POST | JWT | Regenerate API key |
 | /api/usage-stats | GET | JWT | Get usage statistics |
+| /api/settings/notifications | GET | JWT | Get notification preferences |
+| /api/settings/notifications | PUT | JWT | Update notification preferences |
 | /api/admin/me | GET | Admin | Verify admin access |
 | /api/admin/stats | GET | Admin | Platform statistics |
 | /api/admin/users | GET | Admin | List all users |

@@ -52,6 +52,7 @@ export default function AgentDetailPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalOutcomes, setTotalOutcomes] = useState(0);
   const [outcomesLoading, setOutcomesLoading] = useState(false);
+  const [resultFilter, setResultFilter] = useState(null);
   
   // Flags state
   const [showFlagsDialog, setShowFlagsDialog] = useState(false);
@@ -75,15 +76,15 @@ export default function AgentDetailPage() {
 
   useEffect(() => {
     if (agent) {
-      loadOutcomes(currentPage);
+      loadOutcomes(currentPage, resultFilter);
     }
-  }, [currentPage]);
+  }, [currentPage, resultFilter]);
 
   const loadData = async () => {
     try {
       const [agentData, outcomesData, flagsData, scoreResponse] = await Promise.all([
         agentsAPI.get(agentId),
-        outcomesAPI.list(agentId, 1, PAGE_SIZE),
+        outcomesAPI.list(agentId, 1, PAGE_SIZE, resultFilter),
         flagsAPI.list(agentId),
         agentsAPI.getScore(agentId),
       ]);
@@ -102,10 +103,10 @@ export default function AgentDetailPage() {
     }
   };
 
-  const loadOutcomes = async (page) => {
+  const loadOutcomes = async (page, filter = null) => {
     setOutcomesLoading(true);
     try {
-      const outcomesData = await outcomesAPI.list(agentId, page, PAGE_SIZE);
+      const outcomesData = await outcomesAPI.list(agentId, page, PAGE_SIZE, filter);
       setOutcomes(outcomesData.data || []);
       setTotalOutcomes(outcomesData.total || 0);
     } catch (error) {
@@ -114,6 +115,11 @@ export default function AgentDetailPage() {
     } finally {
       setOutcomesLoading(false);
     }
+  };
+
+  const handleResultFilterChange = (newFilter) => {
+    setResultFilter(newFilter);
+    setCurrentPage(1); // Reset to first page when filter changes
   };
 
   const loadFlags = async () => {
@@ -155,7 +161,7 @@ export default function AgentDetailPage() {
   };
 
   const handleRefresh = () => {
-    loadOutcomes(currentPage);
+    loadOutcomes(currentPage, resultFilter);
   };
 
   const openFlagDialog = (outcomeId = null) => {
@@ -571,32 +577,65 @@ export default function AgentDetailPage() {
 
           {/* Outcomes table */}
           <section>
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
               <div className="flex items-center gap-2 sm:gap-3">
                 <h2 className="text-[14px] sm:text-[15px] font-semibold text-white">Outcome History</h2>
                 {totalOutcomes > 0 && (
                   <span className="text-[11px] sm:text-[12px] text-[#6B7280]">
-                    ({totalOutcomes} total)
+                    ({totalOutcomes} {resultFilter ? `${resultFilter}` : 'total'})
                   </span>
                 )}
               </div>
-              <button
-                onClick={handleRefresh}
-                disabled={outcomesLoading}
-                data-testid="refresh-outcomes"
-                className="flex items-center gap-1.5 text-[12px] text-[#6B7280] hover:text-white transition-colors disabled:opacity-50"
-              >
-                <RefreshCw className={`w-3.5 h-3.5 ${outcomesLoading ? 'animate-spin' : ''}`} />
-                Refresh
-              </button>
+              <div className="flex items-center gap-3">
+                {/* Result Filter */}
+                <div className="flex items-center gap-2">
+                  <span className="text-[11px] text-[#6B7280]">Filter:</span>
+                  <select
+                    value={resultFilter || ""}
+                    onChange={(e) => handleResultFilterChange(e.target.value || null)}
+                    disabled={outcomesLoading}
+                    data-testid="outcome-result-filter"
+                    className="h-8 px-2.5 text-[12px] bg-[#0C1116] border border-white/[0.08] rounded-sm text-white focus:outline-none focus:ring-1 focus:ring-[#01696F] disabled:opacity-50"
+                  >
+                    <option value="">All Results</option>
+                    <option value="success">Success</option>
+                    <option value="failure">Failure</option>
+                    <option value="partial">Partial</option>
+                    <option value="timeout">Timeout</option>
+                  </select>
+                </div>
+                <button
+                  onClick={handleRefresh}
+                  disabled={outcomesLoading}
+                  data-testid="refresh-outcomes"
+                  className="flex items-center gap-1.5 text-[12px] text-[#6B7280] hover:text-white transition-colors disabled:opacity-50"
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 ${outcomesLoading ? 'animate-spin' : ''}`} />
+                  Refresh
+                </button>
+              </div>
             </div>
 
             {outcomes.length === 0 && !outcomesLoading ? (
               <div className="card-surface empty-state">
-                <p className="text-[#6B7280] text-[13px]">No outcomes recorded</p>
-                <p className="text-[#4B5563] text-[12px] mt-1">
-                  Submit outcomes via POST /v1/agents/{agent.agent_id}/outcomes
-                </p>
+                {resultFilter ? (
+                  <>
+                    <p className="text-[#6B7280] text-[13px]">No {resultFilter} outcomes found</p>
+                    <button
+                      onClick={() => handleResultFilterChange(null)}
+                      className="text-[#01696F] text-[12px] mt-2 hover:underline"
+                    >
+                      Clear filter
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-[#6B7280] text-[13px]">No outcomes recorded</p>
+                    <p className="text-[#4B5563] text-[12px] mt-1">
+                      Submit outcomes via POST /v1/agents/{agent.agent_id}/outcomes
+                    </p>
+                  </>
+                )}
               </div>
             ) : (
               <div className="card-surface overflow-hidden">

@@ -21,6 +21,7 @@ from routes.auth import router as auth_router, api_key_router
 from routes.agents import router as agents_router
 from routes.webhooks import router as webhooks_router
 from routes.admin import router as admin_router
+from routes.settings import router as settings_router
 
 # Configure logging
 logging.basicConfig(
@@ -250,6 +251,9 @@ api_router.include_router(auth_router)
 
 # API Key routes (/api/api-key, /api/api-key/regenerate)
 api_router.include_router(api_key_router)
+
+# Settings routes (/api/settings/*)
+api_router.include_router(settings_router)
 
 # Admin routes (/api/admin/*)
 api_router.include_router(admin_router)

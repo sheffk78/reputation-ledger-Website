@@ -17,7 +17,7 @@ from services.audit_service import (
     log_agent_created, log_outcome_created, 
     log_agent_flagged, log_agent_public_toggled
 )
-from typing import List
+from typing import List, Optional
 
 router = APIRouter(prefix="/agents", tags=["agents"])
 
@@ -413,9 +413,10 @@ async def list_outcomes(
     agent_id: str, 
     page: int = 1,
     limit: int = 20,
+    result: Optional[str] = None,
     user: dict = Depends(get_user_from_api_key)
 ):
-    """List outcomes for an agent with pagination"""
+    """List outcomes for an agent with pagination and optional result filter"""
     if page < 1:
         page = 1
     if limit < 1:
@@ -443,11 +444,16 @@ async def list_outcomes(
             details={"agent_id": agent_id}
         )
     
-    total = await db.outcomes.count_documents({"agent_id": agent_id})
+    # Build query with optional result filter
+    query = {"agent_id": agent_id}
+    if result and result in ["success", "failure", "partial", "timeout"]:
+        query["result"] = result
+    
+    total = await db.outcomes.count_documents(query)
     skip = (page - 1) * limit
     
     outcomes = await db.outcomes.find(
-        {"agent_id": agent_id}, 
+        query, 
         {"_id": 0}
     ).sort("created_at", -1).skip(skip).limit(limit).to_list(limit)
     
