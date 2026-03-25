@@ -63,6 +63,7 @@ class AdminUserDetailResponse(BaseModel):
 class AdminAgentResponse(BaseModel):
     agent_id: str
     name: str
+    description: Optional[str] = None
     owner_email: str
     owner_id: str
     score: float
@@ -75,6 +76,45 @@ class AdminAgentResponse(BaseModel):
 class AdminAgentListResponse(BaseModel):
     agents: List[AdminAgentResponse]
     total: int
+
+
+class AdminOutcomeResponse(BaseModel):
+    """Outcome for admin view"""
+    id: str
+    result: str
+    task_type: str
+    submitter_type: str
+    created_at: str
+
+
+class AdminFlagResponse(BaseModel):
+    """Flag for admin view"""
+    id: str
+    outcome_id: Optional[str] = None
+    reason: str
+    notes: Optional[str] = None
+    created_by_user_id: str
+    created_at: str
+
+
+class AdminAgentDetailResponse(BaseModel):
+    """Detailed agent info for admin view"""
+    agent_id: str
+    name: str
+    description: Optional[str] = None
+    owner_handle: Optional[str] = None
+    owner_id: str
+    owner_email: str
+    score: float
+    tier: str
+    outcome_count: int
+    success_rate: float
+    is_public: bool
+    created_at: str
+    breakdown: dict
+    recent_outcomes: List[AdminOutcomeResponse]
+    flags: List[AdminFlagResponse]
+    flags_count: int
 
 
 class AdminStatsResponse(BaseModel):
@@ -226,13 +266,20 @@ async def get_user_detail(user_id: str, admin: dict = Depends(get_admin_user)):
 async def list_all_agents(
     limit: int = 50,
     skip: int = 0,
+    tier: Optional[str] = None,
+    is_public: Optional[bool] = None,
     admin: dict = Depends(get_admin_user)
 ):
-    """List all agents across all users (admin only)"""
-    total = await db.agents.count_documents({})
+    """List all agents across all users with optional filtering (admin only)"""
+    # Build filter query
+    query = {}
+    if is_public is not None:
+        query["is_public"] = is_public
+    
+    total = await db.agents.count_documents(query)
     
     agents = await db.agents.find(
-        {}, 
+        query, 
         {"_id": 0}
     ).sort("created_at", -1).skip(skip).limit(limit).to_list(limit)
     
@@ -248,21 +295,109 @@ async def list_all_agents(
             {"_id": 0, "result": 1}
         ).to_list(10000)
         
-        score, tier, _, _ = calculate_score_and_tier(outcomes)
+        score, agent_tier, _, _ = calculate_score_and_tier(outcomes)
+        
+        # Apply tier filter if specified (post-query since tier is computed)
+        if tier and agent_tier != tier:
+            continue
         
         result.append(AdminAgentResponse(
             agent_id=agent["agent_id"],
             name=agent["name"],
+            description=agent.get("description"),
             owner_email=owner_email,
             owner_id=agent["user_id"],
             score=score,
-            tier=tier,
+            tier=agent_tier,
             outcome_count=len(outcomes),
             is_public=agent.get("is_public", False),
             created_at=agent["created_at"]
         ))
     
+    # Adjust total if tier filter was applied
+    if tier:
+        total = len(result)
+    
     return AdminAgentListResponse(agents=result, total=total)
+
+
+@router.get("/agents/{agent_id}", response_model=AdminAgentDetailResponse)
+async def get_agent_detail(agent_id: str, admin: dict = Depends(get_admin_user)):
+    """Get detailed info for a single agent (admin only)"""
+    from core.exceptions import APIError, ErrorCodes
+    
+    agent = await db.agents.find_one({"agent_id": agent_id}, {"_id": 0})
+    
+    if not agent:
+        raise APIError(
+            code=ErrorCodes.AGENT_NOT_FOUND,
+            message=f"Agent '{agent_id}' not found.",
+            status_code=404
+        )
+    
+    # Get owner info
+    owner = await db.users.find_one({"id": agent["user_id"]}, {"_id": 0, "email": 1})
+    owner_email = owner["email"] if owner else "unknown"
+    
+    # Get all outcomes for score calculation
+    all_outcomes = await db.outcomes.find(
+        {"agent_id": agent_id}, 
+        {"_id": 0}
+    ).to_list(10000)
+    
+    score, tier, success_rate, breakdown = calculate_score_and_tier(all_outcomes)
+    
+    # Get recent outcomes (last 20)
+    recent_outcomes_raw = await db.outcomes.find(
+        {"agent_id": agent_id}, 
+        {"_id": 0}
+    ).sort("created_at", -1).limit(20).to_list(20)
+    
+    recent_outcomes = [
+        AdminOutcomeResponse(
+            id=o["id"],
+            result=o["result"],
+            task_type=o["task_type"],
+            submitter_type=o["submitter_type"],
+            created_at=o["created_at"]
+        ) for o in recent_outcomes_raw
+    ]
+    
+    # Get flags
+    flags_raw = await db.flags.find(
+        {"agent_id": agent_id}, 
+        {"_id": 0}
+    ).sort("created_at", -1).to_list(100)
+    
+    flags = [
+        AdminFlagResponse(
+            id=f["id"],
+            outcome_id=f.get("outcome_id"),
+            reason=f["reason"],
+            notes=f.get("notes"),
+            created_by_user_id=f["created_by_user_id"],
+            created_at=f["created_at"]
+        ) for f in flags_raw
+    ]
+    
+    return AdminAgentDetailResponse(
+        agent_id=agent["agent_id"],
+        name=agent["name"],
+        description=agent.get("description"),
+        owner_handle=agent.get("owner_handle"),
+        owner_id=agent["user_id"],
+        owner_email=owner_email,
+        score=score,
+        tier=tier,
+        outcome_count=len(all_outcomes),
+        success_rate=success_rate,
+        is_public=agent.get("is_public", False),
+        created_at=agent["created_at"],
+        breakdown=breakdown,
+        recent_outcomes=recent_outcomes,
+        flags=flags,
+        flags_count=len(flags)
+    )
 
 
 @router.get("/me")

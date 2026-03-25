@@ -210,8 +210,18 @@ export const adminAPI = {
     return response.data;
   },
 
-  getAgents: async (limit = 50, skip = 0) => {
-    const response = await apiClient.get(`/admin/agents?limit=${limit}&skip=${skip}`);
+  getAgents: async (limit = 50, skip = 0, filters = {}) => {
+    const params = new URLSearchParams({ limit, skip });
+    if (filters.tier) params.append('tier', filters.tier);
+    if (filters.is_public !== undefined && filters.is_public !== null) {
+      params.append('is_public', filters.is_public);
+    }
+    const response = await apiClient.get(`/admin/agents?${params.toString()}`);
+    return response.data;
+  },
+
+  getAgent: async (agentId) => {
+    const response = await apiClient.get(`/admin/agents/${agentId}`);
     return response.data;
   },
 
