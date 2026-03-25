@@ -7,7 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks, Response
 from core.database import db
 from core.dependencies import get_user_from_api_key
 from core.exceptions import APIError, ErrorCodes
-from models.agents import AgentCreate, AgentCreateResponse, AgentListResponse, DemoAgentResponse
+from models.agents import AgentCreate, AgentCreateResponse, AgentListResponse, DemoAgentResponse, AgentPublicToggle, AgentPublicProfile
 from models.outcomes import OutcomeCreate, OutcomeResponse, PaginatedOutcomesResponse, ScoreResponse, OutcomeBreakdown
 from models.flags import FlagCreate, FlagResponse, FlagListResponse
 from services.score_service import calculate_score_and_tier, generate_badge_svg
@@ -30,7 +30,8 @@ async def create_agent(data: AgentCreate, user: dict = Depends(get_user_from_api
         "name": data.name,
         "description": data.description,
         "owner_handle": data.owner_handle,
-        "created_at": now
+        "created_at": now,
+        "is_public": False  # Default to private
     }
     
     await db.agents.insert_one(agent_doc)
@@ -71,7 +72,8 @@ async def list_agents(user: dict = Depends(get_user_from_api_key)):
             score=score,
             tier=tier,
             outcome_count=len(outcomes),
-            success_rate=success_rate
+            success_rate=success_rate,
+            is_public=a.get("is_public", False)
         ))
     
     return result
@@ -105,7 +107,8 @@ async def create_demo_agent(user: dict = Depends(get_user_from_api_key)):
                 score=score,
                 tier=tier,
                 outcome_count=len(outcomes),
-                success_rate=success_rate
+                success_rate=success_rate,
+                is_public=existing_demo.get("is_public", False)
             ),
             message="Demo agent already exists for your account.",
             is_new=False
@@ -122,7 +125,8 @@ async def create_demo_agent(user: dict = Depends(get_user_from_api_key)):
         "description": "Demo agent with sample outcomes - shows how RepLedger tracks agent performance",
         "owner_handle": "@demo",
         "created_at": now,
-        "is_demo": True
+        "is_demo": True,
+        "is_public": False
     }
     
     await db.agents.insert_one(agent_doc)
@@ -178,7 +182,8 @@ async def create_demo_agent(user: dict = Depends(get_user_from_api_key)):
             score=score,
             tier=tier,
             outcome_count=len(outcomes),
-            success_rate=success_rate
+            success_rate=success_rate,
+            is_public=False
         ),
         message="Demo agent created with 15 sample outcomes!",
         is_new=True
@@ -224,7 +229,51 @@ async def get_agent(agent_id: str, user: dict = Depends(get_user_from_api_key)):
         score=score,
         tier=tier,
         outcome_count=len(outcomes),
-        success_rate=success_rate
+        success_rate=success_rate,
+        is_public=agent.get("is_public", False)
+    )
+
+
+@router.patch("/{agent_id}/public", response_model=AgentListResponse)
+async def toggle_agent_public(agent_id: str, data: AgentPublicToggle, user: dict = Depends(get_user_from_api_key)):
+    """Toggle agent's public visibility"""
+    agent = await db.agents.find_one(
+        {"agent_id": agent_id, "user_id": user["id"]}, 
+        {"_id": 0}
+    )
+    if not agent:
+        raise APIError(
+            code=ErrorCodes.AGENT_NOT_FOUND,
+            message=f"Agent '{agent_id}' not found.",
+            status_code=404,
+            details={"agent_id": agent_id}
+        )
+    
+    # Update is_public
+    await db.agents.update_one(
+        {"agent_id": agent_id},
+        {"$set": {"is_public": data.is_public}}
+    )
+    
+    # Get updated agent with score
+    outcomes = await db.outcomes.find(
+        {"agent_id": agent_id}, 
+        {"_id": 0}
+    ).to_list(10000)
+    
+    score, tier, success_rate, _ = calculate_score_and_tier(outcomes)
+    
+    return AgentListResponse(
+        agent_id=agent["agent_id"],
+        name=agent["name"],
+        description=agent.get("description"),
+        owner_handle=agent.get("owner_handle"),
+        created_at=agent["created_at"],
+        score=score,
+        tier=tier,
+        outcome_count=len(outcomes),
+        success_rate=success_rate,
+        is_public=data.is_public
     )
 
 

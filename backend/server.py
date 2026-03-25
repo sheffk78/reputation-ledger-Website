@@ -148,6 +148,48 @@ async def health():
     return {"status": "healthy"}
 
 
+# ============== PUBLIC ROUTES ==============
+
+from core.database import db
+from services.score_service import calculate_score_and_tier
+from models.agents import AgentPublicProfile
+
+
+@api_router.get("/public/agents/{agent_id}", response_model=AgentPublicProfile)
+async def get_public_agent_profile(agent_id: str):
+    """
+    Get public agent profile (no authentication required).
+    Returns limited data if agent has is_public=true.
+    """
+    agent = await db.agents.find_one({"agent_id": agent_id}, {"_id": 0})
+    
+    if not agent:
+        raise HTTPException(status_code=404, detail="Agent not found")
+    
+    if not agent.get("is_public", False):
+        raise HTTPException(status_code=404, detail="This agent profile is not publicly available")
+    
+    # Get outcomes for score calculation
+    outcomes = await db.outcomes.find(
+        {"agent_id": agent_id}, 
+        {"_id": 0}
+    ).to_list(10000)
+    
+    score, tier, success_rate, breakdown = calculate_score_and_tier(outcomes)
+    
+    return AgentPublicProfile(
+        agent_id=agent["agent_id"],
+        name=agent["name"],
+        description=agent.get("description"),
+        owner_handle=agent.get("owner_handle"),
+        score=score,
+        tier=tier,
+        outcome_count=len(outcomes),
+        success_rate=success_rate,
+        breakdown=breakdown
+    )
+
+
 # ============== INCLUDE ROUTERS ==============
 
 # Auth routes (/api/auth/*)

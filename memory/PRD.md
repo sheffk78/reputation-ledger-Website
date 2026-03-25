@@ -149,6 +149,22 @@ Build a Phase 1 MVP of Agent Reputation Ledger (RepLedger) - a track record API 
 - ✅ Color-coded bars: green (success), red (failure), amber (partial), gray (timeout)
 - ✅ Shows success rate percentage and total outcome count
 
+### Phase 1.8 - Public Agent Profiles (March 2025)
+#### Backend
+- ✅ Added `is_public` boolean field to agents (default: false)
+- ✅ Added PATCH /api/v1/agents/{agent_id}/public endpoint to toggle visibility
+- ✅ Added GET /api/public/agents/{agent_id} public endpoint (no auth required)
+- ✅ Returns limited data: name, description, owner_handle, score, tier, outcome_count, success_rate, breakdown
+- ✅ Returns 404 "not publicly available" when is_public=false
+
+#### Frontend
+- ✅ Added "Public Profile" card on Agent Detail page with toggle switch
+- ✅ Shows shareable public URL when enabled
+- ✅ Created PublicAgentPage at /a/{agentId} route
+- ✅ Public page shows: name, tier badge, description, owner, SVG badge, stats cards, performance breakdown
+- ✅ "Profile Not Available" page when agent is not public
+- ✅ Styled consistently with marketing site (dark theme, Space Grotesk fonts)
+
 ### Scoring Logic
 - Score = (successful / total) * 100
 - Tiers:
@@ -167,6 +183,7 @@ Build a Phase 1 MVP of Agent Reputation Ledger (RepLedger) - a track record API 
 - ✅ Flags system for problematic outcomes
 - ✅ Backend code refactoring
 - ✅ Score breakdown API and UI
+- ✅ Public agent profiles
 
 ### P1 (High Priority - Phase 2)
 - ⬜ Outcome filtering by result type (success/failure/partial/timeout)
@@ -175,7 +192,6 @@ Build a Phase 1 MVP of Agent Reputation Ledger (RepLedger) - a track record API 
 - ⬜ Agent deletion
 
 ### P2 (Medium Priority)
-- ⬜ Public agent profiles
 - ⬜ AAV (Agent Authority Vault) integration
 - ⬜ Safe-Spend integration
 - ⬜ Multi-tenant organizations/teams
@@ -226,6 +242,7 @@ Build a Phase 1 MVP of Agent Reputation Ledger (RepLedger) - a track record API 
 - `/signup` - Create account (public)
 - `/dashboard` - Main dashboard (protected)
 - `/agents/:agentId` - Agent detail (protected)
+- `/a/:agentId` - Public agent profile (public, read-only)
 
 ## API Endpoints
 | Endpoint | Method | Auth | Description |
@@ -234,12 +251,14 @@ Build a Phase 1 MVP of Agent Reputation Ledger (RepLedger) - a track record API 
 | /api/v1/agents | GET | API Key | List agents |
 | /api/v1/agents/demo | POST | API Key | Create demo agent |
 | /api/v1/agents/{id} | GET | API Key | Get agent |
+| /api/v1/agents/{id}/public | PATCH | API Key | Toggle public visibility |
 | /api/v1/agents/{id}/outcomes | POST | API Key | Submit outcome |
 | /api/v1/agents/{id}/outcomes | GET | API Key | List outcomes (paginated) |
 | /api/v1/agents/{id}/score | GET | API Key | Get score |
 | /api/v1/agents/{id}/badge.svg | GET | Public | SVG badge |
 | /api/v1/agents/{id}/flags | POST | API Key | Create flag |
 | /api/v1/agents/{id}/flags | GET | API Key | List flags |
+| /api/public/agents/{id} | GET | Public | Get public agent profile |
 | /api/v1/webhooks | POST | API Key | Create webhook |
 | /api/v1/webhooks | GET | API Key | List webhooks |
 | /api/v1/webhooks/{id} | GET | API Key | Get webhook |

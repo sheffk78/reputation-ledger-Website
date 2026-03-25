@@ -28,6 +28,25 @@ class AgentListResponse(BaseModel):
     tier: str = "Unrated"
     outcome_count: int = 0
     success_rate: float = 0
+    is_public: bool = False
+
+
+class AgentPublicToggle(BaseModel):
+    """Request to toggle public visibility"""
+    is_public: bool
+
+
+class AgentPublicProfile(BaseModel):
+    """Public-facing agent profile (limited data)"""
+    agent_id: str
+    name: str
+    description: Optional[str] = None
+    owner_handle: Optional[str] = None
+    score: float
+    tier: str
+    outcome_count: int
+    success_rate: float
+    breakdown: dict
 
 
 class DemoAgentResponse(BaseModel):

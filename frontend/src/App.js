@@ -11,6 +11,7 @@ import LoginPage from "./pages/LoginPage";
 import SignupPage from "./pages/SignupPage";
 import DashboardPage from "./pages/DashboardPage";
 import AgentDetailPage from "./pages/AgentDetailPage";
+import PublicAgentPage from "./pages/PublicAgentPage";
 
 // Protected route wrapper
 function ProtectedRoute({ children }) {
@@ -56,6 +57,9 @@ function AppRoutes() {
       {/* Public marketing pages */}
       <Route path="/" element={<HomePage />} />
       <Route path="/developers" element={<DevelopersPage />} />
+      
+      {/* Public agent profile */}
+      <Route path="/a/:agentId" element={<PublicAgentPage />} />
 
       {/* Auth routes */}
       <Route

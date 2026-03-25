@@ -59,9 +59,13 @@ export default function AgentDetailPage() {
   const [flaggingOutcome, setFlaggingOutcome] = useState(null);
   const [creatingFlag, setCreatingFlag] = useState(false);
   const [flagForm, setFlagForm] = useState({ reason: "", notes: "" });
+  
+  // Public toggle state
+  const [togglingPublic, setTogglingPublic] = useState(false);
 
   const badgeUrl = `${BACKEND_URL}/api/v1/agents/${agentId}/badge.svg`;
   const embedSnippet = `<img src="${badgeUrl}" alt="RepLedger score badge" />`;
+  const publicProfileUrl = `${window.location.origin}/a/${agentId}`;
 
   const totalPages = Math.ceil(totalOutcomes / PAGE_SIZE);
 
@@ -118,6 +122,23 @@ export default function AgentDetailPage() {
       setFlags(flagsData.flags || []);
     } catch (error) {
       console.error("Failed to load flags:", error);
+    }
+  };
+
+  const handleTogglePublic = async () => {
+    if (togglingPublic) return;
+    
+    setTogglingPublic(true);
+    try {
+      const newIsPublic = !agent.is_public;
+      const updatedAgent = await agentsAPI.togglePublic(agentId, newIsPublic);
+      setAgent(updatedAgent);
+      toast.success(newIsPublic ? "Public profile enabled" : "Public profile disabled");
+    } catch (error) {
+      console.error("Failed to toggle public:", error);
+      toast.error("Failed to update public visibility");
+    } finally {
+      setTogglingPublic(false);
     }
   };
 
@@ -367,6 +388,73 @@ export default function AgentDetailPage() {
                 </div>
               </div>
             </div>
+          </div>
+
+          {/* Public Profile Card */}
+          <div className="card-surface p-5" data-testid="public-profile-card">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-sm bg-[#01696F]/15 flex items-center justify-center">
+                  <svg className="w-4 h-4 text-[#01696F]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <circle cx="12" cy="12" r="10" />
+                    <path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+                  </svg>
+                </div>
+                <div>
+                  <h2 className="text-[14px] font-semibold text-white">Public Profile</h2>
+                  <p className="text-[12px] text-[#6B7280]">
+                    {agent.is_public ? "Shareable link is active" : "Enable to share your agent's reputation"}
+                  </p>
+                </div>
+              </div>
+              
+              {/* Toggle switch */}
+              <button
+                onClick={handleTogglePublic}
+                disabled={togglingPublic}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-[#01696F] focus:ring-offset-2 focus:ring-offset-[#0C1116] ${
+                  agent.is_public ? "bg-[#01696F]" : "bg-[#1F2933]"
+                }`}
+                data-testid="public-toggle"
+              >
+                <span
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                    agent.is_public ? "translate-x-6" : "translate-x-1"
+                  } ${togglingPublic ? "opacity-50" : ""}`}
+                />
+              </button>
+            </div>
+            
+            {agent.is_public && (
+              <div className="pt-4 border-t border-white/[0.06]">
+                <label className="form-label">Public URL</label>
+                <div className="flex items-center gap-2">
+                  <code className="code-snippet flex-1 truncate">{publicProfileUrl}</code>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleCopy(publicProfileUrl, "publicUrl")}
+                    data-testid="copy-public-url"
+                    className="border-white/[0.08] bg-transparent text-white hover:bg-white/5 h-9 px-3"
+                  >
+                    {copiedField === "publicUrl" ? (
+                      <Check className="w-3.5 h-3.5 text-[#22C55E]" />
+                    ) : (
+                      <Copy className="w-3.5 h-3.5" />
+                    )}
+                  </Button>
+                  <a
+                    href={publicProfileUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    data-testid="open-public-profile"
+                    className="inline-flex items-center justify-center h-9 px-3 rounded-sm border border-white/[0.08] hover:bg-white/5 transition-colors"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5 text-[#6B7280]" />
+                  </a>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Score Breakdown Card */}

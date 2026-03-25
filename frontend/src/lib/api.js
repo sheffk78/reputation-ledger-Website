@@ -106,6 +106,16 @@ export const agentsAPI = {
     const response = await apiClientV1.get(`/agents/${agentId}/score`);
     return response.data;
   },
+
+  togglePublic: async (agentId, isPublic) => {
+    const response = await apiClientV1.patch(`/agents/${agentId}/public`, { is_public: isPublic });
+    return response.data;
+  },
+
+  getPublicProfile: async (agentId) => {
+    const response = await apiClient.get(`/public/agents/${agentId}`);
+    return response.data;
+  },
 };
 
 // Outcomes API (v1)
