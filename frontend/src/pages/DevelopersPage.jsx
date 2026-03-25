@@ -228,6 +228,39 @@ export default function DevelopersPage() {
 />`} />
                 </div>
               </div>
+
+              {/* Step 5: Webhooks */}
+              <div className="mb-12">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-7 h-7 rounded-sm bg-[#01696F]/15 flex items-center justify-center">
+                    <span className="text-[#01696F] font-mono font-bold text-[12px]">5</span>
+                  </div>
+                  <h3 className="text-[16px] font-semibold text-white">Subscribe to webhooks (optional)</h3>
+                </div>
+                <p className="text-[14px] text-[#9CA3AF] mb-4 ml-10">
+                  Get notified in real-time when outcomes are logged:
+                </p>
+                <div className="ml-10 space-y-4">
+                  <CodeBlock code={`curl -X POST ${BASE_URL}/v1/webhooks \\
+  -H "Authorization: Bearer YOUR_API_KEY" \\
+  -H "Content-Type: application/json" \\
+  -d '{"url": "https://your-server.com/webhook", "events": ["outcome.created"]}'`} />
+                  <p className="text-[12px] text-[#6B7280]">When an outcome is logged, we'll POST to your URL:</p>
+                  <CodeBlock code={`{
+  "event": "outcome.created",
+  "timestamp": "2024-01-15T10:30:00Z",
+  "data": {
+    "outcome_id": "abc123",
+    "agent_id": "agt_12345",
+    "agent_name": "support-bot",
+    "result": "success",
+    "task_type": "support-ticket",
+    "score": 82,
+    "tier": "Gold"
+  }
+}`} />
+                </div>
+              </div>
             </section>
 
             {/* Reference Summary */}
@@ -276,12 +309,33 @@ export default function DevelopersPage() {
                       </td>
                       <td className="px-5 py-3 text-[#9CA3AF]">Get the current reputation score, trust tier, and stats.</td>
                     </tr>
-                    <tr>
+                    <tr className="border-b border-white/[0.04]">
                       <td className="px-5 py-3">
                         <code className="text-[#3B82F6] font-mono">GET</code>
                         <code className="text-white font-mono ml-2">/v1/agents/{"{agent_id}"}/badge.svg</code>
                       </td>
                       <td className="px-5 py-3 text-[#9CA3AF]">Get an embeddable SVG badge (public, no auth).</td>
+                    </tr>
+                    <tr className="border-b border-white/[0.04]">
+                      <td className="px-5 py-3">
+                        <code className="text-[#22C55E] font-mono">POST</code>
+                        <code className="text-white font-mono ml-2">/v1/webhooks</code>
+                      </td>
+                      <td className="px-5 py-3 text-[#9CA3AF]">Create a webhook subscription for outcome events.</td>
+                    </tr>
+                    <tr className="border-b border-white/[0.04]">
+                      <td className="px-5 py-3">
+                        <code className="text-[#3B82F6] font-mono">GET</code>
+                        <code className="text-white font-mono ml-2">/v1/webhooks</code>
+                      </td>
+                      <td className="px-5 py-3 text-[#9CA3AF]">List all active webhooks for the authenticated user.</td>
+                    </tr>
+                    <tr>
+                      <td className="px-5 py-3">
+                        <code className="text-[#EF4444] font-mono">DELETE</code>
+                        <code className="text-white font-mono ml-2">/v1/webhooks/{"{webhook_id}"}</code>
+                      </td>
+                      <td className="px-5 py-3 text-[#9CA3AF]">Delete a webhook subscription.</td>
                     </tr>
                   </tbody>
                 </table>
