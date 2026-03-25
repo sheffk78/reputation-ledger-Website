@@ -259,6 +259,20 @@ export const adminAPI = {
     await apiClient.delete(`/admin/agents/${agentId}`);
   },
 
+  updateAgent: async (agentId, data) => {
+    const response = await apiClient.patch(`/admin/agents/${agentId}`, data);
+    return response.data;
+  },
+
+  toggleUserRole: async (userId, isAdmin) => {
+    const response = await apiClient.patch(`/admin/users/${userId}/role`, { is_admin: isAdmin });
+    return response.data;
+  },
+
+  deleteUser: async (userId) => {
+    await apiClient.delete(`/admin/users/${userId}`);
+  },
+
   getApiKeys: async (limit = 50, skip = 0, status = null) => {
     const params = new URLSearchParams({ limit, skip });
     if (status) params.append('status', status);

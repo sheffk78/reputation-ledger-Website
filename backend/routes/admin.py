@@ -506,6 +506,229 @@ async def admin_delete_agent(
     return None
 
 
+# ============== USER MANAGEMENT ==============
+
+class AdminToggleUserRole(BaseModel):
+    """Request to toggle user's admin status"""
+    is_admin: bool
+
+
+class AdminUpdateAgent(BaseModel):
+    """Request to update agent details"""
+    name: Optional[str] = None
+    description: Optional[str] = None
+
+
+@router.patch("/users/{user_id}/role", response_model=AdminUserResponse)
+async def admin_toggle_user_role(
+    user_id: str,
+    data: AdminToggleUserRole,
+    admin: dict = Depends(get_admin_user)
+):
+    """Toggle a user's admin status (admin only)"""
+    # Prevent admin from demoting themselves
+    if user_id == admin["id"] and not data.is_admin:
+        raise APIError(
+            code=ErrorCodes.VALIDATION_ERROR,
+            message="You cannot remove your own admin privileges.",
+            status_code=400,
+            details={"user_id": user_id}
+        )
+    
+    # Find user
+    user = await db.users.find_one({"id": user_id}, {"_id": 0, "password_hash": 0})
+    
+    if not user:
+        raise APIError(
+            code=ErrorCodes.USER_NOT_FOUND,
+            message=f"User '{user_id}' not found.",
+            status_code=404,
+            details={"user_id": user_id}
+        )
+    
+    # Update admin status
+    await db.users.update_one(
+        {"id": user_id},
+        {"$set": {"is_admin": data.is_admin}}
+    )
+    
+    # Get updated stats
+    agent_count = await db.agents.count_documents({"user_id": user_id})
+    agents = await db.agents.find(
+        {"user_id": user_id}, 
+        {"agent_id": 1, "_id": 0}
+    ).to_list(1000)
+    agent_ids = [a["agent_id"] for a in agents]
+    outcome_count = await db.outcomes.count_documents({"agent_id": {"$in": agent_ids}}) if agent_ids else 0
+    
+    return AdminUserResponse(
+        id=user["id"],
+        email=user["email"],
+        is_admin=data.is_admin,
+        created_at=user["created_at"],
+        last_login_at=user.get("last_login_at"),
+        agent_count=agent_count,
+        outcome_count=outcome_count
+    )
+
+
+@router.delete("/users/{user_id}", status_code=204)
+async def admin_delete_user(
+    user_id: str,
+    admin: dict = Depends(get_admin_user)
+):
+    """Delete a user and all their data (admin only)"""
+    # Prevent admin from deleting themselves
+    if user_id == admin["id"]:
+        raise APIError(
+            code=ErrorCodes.VALIDATION_ERROR,
+            message="You cannot delete your own account from admin panel.",
+            status_code=400,
+            details={"user_id": user_id}
+        )
+    
+    # Find user
+    user = await db.users.find_one({"id": user_id}, {"_id": 0})
+    
+    if not user:
+        raise APIError(
+            code=ErrorCodes.USER_NOT_FOUND,
+            message=f"User '{user_id}' not found.",
+            status_code=404,
+            details={"user_id": user_id}
+        )
+    
+    # Get all agents for this user
+    agents = await db.agents.find(
+        {"user_id": user_id}, 
+        {"agent_id": 1, "_id": 0}
+    ).to_list(1000)
+    agent_ids = [a["agent_id"] for a in agents]
+    
+    # Delete all associated data
+    if agent_ids:
+        await db.outcomes.delete_many({"agent_id": {"$in": agent_ids}})
+        await db.flags.delete_many({"agent_id": {"$in": agent_ids}})
+        await db.agents.delete_many({"user_id": user_id})
+    
+    # Delete webhooks
+    await db.webhooks.delete_many({"user_id": user_id})
+    
+    # Delete API keys
+    await db.api_keys.delete_many({"user_id": user_id})
+    
+    # Delete the user
+    await db.users.delete_one({"id": user_id})
+    
+    return None
+
+
+@router.patch("/agents/{agent_id}", response_model=AdminAgentDetailResponse)
+async def admin_update_agent(
+    agent_id: str,
+    data: AdminUpdateAgent,
+    admin: dict = Depends(get_admin_user)
+):
+    """Update an agent's details (admin only)"""
+    # Find agent
+    agent = await db.agents.find_one({"agent_id": agent_id}, {"_id": 0})
+    
+    if not agent:
+        raise APIError(
+            code=ErrorCodes.AGENT_NOT_FOUND,
+            message=f"Agent '{agent_id}' not found.",
+            status_code=404,
+            details={"agent_id": agent_id}
+        )
+    
+    # Build update dict
+    update_fields = {}
+    if data.name is not None:
+        update_fields["name"] = data.name
+    if data.description is not None:
+        update_fields["description"] = data.description
+    
+    if not update_fields:
+        raise APIError(
+            code=ErrorCodes.VALIDATION_ERROR,
+            message="No fields to update provided.",
+            status_code=400
+        )
+    
+    # Update agent
+    await db.agents.update_one(
+        {"agent_id": agent_id},
+        {"$set": update_fields}
+    )
+    
+    # Return full agent detail response
+    updated_agent = await db.agents.find_one({"agent_id": agent_id}, {"_id": 0})
+    
+    # Get owner info
+    owner = await db.users.find_one({"id": updated_agent["user_id"]}, {"_id": 0, "email": 1})
+    owner_email = owner["email"] if owner else "unknown"
+    
+    # Get all outcomes for score calculation
+    all_outcomes = await db.outcomes.find(
+        {"agent_id": agent_id}, 
+        {"_id": 0}
+    ).to_list(10000)
+    
+    score, tier, success_rate, breakdown = calculate_score_and_tier(all_outcomes)
+    
+    # Get recent outcomes (last 20)
+    recent_outcomes_raw = await db.outcomes.find(
+        {"agent_id": agent_id}, 
+        {"_id": 0}
+    ).sort("created_at", -1).limit(20).to_list(20)
+    
+    recent_outcomes = [
+        AdminOutcomeResponse(
+            id=o["id"],
+            result=o["result"],
+            task_type=o["task_type"],
+            submitter_type=o["submitter_type"],
+            created_at=o["created_at"]
+        ) for o in recent_outcomes_raw
+    ]
+    
+    # Get flags
+    flags_raw = await db.flags.find(
+        {"agent_id": agent_id}, 
+        {"_id": 0}
+    ).sort("created_at", -1).to_list(100)
+    
+    flags = [
+        AdminFlagResponse(
+            id=f["id"],
+            outcome_id=f.get("outcome_id"),
+            reason=f["reason"],
+            notes=f.get("notes"),
+            created_by_user_id=f["created_by_user_id"],
+            created_at=f["created_at"]
+        ) for f in flags_raw
+    ]
+    
+    return AdminAgentDetailResponse(
+        agent_id=updated_agent["agent_id"],
+        name=updated_agent["name"],
+        description=updated_agent.get("description"),
+        owner_handle=updated_agent.get("owner_handle"),
+        owner_id=updated_agent["user_id"],
+        owner_email=owner_email,
+        score=score,
+        tier=tier,
+        outcome_count=len(all_outcomes),
+        success_rate=success_rate,
+        is_public=updated_agent.get("is_public", False),
+        created_at=updated_agent["created_at"],
+        breakdown=breakdown,
+        recent_outcomes=recent_outcomes,
+        flags=flags,
+        flags_count=len(flags)
+    )
+
+
 @router.get("/audit-logs", response_model=AuditLogListResponse)
 async def list_audit_logs(
     page: int = 1,

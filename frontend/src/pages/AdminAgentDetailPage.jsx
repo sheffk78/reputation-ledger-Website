@@ -18,8 +18,23 @@ import {
   CheckCircle,
   XCircle,
   AlertCircle,
-  Timer
+  Timer,
+  Pencil,
+  Trash2,
+  X,
+  Check
 } from "lucide-react";
+import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "../components/ui/alert-dialog";
 
 // Result icons
 const resultIcons = {
@@ -38,6 +53,11 @@ export default function AdminAgentDetailPage() {
   const [accessDenied, setAccessDenied] = useState(false);
   const [agentData, setAgentData] = useState(null);
   const [error, setError] = useState(null);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [actionLoading, setActionLoading] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editName, setEditName] = useState("");
+  const [editDescription, setEditDescription] = useState("");
 
   useEffect(() => {
     loadAgentData();
@@ -70,6 +90,58 @@ export default function AdminAgentDetailPage() {
   const handleLogout = () => {
     logout();
     navigate("/");
+  };
+
+  const startEditing = () => {
+    setEditName(agentData?.name || "");
+    setEditDescription(agentData?.description || "");
+    setIsEditing(true);
+  };
+
+  const cancelEditing = () => {
+    setIsEditing(false);
+    setEditName("");
+    setEditDescription("");
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editName.trim()) {
+      toast.error("Agent name is required");
+      return;
+    }
+
+    try {
+      setActionLoading(true);
+      const updatedAgent = await adminAPI.updateAgent(agentId, {
+        name: editName.trim(),
+        description: editDescription.trim() || null
+      });
+      setAgentData(updatedAgent);
+      setIsEditing(false);
+      toast.success("Agent updated successfully");
+    } catch (err) {
+      console.error("Failed to update agent:", err);
+      const message = err.response?.data?.error?.message || "Failed to update agent";
+      toast.error(message);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleDeleteAgent = async () => {
+    try {
+      setActionLoading(true);
+      await adminAPI.deleteAgent(agentId);
+      toast.success("Agent deleted successfully");
+      navigate("/admin");
+    } catch (err) {
+      console.error("Failed to delete agent:", err);
+      const message = err.response?.data?.error?.message || "Failed to delete agent";
+      toast.error(message);
+    } finally {
+      setActionLoading(false);
+      setShowDeleteDialog(false);
+    }
   };
 
   if (loading) {
@@ -206,30 +278,99 @@ export default function AdminAgentDetailPage() {
                 <div className="w-14 h-14 rounded-lg bg-[#01696F]/20 flex items-center justify-center">
                   <Bot className="w-7 h-7 text-[#01696F]" />
                 </div>
-                <div>
-                  <div className="flex items-center gap-3">
-                    <h2 className="text-xl font-semibold text-white font-['Space_Grotesk']">
-                      {agentData?.name}
-                    </h2>
-                    <TierBadge tier={agentData?.tier} />
-                    {agentData?.is_public && (
-                      <span className="flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-green-500/20 text-green-400">
-                        <Globe className="w-3 h-3" />
-                        Public
-                      </span>
-                    )}
-                  </div>
-                  {agentData?.description && (
-                    <p className="text-sm text-gray-400 mt-1">{agentData?.description}</p>
+                <div className="flex-1">
+                  {isEditing ? (
+                    <div className="space-y-3">
+                      <input
+                        type="text"
+                        value={editName}
+                        onChange={(e) => setEditName(e.target.value)}
+                        className="w-full bg-[#0C1116] border border-white/10 rounded-lg px-3 py-2 text-white text-lg font-semibold focus:outline-none focus:ring-1 focus:ring-[#01696F]"
+                        placeholder="Agent name"
+                        data-testid="edit-agent-name"
+                      />
+                      <input
+                        type="text"
+                        value={editDescription}
+                        onChange={(e) => setEditDescription(e.target.value)}
+                        className="w-full bg-[#0C1116] border border-white/10 rounded-lg px-3 py-2 text-gray-300 text-sm focus:outline-none focus:ring-1 focus:ring-[#01696F]"
+                        placeholder="Description (optional)"
+                        data-testid="edit-agent-description"
+                      />
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={handleSaveEdit}
+                          disabled={actionLoading}
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium bg-[#01696F] text-white hover:bg-[#015858] transition-colors disabled:opacity-50"
+                          data-testid="save-agent-edit-btn"
+                        >
+                          {actionLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+                          Save
+                        </button>
+                        <button
+                          onClick={cancelEditing}
+                          disabled={actionLoading}
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium bg-gray-700 text-gray-300 hover:bg-gray-600 transition-colors disabled:opacity-50"
+                          data-testid="cancel-agent-edit-btn"
+                        >
+                          <X className="w-4 h-4" />
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="flex items-center gap-3">
+                        <h2 className="text-xl font-semibold text-white font-['Space_Grotesk']">
+                          {agentData?.name}
+                        </h2>
+                        <TierBadge tier={agentData?.tier} />
+                        {agentData?.is_public && (
+                          <span className="flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-green-500/20 text-green-400">
+                            <Globe className="w-3 h-3" />
+                            Public
+                          </span>
+                        )}
+                      </div>
+                      {agentData?.description && (
+                        <p className="text-sm text-gray-400 mt-1">{agentData?.description}</p>
+                      )}
+                      <p className="text-xs text-gray-500 mt-2 font-mono">{agentData?.agent_id}</p>
+                    </>
                   )}
-                  <p className="text-xs text-gray-500 mt-2 font-mono">{agentData?.agent_id}</p>
                 </div>
               </div>
-              <div className="text-right">
-                <p className="text-4xl font-bold text-white font-['Space_Grotesk']">
-                  {agentData?.score}
-                </p>
-                <p className="text-xs text-gray-500">RepLedger Score</p>
+              
+              {/* Score + Actions */}
+              <div className="flex items-start gap-6">
+                {!isEditing && (
+                  <div className="text-right">
+                    <p className="text-4xl font-bold text-white font-['Space_Grotesk']">
+                      {agentData?.score}
+                    </p>
+                    <p className="text-xs text-gray-500">RepLedger Score</p>
+                  </div>
+                )}
+                {!isEditing && (
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={startEditing}
+                      className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium bg-[#01696F]/10 text-[#01696F] hover:bg-[#01696F]/20 transition-colors"
+                      data-testid="edit-agent-btn"
+                    >
+                      <Pencil className="w-4 h-4" />
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => setShowDeleteDialog(true)}
+                      className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-colors"
+                      data-testid="delete-agent-btn"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      Delete
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -396,6 +537,46 @@ export default function AdminAgentDetailPage() {
           </div>
         </div>
       </main>
+
+      {/* Delete Agent Confirmation Dialog */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent className="bg-[#0C1116] border border-white/10">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-white">Delete Agent</AlertDialogTitle>
+            <AlertDialogDescription className="text-gray-400">
+              Are you sure you want to delete <span className="text-white font-medium">{agentData?.name}</span>?
+              <br /><br />
+              This will permanently delete:
+              <ul className="list-disc list-inside mt-2 text-gray-500">
+                <li>{agentData?.outcome_count} outcome{agentData?.outcome_count !== 1 ? 's' : ''}</li>
+                <li>{agentData?.flags_count} flag{agentData?.flags_count !== 1 ? 's' : ''}</li>
+              </ul>
+              <br />
+              <span className="text-red-400">This action cannot be undone.</span>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel 
+              className="bg-transparent border-white/10 text-gray-400 hover:bg-white/5 hover:text-white"
+              disabled={actionLoading}
+            >
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteAgent}
+              disabled={actionLoading}
+              className="bg-red-600 text-white hover:bg-red-700"
+              data-testid="confirm-delete-agent-btn"
+            >
+              {actionLoading ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                "Delete Agent"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

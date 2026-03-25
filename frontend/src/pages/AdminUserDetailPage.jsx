@@ -13,8 +13,22 @@ import {
   Globe,
   Calendar,
   Mail,
-  Zap
+  Zap,
+  ShieldCheck,
+  ShieldOff,
+  Trash2
 } from "lucide-react";
+import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "../components/ui/alert-dialog";
 
 export default function AdminUserDetailPage() {
   const { userId } = useParams();
@@ -25,6 +39,8 @@ export default function AdminUserDetailPage() {
   const [accessDenied, setAccessDenied] = useState(false);
   const [userData, setUserData] = useState(null);
   const [error, setError] = useState(null);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [actionLoading, setActionLoading] = useState(false);
 
   useEffect(() => {
     loadUserData();
@@ -61,6 +77,39 @@ export default function AdminUserDetailPage() {
     logout();
     navigate("/");
   };
+
+  const handleToggleAdmin = async () => {
+    try {
+      setActionLoading(true);
+      const updatedUser = await adminAPI.toggleUserRole(userId, !userData.is_admin);
+      setUserData(prev => ({ ...prev, is_admin: updatedUser.is_admin }));
+      toast.success(updatedUser.is_admin ? "User promoted to admin" : "Admin privileges removed");
+    } catch (err) {
+      console.error("Failed to toggle admin status:", err);
+      const message = err.response?.data?.error?.message || "Failed to update user role";
+      toast.error(message);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleDeleteUser = async () => {
+    try {
+      setActionLoading(true);
+      await adminAPI.deleteUser(userId);
+      toast.success("User deleted successfully");
+      navigate("/admin");
+    } catch (err) {
+      console.error("Failed to delete user:", err);
+      const message = err.response?.data?.error?.message || "Failed to delete user";
+      toast.error(message);
+    } finally {
+      setActionLoading(false);
+      setShowDeleteDialog(false);
+    }
+  };
+
+  const isSelf = currentUser?.id === userId;
 
   if (loading) {
     return (
@@ -214,6 +263,48 @@ export default function AdminUserDetailPage() {
                   </div>
                 </div>
               </div>
+              
+              {/* Action Buttons */}
+              {!isSelf && (
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={handleToggleAdmin}
+                    disabled={actionLoading}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                      userData?.is_admin
+                        ? "bg-amber-500/10 text-amber-400 hover:bg-amber-500/20"
+                        : "bg-[#01696F]/10 text-[#01696F] hover:bg-[#01696F]/20"
+                    } disabled:opacity-50 disabled:cursor-not-allowed`}
+                    data-testid="toggle-admin-btn"
+                  >
+                    {userData?.is_admin ? (
+                      <>
+                        <ShieldOff className="w-4 h-4" />
+                        Remove Admin
+                      </>
+                    ) : (
+                      <>
+                        <ShieldCheck className="w-4 h-4" />
+                        Make Admin
+                      </>
+                    )}
+                  </button>
+                  <button
+                    onClick={() => setShowDeleteDialog(true)}
+                    disabled={actionLoading}
+                    className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    data-testid="delete-user-btn"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    Delete User
+                  </button>
+                </div>
+              )}
+              {isSelf && (
+                <span className="text-xs text-gray-500 px-3 py-1.5 rounded-lg bg-gray-800">
+                  This is your account
+                </span>
+              )}
             </div>
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -319,6 +410,48 @@ export default function AdminUserDetailPage() {
           </section>
         </div>
       </main>
+
+      {/* Delete User Confirmation Dialog */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent className="bg-[#0C1116] border border-white/10">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-white">Delete User</AlertDialogTitle>
+            <AlertDialogDescription className="text-gray-400">
+              Are you sure you want to delete <span className="text-white font-medium">{userData?.email}</span>?
+              <br /><br />
+              This will permanently delete:
+              <ul className="list-disc list-inside mt-2 text-gray-500">
+                <li>The user account</li>
+                <li>{userData?.agent_count} agent{userData?.agent_count !== 1 ? 's' : ''}</li>
+                <li>{userData?.outcome_count} outcome{userData?.outcome_count !== 1 ? 's' : ''}</li>
+                <li>All associated flags and webhooks</li>
+              </ul>
+              <br />
+              <span className="text-red-400">This action cannot be undone.</span>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel 
+              className="bg-transparent border-white/10 text-gray-400 hover:bg-white/5 hover:text-white"
+              disabled={actionLoading}
+            >
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteUser}
+              disabled={actionLoading}
+              className="bg-red-600 text-white hover:bg-red-700"
+              data-testid="confirm-delete-user-btn"
+            >
+              {actionLoading ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                "Delete User"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
