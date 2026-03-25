@@ -353,11 +353,16 @@ export default function AdminPage() {
                         <th className="text-left py-3 px-4 text-gray-500 font-medium">Agents</th>
                         <th className="text-left py-3 px-4 text-gray-500 font-medium">Outcomes</th>
                         <th className="text-left py-3 px-4 text-gray-500 font-medium">Created</th>
+                        <th className="text-left py-3 px-4 text-gray-500 font-medium"></th>
                       </tr>
                     </thead>
                     <tbody>
                       {users.map((u) => (
-                        <tr key={u.id} className="border-b border-white/[0.03] hover:bg-white/[0.02]">
+                        <tr 
+                          key={u.id} 
+                          className="border-b border-white/[0.03] hover:bg-white/[0.02] cursor-pointer"
+                          onClick={() => navigate(`/admin/users/${u.id}`)}
+                        >
                           <td className="py-3 px-4 text-white">{u.email}</td>
                           <td className="py-3 px-4">
                             {u.is_admin ? (
@@ -370,6 +375,9 @@ export default function AdminPage() {
                           <td className="py-3 px-4 text-gray-400">{u.outcome_count}</td>
                           <td className="py-3 px-4 text-gray-500 text-xs">
                             {new Date(u.created_at).toLocaleDateString()}
+                          </td>
+                          <td className="py-3 px-4 text-gray-500">
+                            <ChevronRight className="w-4 h-4" />
                           </td>
                         </tr>
                       ))}

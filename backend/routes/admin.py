@@ -26,6 +26,7 @@ class AdminUserResponse(BaseModel):
     email: str
     is_admin: bool
     created_at: str
+    last_login_at: Optional[str] = None
     agent_count: int = 0
     outcome_count: int = 0
 
@@ -33,6 +34,30 @@ class AdminUserResponse(BaseModel):
 class AdminUserListResponse(BaseModel):
     users: List[AdminUserResponse]
     total: int
+
+
+class AdminUserAgentResponse(BaseModel):
+    """Agent info for user detail view"""
+    agent_id: str
+    name: str
+    description: Optional[str] = None
+    score: float
+    tier: str
+    outcome_count: int
+    is_public: bool
+    created_at: str
+
+
+class AdminUserDetailResponse(BaseModel):
+    """Detailed user info with their agents"""
+    id: str
+    email: str
+    is_admin: bool
+    created_at: str
+    last_login_at: Optional[str] = None
+    agent_count: int
+    outcome_count: int
+    agents: List[AdminUserAgentResponse]
 
 
 class AdminAgentResponse(BaseModel):
@@ -128,11 +153,73 @@ async def list_all_users(
             email=user["email"],
             is_admin=user.get("is_admin", False),
             created_at=user["created_at"],
+            last_login_at=user.get("last_login_at"),
             agent_count=agent_count,
             outcome_count=outcome_count
         ))
     
     return AdminUserListResponse(users=result, total=total)
+
+
+@router.get("/users/{user_id}", response_model=AdminUserDetailResponse)
+async def get_user_detail(user_id: str, admin: dict = Depends(get_admin_user)):
+    """Get detailed info for a single user including their agents (admin only)"""
+    from core.exceptions import APIError, ErrorCodes
+    
+    user = await db.users.find_one(
+        {"id": user_id}, 
+        {"_id": 0, "password_hash": 0}
+    )
+    
+    if not user:
+        raise APIError(
+            code=ErrorCodes.USER_NOT_FOUND,
+            message=f"User '{user_id}' not found.",
+            status_code=404
+        )
+    
+    # Get all agents for this user with their scores
+    agents_cursor = db.agents.find(
+        {"user_id": user_id}, 
+        {"_id": 0}
+    ).sort("created_at", -1)
+    agents = await agents_cursor.to_list(1000)
+    
+    user_agents = []
+    total_outcomes = 0
+    
+    for agent in agents:
+        # Get outcomes and calculate score
+        outcomes = await db.outcomes.find(
+            {"agent_id": agent["agent_id"]}, 
+            {"_id": 0, "result": 1}
+        ).to_list(10000)
+        
+        score, tier, _, _ = calculate_score_and_tier(outcomes)
+        outcome_count = len(outcomes)
+        total_outcomes += outcome_count
+        
+        user_agents.append(AdminUserAgentResponse(
+            agent_id=agent["agent_id"],
+            name=agent["name"],
+            description=agent.get("description"),
+            score=score,
+            tier=tier,
+            outcome_count=outcome_count,
+            is_public=agent.get("is_public", False),
+            created_at=agent["created_at"]
+        ))
+    
+    return AdminUserDetailResponse(
+        id=user["id"],
+        email=user["email"],
+        is_admin=user.get("is_admin", False),
+        created_at=user["created_at"],
+        last_login_at=user.get("last_login_at"),
+        agent_count=len(agents),
+        outcome_count=total_outcomes,
+        agents=user_agents
+    )
 
 
 @router.get("/agents", response_model=AdminAgentListResponse)

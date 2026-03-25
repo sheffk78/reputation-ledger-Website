@@ -205,6 +205,11 @@ export const adminAPI = {
     return response.data;
   },
 
+  getUser: async (userId) => {
+    const response = await apiClient.get(`/admin/users/${userId}`);
+    return response.data;
+  },
+
   getAgents: async (limit = 50, skip = 0) => {
     const response = await apiClient.get(`/admin/agents?limit=${limit}&skip=${skip}`);
     return response.data;

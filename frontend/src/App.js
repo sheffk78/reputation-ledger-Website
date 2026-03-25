@@ -13,6 +13,7 @@ import DashboardPage from "./pages/DashboardPage";
 import AgentDetailPage from "./pages/AgentDetailPage";
 import PublicAgentPage from "./pages/PublicAgentPage";
 import AdminPage from "./pages/AdminPage";
+import AdminUserDetailPage from "./pages/AdminUserDetailPage";
 
 // Protected route wrapper
 function ProtectedRoute({ children }) {
@@ -104,6 +105,16 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <AdminPage />
+          </ProtectedRoute>
+        }
+      />
+      
+      {/* Admin user detail route */}
+      <Route
+        path="/admin/users/:userId"
+        element={
+          <ProtectedRoute>
+            <AdminUserDetailPage />
           </ProtectedRoute>
         }
       />
