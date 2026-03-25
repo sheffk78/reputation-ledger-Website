@@ -4,29 +4,102 @@ import { useAuth } from "../context/AuthContext";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
-import { Loader2 } from "lucide-react";
+import { Loader2, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
+import { parseApiError, validateEmail, validatePassword, validateRequired } from "../lib/utils";
 
 const LOGO_URL = "https://customer-assets.emergentagent.com/job_ac636d4a-6ca2-497e-8615-5b0c10a94a77/artifacts/vcawrcg8_repledger-logo-dark.svg";
+
+// Inline error message component
+function FieldError({ message }) {
+  if (!message) return null;
+  return (
+    <p className="flex items-center gap-1.5 text-[12px] text-red-400 mt-1.5" role="alert">
+      <AlertCircle className="w-3 h-3 flex-shrink-0" />
+      {message}
+    </p>
+  );
+}
 
 export default function SignupPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState({});
+  const [touched, setTouched] = useState({});
   const { signup } = useAuth();
   const navigate = useNavigate();
+
+  const validateField = (field, value) => {
+    switch (field) {
+      case "email":
+        return validateEmail(value);
+      case "password":
+        return validatePassword(value, 6);
+      case "confirmPassword":
+        if (!value) return "Please confirm your password.";
+        if (value !== password) return "Passwords do not match.";
+        return null;
+      default:
+        return null;
+    }
+  };
+
+  const handleBlur = (field) => {
+    setTouched({ ...touched, [field]: true });
+    const value = field === "email" ? email : field === "password" ? password : confirmPassword;
+    const error = validateField(field, value);
+    setErrors({ ...errors, [field]: error });
+  };
+
+  const handleChange = (field, value) => {
+    // Clear error when user starts typing
+    if (errors[field]) {
+      setErrors({ ...errors, [field]: null });
+    }
+    
+    switch (field) {
+      case "email":
+        setEmail(value);
+        break;
+      case "password":
+        setPassword(value);
+        // Re-validate confirmPassword if it was touched
+        if (touched.confirmPassword && confirmPassword) {
+          const confirmError = value !== confirmPassword ? "Passwords do not match." : null;
+          setErrors(prev => ({ ...prev, confirmPassword: confirmError }));
+        }
+        break;
+      case "confirmPassword":
+        setConfirmPassword(value);
+        break;
+      default:
+        break;
+    }
+  };
+
+  const validateForm = () => {
+    const newErrors = {
+      email: validateEmail(email),
+      password: validatePassword(password, 6),
+      confirmPassword: !confirmPassword 
+        ? "Please confirm your password." 
+        : confirmPassword !== password 
+          ? "Passwords do not match." 
+          : null
+    };
+    
+    setErrors(newErrors);
+    setTouched({ email: true, password: true, confirmPassword: true });
+    
+    return !Object.values(newErrors).some(Boolean);
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (password !== confirmPassword) {
-      toast.error("Passwords do not match");
-      return;
-    }
-
-    if (password.length < 6) {
-      toast.error("Password must be at least 6 characters");
+    if (!validateForm()) {
       return;
     }
 
@@ -36,8 +109,15 @@ export default function SignupPage() {
       await signup(email, password);
       navigate("/dashboard");
     } catch (error) {
-      const message = error.response?.data?.detail || "Signup failed";
-      toast.error(message);
+      const parsed = parseApiError(error);
+      
+      // Set field-specific errors if available
+      if (parsed.fields && Object.keys(parsed.fields).length > 0) {
+        setErrors(prev => ({ ...prev, ...parsed.fields }));
+      } else {
+        // Show general error message
+        toast.error(parsed.message);
+      }
     } finally {
       setLoading(false);
     }
@@ -63,47 +143,54 @@ export default function SignupPage() {
           </div>
 
           {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-5">
-            <div className="space-y-2">
+          <form onSubmit={handleSubmit} className="space-y-5" noValidate>
+            <div className="space-y-1">
               <Label htmlFor="email" className="form-label">Email</Label>
               <Input
                 id="email"
                 type="email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => handleChange("email", e.target.value)}
+                onBlur={() => handleBlur("email")}
                 placeholder="you@example.com"
-                required
                 data-testid="signup-email-input"
-                className="form-input"
+                className={`form-input ${errors.email && touched.email ? "border-red-400 focus:border-red-400" : ""}`}
+                aria-invalid={errors.email && touched.email ? "true" : "false"}
+                aria-describedby={errors.email ? "email-error" : undefined}
               />
+              <FieldError message={touched.email && errors.email} />
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-1">
               <Label htmlFor="password" className="form-label">Password</Label>
               <Input
                 id="password"
                 type="password"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(e) => handleChange("password", e.target.value)}
+                onBlur={() => handleBlur("password")}
                 placeholder="At least 6 characters"
-                required
                 data-testid="signup-password-input"
-                className="form-input"
+                className={`form-input ${errors.password && touched.password ? "border-red-400 focus:border-red-400" : ""}`}
+                aria-invalid={errors.password && touched.password ? "true" : "false"}
               />
+              <FieldError message={touched.password && errors.password} />
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-1">
               <Label htmlFor="confirmPassword" className="form-label">Confirm Password</Label>
               <Input
                 id="confirmPassword"
                 type="password"
                 value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
+                onChange={(e) => handleChange("confirmPassword", e.target.value)}
+                onBlur={() => handleBlur("confirmPassword")}
                 placeholder="Repeat your password"
-                required
                 data-testid="signup-confirm-password-input"
-                className="form-input"
+                className={`form-input ${errors.confirmPassword && touched.confirmPassword ? "border-red-400 focus:border-red-400" : ""}`}
+                aria-invalid={errors.confirmPassword && touched.confirmPassword ? "true" : "false"}
               />
+              <FieldError message={touched.confirmPassword && errors.confirmPassword} />
             </div>
 
             <Button

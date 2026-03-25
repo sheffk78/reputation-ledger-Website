@@ -4,28 +4,98 @@ import { useAuth } from "../context/AuthContext";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { Loader2, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
+import { parseApiError, validateEmail, validateRequired } from "../lib/utils";
 
 const LOGO_URL = "https://customer-assets.emergentagent.com/job_ac636d4a-6ca2-497e-8615-5b0c10a94a77/artifacts/vcawrcg8_repledger-logo-dark.svg";
+
+// Inline error message component
+function FieldError({ message }) {
+  if (!message) return null;
+  return (
+    <p className="flex items-center gap-1.5 text-[12px] text-red-400 mt-1.5" role="alert">
+      <AlertCircle className="w-3 h-3 flex-shrink-0" />
+      {message}
+    </p>
+  );
+}
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState({});
+  const [touched, setTouched] = useState({});
+  const [generalError, setGeneralError] = useState(null);
   const { login } = useAuth();
   const navigate = useNavigate();
 
+  const handleBlur = (field) => {
+    setTouched({ ...touched, [field]: true });
+    let error = null;
+    if (field === "email") {
+      error = validateEmail(email);
+    } else if (field === "password") {
+      error = validateRequired(password, "Password");
+    }
+    setErrors({ ...errors, [field]: error });
+  };
+
+  const handleChange = (field, value) => {
+    // Clear errors when user starts typing
+    if (errors[field]) {
+      setErrors({ ...errors, [field]: null });
+    }
+    if (generalError) {
+      setGeneralError(null);
+    }
+    
+    if (field === "email") {
+      setEmail(value);
+    } else if (field === "password") {
+      setPassword(value);
+    }
+  };
+
+  const validateForm = () => {
+    const newErrors = {
+      email: validateEmail(email),
+      password: validateRequired(password, "Password")
+    };
+    
+    setErrors(newErrors);
+    setTouched({ email: true, password: true });
+    
+    return !Object.values(newErrors).some(Boolean);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setGeneralError(null);
+
+    if (!validateForm()) {
+      return;
+    }
+
     setLoading(true);
 
     try {
       await login(email, password);
       navigate("/dashboard");
     } catch (error) {
-      const message = error.response?.data?.detail || "Invalid credentials";
-      toast.error(message);
+      const parsed = parseApiError(error);
+      
+      // Set field-specific errors if available
+      if (parsed.fields && Object.keys(parsed.fields).length > 0) {
+        setErrors(prev => ({ ...prev, ...parsed.fields }));
+      } else if (parsed.code === "INVALID_CREDENTIALS") {
+        // Show inline for credentials error
+        setGeneralError(parsed.message);
+      } else {
+        // Show toast for other errors
+        toast.error(parsed.message);
+      }
     } finally {
       setLoading(false);
     }
@@ -50,34 +120,50 @@ export default function LoginPage() {
             </p>
           </div>
 
+          {/* General Error Alert */}
+          {generalError && (
+            <div 
+              className="mb-5 p-3 bg-red-400/10 border border-red-400/20 rounded-md flex items-start gap-2"
+              role="alert"
+              data-testid="login-error-alert"
+            >
+              <AlertCircle className="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" />
+              <p className="text-[13px] text-red-400">{generalError}</p>
+            </div>
+          )}
+
           {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-5">
-            <div className="space-y-2">
+          <form onSubmit={handleSubmit} className="space-y-5" noValidate>
+            <div className="space-y-1">
               <Label htmlFor="email" className="form-label">Email</Label>
               <Input
                 id="email"
                 type="email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => handleChange("email", e.target.value)}
+                onBlur={() => handleBlur("email")}
                 placeholder="you@example.com"
-                required
                 data-testid="login-email-input"
-                className="form-input"
+                className={`form-input ${errors.email && touched.email ? "border-red-400 focus:border-red-400" : ""}`}
+                aria-invalid={errors.email && touched.email ? "true" : "false"}
               />
+              <FieldError message={touched.email && errors.email} />
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-1">
               <Label htmlFor="password" className="form-label">Password</Label>
               <Input
                 id="password"
                 type="password"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(e) => handleChange("password", e.target.value)}
+                onBlur={() => handleBlur("password")}
                 placeholder="Enter your password"
-                required
                 data-testid="login-password-input"
-                className="form-input"
+                className={`form-input ${errors.password && touched.password ? "border-red-400 focus:border-red-400" : ""}`}
+                aria-invalid={errors.password && touched.password ? "true" : "false"}
               />
+              <FieldError message={touched.password && errors.password} />
             </div>
 
             <Button

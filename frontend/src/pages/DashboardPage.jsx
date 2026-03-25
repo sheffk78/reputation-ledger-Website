@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { agentsAPI, apiKeyAPI, webhooksAPI } from "../lib/api";
-import { copyToClipboard, getTierColorClass } from "../lib/utils";
+import { copyToClipboard, getTierColorClass, parseApiError, validateRequired, validateUrl } from "../lib/utils";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
@@ -46,12 +46,24 @@ import {
   BookOpen,
   ChevronDown,
   ChevronUp,
-  Terminal
+  Terminal,
+  AlertCircle
 } from "lucide-react";
 import { toast } from "sonner";
 
 const LOGO_URL = "https://customer-assets.emergentagent.com/job_ac636d4a-6ca2-497e-8615-5b0c10a94a77/artifacts/vcawrcg8_repledger-logo-dark.svg";
 const BASE_URL = "https://arl.agentauthority.dev";
+
+// Inline field error component
+function FieldError({ message }) {
+  if (!message) return null;
+  return (
+    <p className="flex items-center gap-1.5 text-[11px] text-red-400 mt-1" role="alert">
+      <AlertCircle className="w-3 h-3 flex-shrink-0" />
+      {message}
+    </p>
+  );
+}
 
 // Code snippet with copy button
 function CodeSnippet({ code, onCopy, copiedId, snippetId }) {
@@ -307,10 +319,12 @@ export default function DashboardPage() {
     description: "",
     owner_handle: "",
   });
+  const [formErrors, setFormErrors] = useState({});
   const [webhookFormData, setWebhookFormData] = useState({
     url: "",
     description: "",
   });
+  const [webhookFormErrors, setWebhookFormErrors] = useState({});
 
   useEffect(() => {
     loadData();
@@ -328,7 +342,8 @@ export default function DashboardPage() {
       setWebhooks(webhooksData.webhooks || []);
     } catch (error) {
       console.error("Failed to load data:", error);
-      toast.error("Failed to load data");
+      const parsed = parseApiError(error);
+      toast.error(parsed.message);
     } finally {
       setLoading(false);
     }
@@ -350,14 +365,28 @@ export default function DashboardPage() {
       setApiKey(data);
       toast.success("API key regenerated");
     } catch (error) {
-      toast.error("Failed to regenerate API key");
+      const parsed = parseApiError(error);
+      toast.error(parsed.message);
     } finally {
       setRegenerating(false);
     }
   };
 
+  const validateAgentForm = () => {
+    const errors = {};
+    const nameError = validateRequired(formData.name, "Name");
+    if (nameError) errors.name = nameError;
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
   const handleCreateAgent = async (e) => {
     e.preventDefault();
+    
+    if (!validateAgentForm()) {
+      return;
+    }
+    
     setCreating(true);
 
     try {
@@ -370,10 +399,15 @@ export default function DashboardPage() {
       setAgents(agentsData);
       setDialogOpen(false);
       setFormData({ name: "", description: "", owner_handle: "" });
+      setFormErrors({});
       toast.success("Agent registered");
     } catch (error) {
-      const message = error.response?.data?.detail || "Failed to create agent";
-      toast.error(message);
+      const parsed = parseApiError(error);
+      if (parsed.fields && Object.keys(parsed.fields).length > 0) {
+        setFormErrors(parsed.fields);
+      } else {
+        toast.error(parsed.message);
+      }
     } finally {
       setCreating(false);
     }
@@ -384,8 +418,21 @@ export default function DashboardPage() {
     navigate("/login");
   };
 
+  const validateWebhookForm = () => {
+    const errors = {};
+    const urlError = validateUrl(webhookFormData.url);
+    if (urlError) errors.url = urlError;
+    setWebhookFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
   const handleCreateWebhook = async (e) => {
     e.preventDefault();
+    
+    if (!validateWebhookForm()) {
+      return;
+    }
+    
     setCreatingWebhook(true);
 
     try {
@@ -398,10 +445,15 @@ export default function DashboardPage() {
       setWebhooks(webhooksData.webhooks || []);
       setWebhookDialogOpen(false);
       setWebhookFormData({ url: "", description: "" });
+      setWebhookFormErrors({});
       toast.success("Webhook created");
     } catch (error) {
-      const message = error.response?.data?.detail || "Failed to create webhook";
-      toast.error(message);
+      const parsed = parseApiError(error);
+      if (parsed.fields && Object.keys(parsed.fields).length > 0) {
+        setWebhookFormErrors(parsed.fields);
+      } else {
+        toast.error(parsed.message);
+      }
     } finally {
       setCreatingWebhook(false);
     }
@@ -414,7 +466,8 @@ export default function DashboardPage() {
       setWebhooks(webhooks.filter((w) => w.id !== webhookId));
       toast.success("Webhook deleted");
     } catch (error) {
-      toast.error("Failed to delete webhook");
+      const parsed = parseApiError(error);
+      toast.error(parsed.message);
     } finally {
       setDeletingWebhook(null);
     }
@@ -569,25 +622,27 @@ export default function DashboardPage() {
                       Create an identity for your agent in the ledger.
                     </DialogDescription>
                   </DialogHeader>
-                  <form onSubmit={handleCreateAgent} className="space-y-5 mt-4">
-                    <div className="space-y-2">
+                  <form onSubmit={handleCreateAgent} className="space-y-5 mt-4" noValidate>
+                    <div className="space-y-1">
                       <Label htmlFor="name" className="form-label">
                         Agent Name <span className="text-red-400">*</span>
                       </Label>
                       <Input
                         id="name"
                         value={formData.name}
-                        onChange={(e) =>
-                          setFormData({ ...formData, name: e.target.value })
-                        }
+                        onChange={(e) => {
+                          setFormData({ ...formData, name: e.target.value });
+                          if (formErrors.name) setFormErrors({ ...formErrors, name: null });
+                        }}
                         placeholder="e.g., research-agent-v2"
-                        required
                         data-testid="agent-name-input"
-                        className="form-input"
+                        className={`form-input ${formErrors.name ? "border-red-400 focus:border-red-400" : ""}`}
+                        aria-invalid={formErrors.name ? "true" : "false"}
                       />
+                      <FieldError message={formErrors.name} />
                     </div>
 
-                    <div className="space-y-2">
+                    <div className="space-y-1">
                       <Label htmlFor="description" className="form-label">
                         Description
                       </Label>
@@ -603,7 +658,7 @@ export default function DashboardPage() {
                       />
                     </div>
 
-                    <div className="space-y-2">
+                    <div className="space-y-1">
                       <Label htmlFor="owner_handle" className="form-label">
                         Owner Handle
                       </Label>
@@ -750,8 +805,8 @@ export default function DashboardPage() {
                       Receive HTTP POST notifications when outcomes are logged.
                     </DialogDescription>
                   </DialogHeader>
-                  <form onSubmit={handleCreateWebhook} className="space-y-5 mt-4">
-                    <div className="space-y-2">
+                  <form onSubmit={handleCreateWebhook} className="space-y-5 mt-4" noValidate>
+                    <div className="space-y-1">
                       <Label htmlFor="webhook-url" className="form-label">
                         Webhook URL <span className="text-red-400">*</span>
                       </Label>
@@ -759,20 +814,24 @@ export default function DashboardPage() {
                         id="webhook-url"
                         type="url"
                         value={webhookFormData.url}
-                        onChange={(e) =>
-                          setWebhookFormData({ ...webhookFormData, url: e.target.value })
-                        }
+                        onChange={(e) => {
+                          setWebhookFormData({ ...webhookFormData, url: e.target.value });
+                          if (webhookFormErrors.url) setWebhookFormErrors({ ...webhookFormErrors, url: null });
+                        }}
                         placeholder="https://your-server.com/webhook"
-                        required
                         data-testid="webhook-url-input"
-                        className="form-input"
+                        className={`form-input ${webhookFormErrors.url ? "border-red-400 focus:border-red-400" : ""}`}
+                        aria-invalid={webhookFormErrors.url ? "true" : "false"}
                       />
-                      <p className="text-[11px] text-[#6B7280]">
-                        We'll POST a JSON payload to this URL for each outcome event.
-                      </p>
+                      <FieldError message={webhookFormErrors.url} />
+                      {!webhookFormErrors.url && (
+                        <p className="text-[11px] text-[#6B7280]">
+                          We'll POST a JSON payload to this URL for each outcome event.
+                        </p>
+                      )}
                     </div>
 
-                    <div className="space-y-2">
+                    <div className="space-y-1">
                       <Label htmlFor="webhook-description" className="form-label">
                         Description
                       </Label>

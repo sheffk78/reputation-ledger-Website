@@ -33,9 +33,13 @@ const addAuthInterceptor = (client) => {
     (response) => response,
     (error) => {
       if (error.response?.status === 401) {
-        localStorage.removeItem("token");
-        localStorage.removeItem("user");
-        window.location.href = "/login";
+        // Don't redirect if already on login/signup page (auth errors are expected there)
+        const isAuthPage = window.location.pathname === "/login" || window.location.pathname === "/signup";
+        if (!isAuthPage) {
+          localStorage.removeItem("token");
+          localStorage.removeItem("user");
+          window.location.href = "/login";
+        }
       }
       return Promise.reject(error);
     }
