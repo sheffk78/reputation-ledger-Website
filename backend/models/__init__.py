@@ -4,7 +4,7 @@ from .auth import (
 )
 from .agents import (
     AgentCreate, AgentCreateResponse, AgentListResponse,
-    DemoAgentResponse, AgentPublicToggle, AgentPublicProfile
+    DemoAgentResponse, AgentPublicToggle, AgentPublicProfile, UsageStatsResponse
 )
 from .outcomes import (
     OutcomeCreate, OutcomeResponse, PaginatedOutcomesResponse, ScoreResponse, OutcomeBreakdown
@@ -18,7 +18,7 @@ __all__ = [
     "ApiKeyResponse", "PasswordResetRequest", "PasswordResetConfirm",
     # Agents
     "AgentCreate", "AgentCreateResponse", "AgentListResponse", "DemoAgentResponse",
-    "AgentPublicToggle", "AgentPublicProfile",
+    "AgentPublicToggle", "AgentPublicProfile", "UsageStatsResponse",
     # Outcomes
     "OutcomeCreate", "OutcomeResponse", "PaginatedOutcomesResponse", "ScoreResponse", "OutcomeBreakdown",
     # Webhooks

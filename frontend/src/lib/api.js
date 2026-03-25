@@ -80,6 +80,14 @@ export const apiKeyAPI = {
   },
 };
 
+// Usage Stats API
+export const usageStatsAPI = {
+  get: async () => {
+    const response = await apiClient.get("/usage-stats");
+    return response.data;
+  },
+};
+
 // Agents API (v1)
 export const agentsAPI = {
   list: async () => {

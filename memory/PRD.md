@@ -165,6 +165,18 @@ Build a Phase 1 MVP of Agent Reputation Ledger (RepLedger) - a track record API 
 - ✅ "Profile Not Available" page when agent is not public
 - ✅ Styled consistently with marketing site (dark theme, Space Grotesk fonts)
 
+### Phase 1.9 - Usage Overview Dashboard (March 2025)
+#### Backend
+- ✅ Added GET /api/usage-stats endpoint (JWT auth required)
+- ✅ Returns: total_agents, total_outcomes, outcomes_last_7_days, avg_score
+- ✅ avg_score calculated only for agents with >= 5 outcomes
+
+#### Frontend
+- ✅ Added Usage Overview section to Dashboard page
+- ✅ 4 stat cards: Agents, Total Outcomes, Last 7 Days, Avg. Score
+- ✅ Clean card layout with teal icons and uppercase labels
+- ✅ Shows "—" for avg_score when no qualifying agents exist
+
 ### Scoring Logic
 - Score = (successful / total) * 100
 - Tiers:
@@ -184,6 +196,7 @@ Build a Phase 1 MVP of Agent Reputation Ledger (RepLedger) - a track record API 
 - ✅ Backend code refactoring
 - ✅ Score breakdown API and UI
 - ✅ Public agent profiles
+- ✅ Usage overview dashboard
 
 ### P1 (High Priority - Phase 2)
 - ⬜ Outcome filtering by result type (success/failure/partial/timeout)
@@ -270,6 +283,7 @@ Build a Phase 1 MVP of Agent Reputation Ledger (RepLedger) - a track record API 
 | /api/auth/password-reset/confirm | POST | Public | Confirm password reset |
 | /api/api-key | GET | JWT | Get API key |
 | /api/api-key/regenerate | POST | JWT | Regenerate API key |
+| /api/usage-stats | GET | JWT | Get usage statistics |
 
 ## Third-Party Integrations
 - **Postmark**: Transactional emails (welcome, password reset, outcome notifications)

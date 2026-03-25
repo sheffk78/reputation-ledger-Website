@@ -53,3 +53,11 @@ class DemoAgentResponse(BaseModel):
     agent: AgentListResponse
     message: str
     is_new: bool
+
+
+class UsageStatsResponse(BaseModel):
+    """Usage statistics for dashboard overview"""
+    total_agents: int
+    total_outcomes: int
+    outcomes_last_7_days: int
+    avg_score: float  # Average across agents with >= 5 outcomes, 0 if none qualify

@@ -6,7 +6,7 @@ middleware, and exception handlers.
 """
 import os
 import logging
-from fastapi import FastAPI, APIRouter, Request, HTTPException
+from fastapi import FastAPI, APIRouter, Request, HTTPException, Depends
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 from starlette.middleware.cors import CORSMiddleware
@@ -152,7 +152,9 @@ async def health():
 
 from core.database import db
 from services.score_service import calculate_score_and_tier
-from models.agents import AgentPublicProfile
+from models.agents import AgentPublicProfile, UsageStatsResponse
+from core.dependencies import get_current_user
+from datetime import datetime, timezone, timedelta
 
 
 @api_router.get("/public/agents/{agent_id}", response_model=AgentPublicProfile)
@@ -187,6 +189,56 @@ async def get_public_agent_profile(agent_id: str):
         outcome_count=len(outcomes),
         success_rate=success_rate,
         breakdown=breakdown
+    )
+
+
+@api_router.get("/usage-stats", response_model=UsageStatsResponse)
+async def get_usage_stats(user: dict = Depends(get_current_user)):
+    """
+    Get usage statistics for the current user's dashboard overview.
+    Returns total agents, total outcomes, outcomes in last 7 days, and average score.
+    """
+    user_id = user["id"]
+    
+    # Total agents
+    total_agents = await db.agents.count_documents({"user_id": user_id})
+    
+    # Get all agent IDs for this user
+    agents = await db.agents.find(
+        {"user_id": user_id}, 
+        {"agent_id": 1, "_id": 0}
+    ).to_list(10000)
+    agent_ids = [a["agent_id"] for a in agents]
+    
+    # Total outcomes
+    total_outcomes = await db.outcomes.count_documents({"agent_id": {"$in": agent_ids}})
+    
+    # Outcomes in last 7 days
+    seven_days_ago = (datetime.now(timezone.utc) - timedelta(days=7)).isoformat()
+    outcomes_last_7_days = await db.outcomes.count_documents({
+        "agent_id": {"$in": agent_ids},
+        "created_at": {"$gte": seven_days_ago}
+    })
+    
+    # Calculate average score across agents with >= 5 outcomes
+    scores = []
+    for agent_id in agent_ids:
+        outcomes = await db.outcomes.find(
+            {"agent_id": agent_id}, 
+            {"_id": 0, "result": 1}
+        ).to_list(10000)
+        
+        if len(outcomes) >= 5:
+            score, _, _, _ = calculate_score_and_tier(outcomes)
+            scores.append(score)
+    
+    avg_score = round(sum(scores) / len(scores), 1) if scores else 0.0
+    
+    return UsageStatsResponse(
+        total_agents=total_agents,
+        total_outcomes=total_outcomes,
+        outcomes_last_7_days=outcomes_last_7_days,
+        avg_score=avg_score
     )
 
 
