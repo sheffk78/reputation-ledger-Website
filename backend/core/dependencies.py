@@ -91,3 +91,42 @@ async def get_user_from_api_key(credentials: HTTPAuthorizationCredentials = Depe
         message="Invalid API key or token. Check your credentials and try again.",
         status_code=401
     )
+
+
+async def get_admin_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    """
+    Get user from JWT token and verify admin access.
+    Used for all /admin routes and admin API endpoints.
+    
+    Admin access is determined by the `is_admin` boolean field on the user document.
+    To promote a user to admin, set `is_admin: true` in the database:
+    
+        db.users.updateOne({email: "admin@example.com"}, {$set: {is_admin: true}})
+    """
+    if not credentials:
+        raise APIError(
+            code=ErrorCodes.MISSING_TOKEN,
+            message="Authentication required. Please sign in.",
+            status_code=401
+        )
+    
+    token = credentials.credentials
+    payload = decode_token(token)
+    user = await db.users.find_one({"id": payload["sub"]}, {"_id": 0})
+    
+    if not user:
+        raise APIError(
+            code=ErrorCodes.USER_NOT_FOUND,
+            message="User account not found.",
+            status_code=401
+        )
+    
+    # Check admin flag
+    if not user.get("is_admin", False):
+        raise APIError(
+            code=ErrorCodes.ADMIN_ACCESS_REQUIRED,
+            message="Admin access required. You do not have permission to access this resource.",
+            status_code=403
+        )
+    
+    return user

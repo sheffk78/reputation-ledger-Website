@@ -193,4 +193,27 @@ export const passwordResetAPI = {
   },
 };
 
+// Admin API (requires is_admin: true)
+export const adminAPI = {
+  getStats: async () => {
+    const response = await apiClient.get("/admin/stats");
+    return response.data;
+  },
+
+  getUsers: async (limit = 50, skip = 0) => {
+    const response = await apiClient.get(`/admin/users?limit=${limit}&skip=${skip}`);
+    return response.data;
+  },
+
+  getAgents: async (limit = 50, skip = 0) => {
+    const response = await apiClient.get(`/admin/agents?limit=${limit}&skip=${skip}`);
+    return response.data;
+  },
+
+  verifyAccess: async () => {
+    const response = await apiClient.get("/admin/me");
+    return response.data;
+  },
+};
+
 export default apiClient;

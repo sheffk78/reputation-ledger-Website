@@ -20,6 +20,7 @@ from core.exceptions import APIError, ErrorCodes, create_error_response
 from routes.auth import router as auth_router, api_key_router
 from routes.agents import router as agents_router
 from routes.webhooks import router as webhooks_router
+from routes.admin import router as admin_router
 
 # Configure logging
 logging.basicConfig(
@@ -249,6 +250,9 @@ api_router.include_router(auth_router)
 
 # API Key routes (/api/api-key, /api/api-key/regenerate)
 api_router.include_router(api_key_router)
+
+# Admin routes (/api/admin/*)
+api_router.include_router(admin_router)
 
 # V1 API routes
 v1_router.include_router(agents_router)  # /api/v1/agents/*

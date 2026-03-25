@@ -12,6 +12,7 @@ import SignupPage from "./pages/SignupPage";
 import DashboardPage from "./pages/DashboardPage";
 import AgentDetailPage from "./pages/AgentDetailPage";
 import PublicAgentPage from "./pages/PublicAgentPage";
+import AdminPage from "./pages/AdminPage";
 
 // Protected route wrapper
 function ProtectedRoute({ children }) {
@@ -93,6 +94,16 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <AgentDetailPage />
+          </ProtectedRoute>
+        }
+      />
+      
+      {/* Admin route (requires is_admin check in component) */}
+      <Route
+        path="/admin"
+        element={
+          <ProtectedRoute>
+            <AdminPage />
           </ProtectedRoute>
         }
       />

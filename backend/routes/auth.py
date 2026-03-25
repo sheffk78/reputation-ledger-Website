@@ -59,7 +59,7 @@ async def signup(data: UserCreate, background_tasks: BackgroundTasks):
     
     return TokenResponse(
         access_token=token,
-        user=UserResponse(id=user_id, email=data.email.lower(), created_at=now)
+        user=UserResponse(id=user_id, email=data.email.lower(), created_at=now, is_admin=False)
     )
 
 
@@ -78,14 +78,24 @@ async def login(data: UserLogin):
     
     return TokenResponse(
         access_token=token,
-        user=UserResponse(id=user["id"], email=user["email"], created_at=user["created_at"])
+        user=UserResponse(
+            id=user["id"], 
+            email=user["email"], 
+            created_at=user["created_at"],
+            is_admin=user.get("is_admin", False)
+        )
     )
 
 
 @router.get("/me", response_model=UserResponse)
 async def get_me(user: dict = Depends(get_current_user)):
     """Get current user info"""
-    return UserResponse(id=user["id"], email=user["email"], created_at=user["created_at"])
+    return UserResponse(
+        id=user["id"], 
+        email=user["email"], 
+        created_at=user["created_at"],
+        is_admin=user.get("is_admin", False)
+    )
 
 
 @router.post("/password-reset/request")

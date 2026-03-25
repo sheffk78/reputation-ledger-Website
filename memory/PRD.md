@@ -177,6 +177,31 @@ Build a Phase 1 MVP of Agent Reputation Ledger (RepLedger) - a track record API 
 - ✅ Clean card layout with teal icons and uppercase labels
 - ✅ Shows "—" for avg_score when no qualifying agents exist
 
+### Phase 2.0 - Admin System (March 2025)
+#### Backend
+- ✅ Added `is_admin` boolean field to users (default: false)
+- ✅ Created `get_admin_user` dependency for admin-only routes
+- ✅ Returns 403 ADMIN_ACCESS_REQUIRED for non-admin users
+- ✅ Admin API endpoints under `/api/admin/*`:
+  - GET /admin/me - Verify admin access
+  - GET /admin/stats - Platform-wide statistics
+  - GET /admin/users - List all users with stats
+  - GET /admin/agents - List all agents across users
+
+#### Frontend
+- ✅ Created AdminPage at /admin route
+- ✅ Platform Overview stats (users, agents, outcomes, 24h/7d activity)
+- ✅ Recent Users table with role badges
+- ✅ Recent Agents table with tier badges and public status
+- ✅ Access Denied page for non-admin users
+- ✅ Login response includes is_admin field
+
+#### Admin Promotion
+To promote a user to admin, run in MongoDB shell:
+```
+db.users.updateOne({email: "admin@example.com"}, {$set: {is_admin: true}})
+```
+
 ### Scoring Logic
 - Score = (successful / total) * 100
 - Tiers:
@@ -197,6 +222,7 @@ Build a Phase 1 MVP of Agent Reputation Ledger (RepLedger) - a track record API 
 - ✅ Score breakdown API and UI
 - ✅ Public agent profiles
 - ✅ Usage overview dashboard
+- ✅ Admin system with role-based access
 
 ### P1 (High Priority - Phase 2)
 - ⬜ Outcome filtering by result type (success/failure/partial/timeout)
