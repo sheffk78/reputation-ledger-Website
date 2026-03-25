@@ -190,6 +190,7 @@ Build a Phase 1 MVP of Agent Reputation Ledger (RepLedger) - a track record API 
   - GET /admin/agents - List all agents across users (with tier/public filtering)
   - GET /admin/agents/{id} - Get agent details with outcomes and flags
   - GET /admin/api-keys - List all API keys with user info and usage stats
+  - GET /admin/audit-logs - Paginated audit log entries with event type filtering
 
 #### Frontend
 - ✅ Created AdminPage at /admin route with sidebar navigation
@@ -199,12 +200,28 @@ Build a Phase 1 MVP of Agent Reputation Ledger (RepLedger) - a track record API 
 - ✅ Agents section: Table with name, owner, score, tier, outcomes, public status
 - ✅ API Keys section: Table with user email, partial key, status (Active/Revoked), created/last used dates
 - ✅ API Keys status filter dropdown (All/Active/Revoked)
+- ✅ Logs section: Audit log table with timestamp, event badges, actor, description
+- ✅ Logs event type filter dropdown
+- ✅ Logs pagination controls
 - ✅ Access Denied page for non-admin users
 - ✅ Login response includes is_admin field
 
 #### Backend - API Key Tracking
 - ✅ Added `last_used_at` field tracking when API keys are used
 - ✅ Updates timestamp each time API key is used for authentication
+
+#### Backend - Audit Logging (March 2025)
+- ✅ Created `audit_logs` collection with: id, timestamp, actor_type, actor_id, actor_email, event_type, metadata, description
+- ✅ Created `audit_service.py` with emit functions for key events
+- ✅ Events logged:
+  - `user.signup` - New user registration
+  - `user.login` - User login
+  - `api_key.created` - API key creation (during signup)
+  - `api_key.regenerated` - API key regeneration
+  - `agent.created` - Agent registration
+  - `agent.flagged` - Agent/outcome flagging
+  - `agent.public_toggled` - Public visibility toggle
+  - `outcome.logged` - Outcome submission
 
 #### Admin Promotion
 To promote a user to admin, run in MongoDB shell:
@@ -233,6 +250,8 @@ db.users.updateOne({email: "admin@example.com"}, {$set: {is_admin: true}})
 - ✅ Public agent profiles
 - ✅ Usage overview dashboard
 - ✅ Admin system with role-based access
+- ✅ Admin API Keys view
+- ✅ Audit logging system
 
 ### P1 (High Priority - Phase 2)
 - ⬜ Outcome filtering by result type (success/failure/partial/timeout)
@@ -276,6 +295,7 @@ db.users.updateOne({email: "admin@example.com"}, {$set: {is_admin: true}})
 │   └── webhooks.py        # /api/v1/webhooks/* routes
 ├── services/
 │   ├── __init__.py
+│   ├── audit_service.py    # Audit log emission
 │   ├── email_service.py   # Postmark email sending
 │   ├── score_service.py   # Score/tier calculation, badge SVG generation
 │   └── webhook_service.py # Webhook triggering logic
@@ -327,6 +347,7 @@ db.users.updateOne({email: "admin@example.com"}, {$set: {is_admin: true}})
 | /api/admin/agents | GET | Admin | List all agents |
 | /api/admin/agents/{id} | GET | Admin | Get agent details |
 | /api/admin/api-keys | GET | Admin | List all API keys |
+| /api/admin/audit-logs | GET | Admin | List audit logs (paginated) |
 
 ## Third-Party Integrations
 - **Postmark**: Transactional emails (welcome, password reset, outcome notifications)

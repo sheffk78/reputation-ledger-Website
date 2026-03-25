@@ -232,6 +232,13 @@ export const adminAPI = {
     return response.data;
   },
 
+  getAuditLogs: async (page = 1, limit = 50, eventType = null) => {
+    const params = new URLSearchParams({ page, limit });
+    if (eventType) params.append('event_type', eventType);
+    const response = await apiClient.get(`/admin/audit-logs?${params.toString()}`);
+    return response.data;
+  },
+
   verifyAccess: async () => {
     const response = await apiClient.get("/admin/me");
     return response.data;

@@ -12,6 +12,10 @@ from models.auth import (
 )
 from utils.password import hash_password, verify_password
 from services.email_service import send_welcome_email, send_password_reset_email
+from services.audit_service import (
+    log_user_signup, log_user_login, 
+    log_api_key_created, log_api_key_regenerated
+)
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -55,6 +59,10 @@ async def signup(data: UserCreate, background_tasks: BackgroundTasks):
     # Send welcome email in background
     background_tasks.add_task(send_welcome_email, data.email.lower())
     
+    # Audit logging in background
+    background_tasks.add_task(log_user_signup, user_id, data.email.lower())
+    background_tasks.add_task(log_api_key_created, user_id, data.email.lower(), api_key_doc["id"])
+    
     token = create_token(user_id, data.email.lower())
     
     return TokenResponse(
@@ -64,7 +72,7 @@ async def signup(data: UserCreate, background_tasks: BackgroundTasks):
 
 
 @router.post("/login", response_model=TokenResponse)
-async def login(data: UserLogin):
+async def login(data: UserLogin, background_tasks: BackgroundTasks):
     """Login with email and password"""
     user = await db.users.find_one({"email": data.email.lower()}, {"_id": 0})
     if not user or not verify_password(data.password, user["password_hash"]):
@@ -73,6 +81,9 @@ async def login(data: UserLogin):
             message="Invalid email or password. Please check your credentials and try again.",
             status_code=401
         )
+    
+    # Audit logging in background
+    background_tasks.add_task(log_user_login, user["id"], user["email"])
     
     token = create_token(user["id"], user["email"])
     
@@ -184,7 +195,7 @@ async def get_api_key(user: dict = Depends(get_current_user)):
 
 
 @api_key_router.post("/api-key/regenerate", response_model=ApiKeyResponse)
-async def regenerate_api_key(user: dict = Depends(get_current_user)):
+async def regenerate_api_key(user: dict = Depends(get_current_user), background_tasks: BackgroundTasks = None):
     """Regenerate the user's API key (revokes the old one)"""
     now = datetime.now(timezone.utc).isoformat()
     
@@ -204,5 +215,9 @@ async def regenerate_api_key(user: dict = Depends(get_current_user)):
         "revoked_at": None
     }
     await db.api_keys.insert_one(api_key_doc)
+    
+    # Audit logging in background
+    if background_tasks:
+        background_tasks.add_task(log_api_key_regenerated, user["id"], user["email"], api_key_doc["id"])
     
     return ApiKeyResponse(api_key=api_key, created_at=now)

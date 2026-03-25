@@ -15,6 +15,7 @@ from typing import List, Optional
 from core.database import db
 from core.dependencies import get_admin_user
 from services.score_service import calculate_score_and_tier
+from models.audit import AuditLogEntry, AuditLogListResponse
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
@@ -475,3 +476,56 @@ async def get_admin_me(admin: dict = Depends(get_admin_user)):
         "email": admin["email"],
         "is_admin": True
     }
+
+
+@router.get("/audit-logs", response_model=AuditLogListResponse)
+async def list_audit_logs(
+    page: int = 1,
+    limit: int = 50,
+    event_type: Optional[str] = None,
+    admin: dict = Depends(get_admin_user)
+):
+    """
+    List audit logs with pagination (admin only).
+    
+    Query params:
+    - page: Page number (1-indexed)
+    - limit: Items per page (default 50, max 100)
+    - event_type: Optional filter by event type
+    """
+    # Enforce limits
+    limit = min(limit, 100)
+    skip = (page - 1) * limit
+    
+    # Build filter query
+    query = {}
+    if event_type:
+        query["event_type"] = event_type
+    
+    total = await db.audit_logs.count_documents(query)
+    
+    logs = await db.audit_logs.find(
+        query,
+        {"_id": 0}
+    ).sort("timestamp", -1).skip(skip).limit(limit).to_list(limit)
+    
+    result = [
+        AuditLogEntry(
+            id=log["id"],
+            timestamp=log["timestamp"],
+            actor_type=log["actor_type"],
+            actor_id=log.get("actor_id"),
+            actor_email=log.get("actor_email"),
+            event_type=log["event_type"],
+            metadata=log.get("metadata", {}),
+            description=log.get("description")
+        )
+        for log in logs
+    ]
+    
+    return AuditLogListResponse(
+        logs=result,
+        page=page,
+        limit=limit,
+        total=total
+    )

@@ -13,13 +13,21 @@ from models.flags import FlagCreate, FlagResponse, FlagListResponse
 from services.score_service import calculate_score_and_tier, generate_badge_svg
 from services.webhook_service import trigger_webhooks
 from services.email_service import send_outcome_notification_email
+from services.audit_service import (
+    log_agent_created, log_outcome_created, 
+    log_agent_flagged, log_agent_public_toggled
+)
 from typing import List
 
 router = APIRouter(prefix="/agents", tags=["agents"])
 
 
 @router.post("", response_model=AgentCreateResponse, status_code=201)
-async def create_agent(data: AgentCreate, user: dict = Depends(get_user_from_api_key)):
+async def create_agent(
+    data: AgentCreate, 
+    user: dict = Depends(get_user_from_api_key),
+    background_tasks: BackgroundTasks = None
+):
     """Register a new agent"""
     agent_id = f"agt_{secrets.token_hex(12)}"
     now = datetime.now(timezone.utc).isoformat()
@@ -35,6 +43,12 @@ async def create_agent(data: AgentCreate, user: dict = Depends(get_user_from_api
     }
     
     await db.agents.insert_one(agent_doc)
+    
+    # Audit logging
+    if background_tasks:
+        background_tasks.add_task(
+            log_agent_created, user["id"], user["email"], agent_id, data.name
+        )
     
     return AgentCreateResponse(
         agent_id=agent_id,
@@ -235,7 +249,12 @@ async def get_agent(agent_id: str, user: dict = Depends(get_user_from_api_key)):
 
 
 @router.patch("/{agent_id}/public", response_model=AgentListResponse)
-async def toggle_agent_public(agent_id: str, data: AgentPublicToggle, user: dict = Depends(get_user_from_api_key)):
+async def toggle_agent_public(
+    agent_id: str, 
+    data: AgentPublicToggle, 
+    user: dict = Depends(get_user_from_api_key),
+    background_tasks: BackgroundTasks = None
+):
     """Toggle agent's public visibility"""
     agent = await db.agents.find_one(
         {"agent_id": agent_id, "user_id": user["id"]}, 
@@ -254,6 +273,17 @@ async def toggle_agent_public(agent_id: str, data: AgentPublicToggle, user: dict
         {"agent_id": agent_id},
         {"$set": {"is_public": data.is_public}}
     )
+    
+    # Audit logging
+    if background_tasks:
+        background_tasks.add_task(
+            log_agent_public_toggled,
+            user["id"],
+            user["email"],
+            agent_id,
+            agent["name"],
+            data.is_public
+        )
     
     # Get updated agent with score
     outcomes = await db.outcomes.find(
@@ -355,6 +385,17 @@ async def create_outcome(
             "tier": new_tier,
             "created_at": now
         }
+    )
+    
+    # Audit logging
+    background_tasks.add_task(
+        log_outcome_created,
+        user["id"],
+        user["email"],
+        agent_id,
+        outcome_id,
+        data.result,
+        data.submitter_type
     )
     
     return OutcomeResponse(
@@ -488,7 +529,12 @@ async def get_agent_badge(agent_id: str):
 
 # Flag routes for agents
 @router.post("/{agent_id}/flags", response_model=FlagResponse, status_code=201)
-async def create_flag(agent_id: str, data: FlagCreate, user: dict = Depends(get_user_from_api_key)):
+async def create_flag(
+    agent_id: str, 
+    data: FlagCreate, 
+    user: dict = Depends(get_user_from_api_key),
+    background_tasks: BackgroundTasks = None
+):
     """Create a flag for an agent or specific outcome"""
     agent = await db.agents.find_one(
         {"agent_id": agent_id, "user_id": user["id"]}, 
@@ -537,6 +583,18 @@ async def create_flag(agent_id: str, data: FlagCreate, user: dict = Depends(get_
     }
     
     await db.flags.insert_one(flag_doc)
+    
+    # Audit logging
+    if background_tasks:
+        background_tasks.add_task(
+            log_agent_flagged,
+            user["id"],
+            user["email"],
+            agent_id,
+            flag_id,
+            data.reason,
+            data.outcome_id
+        )
     
     return FlagResponse(
         id=flag_id,

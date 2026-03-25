@@ -45,6 +45,11 @@ export default function AdminPage() {
   const [apiKeys, setApiKeys] = useState([]);
   const [apiKeysTotal, setApiKeysTotal] = useState(0);
   const [apiKeyStatusFilter, setApiKeyStatusFilter] = useState(null);
+  const [auditLogs, setAuditLogs] = useState([]);
+  const [auditLogsTotal, setAuditLogsTotal] = useState(0);
+  const [auditLogsPage, setAuditLogsPage] = useState(1);
+  const [auditLogsLoading, setAuditLogsLoading] = useState(false);
+  const [auditEventFilter, setAuditEventFilter] = useState(null);
 
   useEffect(() => {
     checkAdminAccess();
@@ -101,6 +106,34 @@ export default function AdminPage() {
     setApiKeyStatusFilter(newStatus);
     fetchApiKeys(newStatus);
   };
+
+  // Fetch audit logs
+  const fetchAuditLogs = async (page = 1, eventType = null) => {
+    setAuditLogsLoading(true);
+    try {
+      const data = await adminAPI.getAuditLogs(page, 50, eventType);
+      setAuditLogs(data.logs);
+      setAuditLogsTotal(data.total);
+      setAuditLogsPage(page);
+    } catch (error) {
+      console.error("Failed to fetch audit logs:", error);
+    } finally {
+      setAuditLogsLoading(false);
+    }
+  };
+
+  // Handle audit event filter change
+  const handleAuditEventFilter = (eventType) => {
+    setAuditEventFilter(eventType);
+    fetchAuditLogs(1, eventType);
+  };
+
+  // Load audit logs when switching to logs section
+  useEffect(() => {
+    if (activeSection === "logs" && auditLogs.length === 0 && !auditLogsLoading) {
+      fetchAuditLogs(1, auditEventFilter);
+    }
+  }, [activeSection]);
 
   if (loading) {
     return (
@@ -539,19 +572,104 @@ export default function AdminPage() {
             </div>
           )}
 
-          {/* Logs Section (Placeholder) */}
+          {/* Logs Section - Audit Logs */}
           {activeSection === "logs" && (
-            <div data-testid="admin-logs" className="flex flex-col items-center justify-center py-20">
-              <div className="w-16 h-16 rounded-full bg-[#1F2933] flex items-center justify-center mb-6">
-                <FileText className="w-8 h-8 text-gray-500" />
+            <div data-testid="admin-logs">
+              <div className="flex items-center justify-between mb-6">
+                <p className="text-sm text-gray-400">{auditLogsTotal} total audit events</p>
+                {/* Event type filter */}
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-gray-500">Filter:</span>
+                  <select
+                    value={auditEventFilter || ""}
+                    onChange={(e) => handleAuditEventFilter(e.target.value || null)}
+                    className="bg-[#0C1116] border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:ring-1 focus:ring-[#01696F]"
+                    data-testid="audit-event-filter"
+                  >
+                    <option value="">All Events</option>
+                    <option value="user.signup">User Signup</option>
+                    <option value="user.login">User Login</option>
+                    <option value="api_key.created">API Key Created</option>
+                    <option value="api_key.regenerated">API Key Regenerated</option>
+                    <option value="agent.created">Agent Created</option>
+                    <option value="agent.flagged">Agent Flagged</option>
+                    <option value="agent.public_toggled">Agent Public Toggled</option>
+                    <option value="outcome.logged">Outcome Logged</option>
+                  </select>
+                </div>
               </div>
-              <h2 className="text-xl font-semibold text-white mb-2 font-['Space_Grotesk']">
-                Logs Coming Soon
-              </h2>
-              <p className="text-gray-400 text-center max-w-md">
-                Activity logs and audit trails will be available in a future update. 
-                This will include user actions, API calls, and system events.
-              </p>
+              
+              <div className="card-surface overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-white/[0.06]">
+                        <th className="text-left py-3 px-4 text-gray-500 font-medium">Timestamp</th>
+                        <th className="text-left py-3 px-4 text-gray-500 font-medium">Event</th>
+                        <th className="text-left py-3 px-4 text-gray-500 font-medium">Actor</th>
+                        <th className="text-left py-3 px-4 text-gray-500 font-medium">Description</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {auditLogsLoading ? (
+                        <tr>
+                          <td colSpan={4} className="py-8 text-center">
+                            <Loader2 className="w-5 h-5 text-[#01696F] animate-spin mx-auto" />
+                          </td>
+                        </tr>
+                      ) : auditLogs.length === 0 ? (
+                        <tr>
+                          <td colSpan={4} className="py-8 text-center text-gray-500">
+                            No audit logs found
+                          </td>
+                        </tr>
+                      ) : (
+                        auditLogs.map((log) => (
+                          <tr key={log.id} className="border-b border-white/[0.03] hover:bg-white/[0.02]">
+                            <td className="py-3 px-4 text-gray-400 text-xs whitespace-nowrap">
+                              {new Date(log.timestamp).toLocaleString()}
+                            </td>
+                            <td className="py-3 px-4">
+                              <EventTypeBadge eventType={log.event_type} />
+                            </td>
+                            <td className="py-3 px-4 text-white text-xs">
+                              {log.actor_email || (log.actor_type === "system" ? "System" : "Unknown")}
+                            </td>
+                            <td className="py-3 px-4 text-gray-400 text-xs max-w-md truncate">
+                              {log.description || "—"}
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+              
+              {/* Pagination */}
+              {auditLogsTotal > 50 && (
+                <div className="flex items-center justify-between mt-4">
+                  <p className="text-xs text-gray-500">
+                    Page {auditLogsPage} of {Math.ceil(auditLogsTotal / 50)}
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => fetchAuditLogs(auditLogsPage - 1, auditEventFilter)}
+                      disabled={auditLogsPage <= 1 || auditLogsLoading}
+                      className="px-3 py-1.5 text-xs text-gray-400 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Previous
+                    </button>
+                    <button
+                      onClick={() => fetchAuditLogs(auditLogsPage + 1, auditEventFilter)}
+                      disabled={auditLogsPage >= Math.ceil(auditLogsTotal / 50) || auditLogsLoading}
+                      className="px-3 py-1.5 text-xs text-gray-400 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Next
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -589,6 +707,37 @@ function TierBadge({ tier }) {
   return (
     <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${colors[tier] || colors.Unrated}`}>
       {tier}
+    </span>
+  );
+}
+
+// Event Type Badge Component
+function EventTypeBadge({ eventType }) {
+  const eventColors = {
+    "user.signup": "bg-green-500/20 text-green-400",
+    "user.login": "bg-blue-500/20 text-blue-400",
+    "api_key.created": "bg-purple-500/20 text-purple-400",
+    "api_key.regenerated": "bg-purple-500/20 text-purple-400",
+    "agent.created": "bg-teal-500/20 text-teal-400",
+    "agent.flagged": "bg-red-500/20 text-red-400",
+    "agent.public_toggled": "bg-amber-500/20 text-amber-400",
+    "outcome.logged": "bg-cyan-500/20 text-cyan-400",
+  };
+  
+  const eventLabels = {
+    "user.signup": "User Signup",
+    "user.login": "User Login",
+    "api_key.created": "API Key Created",
+    "api_key.regenerated": "API Key Regenerated",
+    "agent.created": "Agent Created",
+    "agent.flagged": "Agent Flagged",
+    "agent.public_toggled": "Public Toggled",
+    "outcome.logged": "Outcome Logged",
+  };
+  
+  return (
+    <span className={`px-2 py-0.5 rounded-full text-xs font-medium whitespace-nowrap ${eventColors[eventType] || "bg-gray-500/20 text-gray-400"}`}>
+      {eventLabels[eventType] || eventType}
     </span>
   );
 }
