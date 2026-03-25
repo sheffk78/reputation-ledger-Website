@@ -420,15 +420,14 @@ export default function AdminUserDetailPage() {
               Are you sure you want to delete <span className="text-white font-medium">{userData?.email}</span>?
               <br /><br />
               This will permanently delete:
-              <ul className="list-disc list-inside mt-2 text-gray-500">
-                <li>The user account</li>
-                <li>{userData?.agent_count} agent{userData?.agent_count !== 1 ? 's' : ''}</li>
-                <li>{userData?.outcome_count} outcome{userData?.outcome_count !== 1 ? 's' : ''}</li>
-                <li>All associated flags and webhooks</li>
-              </ul>
-              <br />
-              <span className="text-red-400">This action cannot be undone.</span>
             </AlertDialogDescription>
+            <ul className="list-disc list-inside mt-2 text-gray-500 text-sm">
+              <li>The user account</li>
+              <li>{userData?.agent_count} agent{userData?.agent_count !== 1 ? 's' : ''}</li>
+              <li>{userData?.outcome_count} outcome{userData?.outcome_count !== 1 ? 's' : ''}</li>
+              <li>All associated flags and webhooks</li>
+            </ul>
+            <p className="text-red-400 text-sm mt-4">This action cannot be undone.</p>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel 

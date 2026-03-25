@@ -228,8 +228,20 @@ Build a Phase 1 MVP of Agent Reputation Ledger (RepLedger) - a track record API 
   - `agent.public_toggled` - Public visibility toggle
   - `outcome.logged` - Outcome submission
 
+#### Admin User & Agent Management (Phase 2.1 - March 2025)
+- ✅ Toggle user admin status via `/api/admin/users/{id}/role`
+- ✅ Delete user with cascade (removes all agents, outcomes, flags, webhooks, API keys)
+- ✅ Self-protection: Admin cannot demote or delete themselves
+- ✅ Update agent name/description via `/api/admin/agents/{id}`
+- ✅ Admin User Detail page shows "Make Admin" / "Remove Admin" and "Delete User" buttons
+- ✅ Admin Agent Detail page shows "Edit" and "Delete" buttons
+- ✅ Inline edit mode for agents with Save/Cancel functionality
+- ✅ Confirmation dialogs for destructive actions showing cascade details
+
 #### Admin Promotion
-To promote a user to admin, run in MongoDB shell:
+To promote a user to admin, you can either:
+1. Use the Admin Panel: Navigate to Admin → Users → Click on user → "Make Admin" button
+2. Run in MongoDB shell:
 ```
 db.users.updateOne({email: "admin@example.com"}, {$set: {is_admin: true}})
 ```
@@ -264,8 +276,11 @@ db.users.updateOne({email: "admin@example.com"}, {$set: {is_admin: true}})
 - ✅ Email notification preferences (toggle on/off in settings)
 - ✅ Password reset UI (forgot password + reset password pages)
 - ✅ Agent deletion (user can delete own agents with confirmation)
+- ✅ Admin Actions - User management (toggle admin, delete user with cascade)
+- ✅ Admin Actions - Agent management (edit name/description, delete)
 
 ### P2 (Medium Priority)
+- ⬜ Social Sharing Meta Tags (OpenGraph/Twitter cards for public agent profiles)
 - ⬜ AAV (Agent Authority Vault) integration
 - ⬜ Safe-Spend integration
 - ⬜ Multi-tenant organizations/teams
@@ -359,8 +374,11 @@ db.users.updateOne({email: "admin@example.com"}, {$set: {is_admin: true}})
 | /api/admin/stats | GET | Admin | Platform statistics |
 | /api/admin/users | GET | Admin | List all users |
 | /api/admin/users/{id} | GET | Admin | Get user details |
+| /api/admin/users/{id}/role | PATCH | Admin | Toggle user admin status |
+| /api/admin/users/{id} | DELETE | Admin | Delete user (cascades) |
 | /api/admin/agents | GET | Admin | List all agents |
 | /api/admin/agents/{id} | GET | Admin | Get agent details |
+| /api/admin/agents/{id} | PATCH | Admin | Update agent name/description |
 | /api/admin/agents/{id} | DELETE | Admin | Delete any agent |
 | /api/admin/api-keys | GET | Admin | List all API keys |
 | /api/admin/audit-logs | GET | Admin | List audit logs (paginated) |

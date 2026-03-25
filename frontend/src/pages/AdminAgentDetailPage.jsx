@@ -547,13 +547,12 @@ export default function AdminAgentDetailPage() {
               Are you sure you want to delete <span className="text-white font-medium">{agentData?.name}</span>?
               <br /><br />
               This will permanently delete:
-              <ul className="list-disc list-inside mt-2 text-gray-500">
-                <li>{agentData?.outcome_count} outcome{agentData?.outcome_count !== 1 ? 's' : ''}</li>
-                <li>{agentData?.flags_count} flag{agentData?.flags_count !== 1 ? 's' : ''}</li>
-              </ul>
-              <br />
-              <span className="text-red-400">This action cannot be undone.</span>
             </AlertDialogDescription>
+            <ul className="list-disc list-inside mt-2 text-gray-500 text-sm">
+              <li>{agentData?.outcome_count} outcome{agentData?.outcome_count !== 1 ? 's' : ''}</li>
+              <li>{agentData?.flags_count} flag{agentData?.flags_count !== 1 ? 's' : ''}</li>
+            </ul>
+            <p className="text-red-400 text-sm mt-4">This action cannot be undone.</p>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel 
