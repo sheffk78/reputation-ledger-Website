@@ -1,18 +1,32 @@
-from typing import List, Tuple
+from typing import List, Tuple, Dict
 
 
-def calculate_score_and_tier(outcomes: List[dict]) -> Tuple[float, str, float]:
+def calculate_score_and_tier(outcomes: List[dict]) -> Tuple[float, str, float, Dict[str, int]]:
     """
     Calculate score and tier from outcomes list.
     
     Returns:
-        Tuple of (score, tier, success_rate)
+        Tuple of (score, tier, success_rate, breakdown)
     """
     total = len(outcomes)
-    if total == 0:
-        return 0.0, "Unrated", 0.0
     
-    successful = sum(1 for o in outcomes if o["result"] == "success")
+    # Calculate breakdown
+    breakdown = {
+        "success": 0,
+        "failure": 0,
+        "partial": 0,
+        "timeout": 0
+    }
+    
+    for o in outcomes:
+        result = o.get("result", "")
+        if result in breakdown:
+            breakdown[result] += 1
+    
+    if total == 0:
+        return 0.0, "Unrated", 0.0, breakdown
+    
+    successful = breakdown["success"]
     success_rate = (successful / total) * 100
     score = round(success_rate, 1)
     
@@ -30,7 +44,7 @@ def calculate_score_and_tier(outcomes: List[dict]) -> Tuple[float, str, float]:
     else:
         tier = "Gold"  # Score >= 90 but < 50 outcomes
     
-    return score, tier, round(success_rate, 1)
+    return score, tier, round(success_rate, 1), breakdown
 
 
 def generate_badge_svg(tier: str, score: float) -> str:

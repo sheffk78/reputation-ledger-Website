@@ -8,7 +8,7 @@ from core.database import db
 from core.dependencies import get_user_from_api_key
 from core.exceptions import APIError, ErrorCodes
 from models.agents import AgentCreate, AgentCreateResponse, AgentListResponse, DemoAgentResponse
-from models.outcomes import OutcomeCreate, OutcomeResponse, PaginatedOutcomesResponse, ScoreResponse
+from models.outcomes import OutcomeCreate, OutcomeResponse, PaginatedOutcomesResponse, ScoreResponse, OutcomeBreakdown
 from models.flags import FlagCreate, FlagResponse, FlagListResponse
 from services.score_service import calculate_score_and_tier, generate_badge_svg
 from services.webhook_service import trigger_webhooks
@@ -60,7 +60,7 @@ async def list_agents(user: dict = Depends(get_user_from_api_key)):
             {"_id": 0}
         ).to_list(10000)
         
-        score, tier, success_rate = calculate_score_and_tier(outcomes)
+        score, tier, success_rate, _ = calculate_score_and_tier(outcomes)
         
         result.append(AgentListResponse(
             agent_id=a["agent_id"],
@@ -93,7 +93,7 @@ async def create_demo_agent(user: dict = Depends(get_user_from_api_key)):
             {"_id": 0}
         ).to_list(10000)
         
-        score, tier, success_rate = calculate_score_and_tier(outcomes)
+        score, tier, success_rate, _ = calculate_score_and_tier(outcomes)
         
         return DemoAgentResponse(
             agent=AgentListResponse(
@@ -166,7 +166,7 @@ async def create_demo_agent(user: dict = Depends(get_user_from_api_key)):
         {"_id": 0}
     ).to_list(100)
     
-    score, tier, success_rate = calculate_score_and_tier(outcomes)
+    score, tier, success_rate, _ = calculate_score_and_tier(outcomes)
     
     return DemoAgentResponse(
         agent=AgentListResponse(
@@ -213,7 +213,7 @@ async def get_agent(agent_id: str, user: dict = Depends(get_user_from_api_key)):
         {"_id": 0}
     ).to_list(10000)
     
-    score, tier, success_rate = calculate_score_and_tier(outcomes)
+    score, tier, success_rate, _ = calculate_score_and_tier(outcomes)
     
     return AgentListResponse(
         agent_id=agent["agent_id"],
@@ -275,7 +275,7 @@ async def create_outcome(
         {"agent_id": agent_id}, 
         {"_id": 0}
     ).to_list(10000)
-    new_score, new_tier, _ = calculate_score_and_tier(outcomes)
+    new_score, new_tier, _, _ = calculate_score_and_tier(outcomes)
     
     # Send outcome notification email if user has notifications enabled
     if user.get("email_notifications", True):
@@ -397,14 +397,15 @@ async def get_agent_score(agent_id: str, user: dict = Depends(get_user_from_api_
         {"_id": 0}
     ).to_list(10000)
     
-    score, tier, success_rate = calculate_score_and_tier(outcomes)
+    score, tier, success_rate, breakdown = calculate_score_and_tier(outcomes)
     
     return ScoreResponse(
         agent_id=agent_id,
         score=score,
         tier=tier,
         outcome_count=len(outcomes),
-        success_rate=success_rate
+        success_rate=success_rate,
+        breakdown=OutcomeBreakdown(**breakdown)
     )
 
 
@@ -423,7 +424,7 @@ async def get_agent_badge(agent_id: str):
         {"_id": 0}
     ).to_list(10000)
     
-    score, tier, _ = calculate_score_and_tier(outcomes)
+    score, tier, _, _ = calculate_score_and_tier(outcomes)
     svg = generate_badge_svg(tier, score)
     
     return Response(

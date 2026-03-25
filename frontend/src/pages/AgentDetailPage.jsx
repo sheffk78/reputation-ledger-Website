@@ -44,6 +44,7 @@ export default function AgentDetailPage() {
   const [agent, setAgent] = useState(null);
   const [outcomes, setOutcomes] = useState([]);
   const [flags, setFlags] = useState([]);
+  const [scoreData, setScoreData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [copiedField, setCopiedField] = useState(null);
   
@@ -76,15 +77,17 @@ export default function AgentDetailPage() {
 
   const loadData = async () => {
     try {
-      const [agentData, outcomesData, flagsData] = await Promise.all([
+      const [agentData, outcomesData, flagsData, scoreResponse] = await Promise.all([
         agentsAPI.get(agentId),
         outcomesAPI.list(agentId, 1, PAGE_SIZE),
         flagsAPI.list(agentId),
+        agentsAPI.getScore(agentId),
       ]);
       setAgent(agentData);
       setOutcomes(outcomesData.data || []);
       setTotalOutcomes(outcomesData.total || 0);
       setFlags(flagsData.flags || []);
+      setScoreData(scoreResponse);
       setCurrentPage(1);
     } catch (error) {
       console.error("Failed to load agent:", error);
@@ -365,6 +368,75 @@ export default function AgentDetailPage() {
               </div>
             </div>
           </div>
+
+          {/* Score Breakdown Card */}
+          {scoreData && scoreData.breakdown && (
+            <div className="card-surface p-5" data-testid="score-breakdown-card">
+              <div className="flex items-center gap-3 mb-5">
+                <div className="w-9 h-9 rounded-sm bg-[#01696F]/15 flex items-center justify-center">
+                  <svg className="w-4 h-4 text-[#01696F]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M18 20V10M12 20V4M6 20v-6" />
+                  </svg>
+                </div>
+                <div>
+                  <h2 className="text-[14px] font-semibold text-white">Score Breakdown</h2>
+                  <p className="text-[12px] text-[#6B7280]">
+                    {scoreData.success_rate}% success rate across {scoreData.outcome_count} outcomes
+                  </p>
+                </div>
+              </div>
+              
+              <div className="space-y-3">
+                {/* Success */}
+                <div className="flex items-center gap-3">
+                  <span className="text-[12px] text-[#6B7280] w-16">Success</span>
+                  <div className="flex-1 h-2 bg-[#1F2933] rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-[#22C55E] rounded-full transition-all duration-500"
+                      style={{ width: `${scoreData.outcome_count > 0 ? (scoreData.breakdown.success / scoreData.outcome_count) * 100 : 0}%` }}
+                    />
+                  </div>
+                  <span className="text-[13px] font-medium text-[#22C55E] w-8 text-right">{scoreData.breakdown.success}</span>
+                </div>
+                
+                {/* Failure */}
+                <div className="flex items-center gap-3">
+                  <span className="text-[12px] text-[#6B7280] w-16">Failure</span>
+                  <div className="flex-1 h-2 bg-[#1F2933] rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-[#EF4444] rounded-full transition-all duration-500"
+                      style={{ width: `${scoreData.outcome_count > 0 ? (scoreData.breakdown.failure / scoreData.outcome_count) * 100 : 0}%` }}
+                    />
+                  </div>
+                  <span className="text-[13px] font-medium text-[#EF4444] w-8 text-right">{scoreData.breakdown.failure}</span>
+                </div>
+                
+                {/* Partial */}
+                <div className="flex items-center gap-3">
+                  <span className="text-[12px] text-[#6B7280] w-16">Partial</span>
+                  <div className="flex-1 h-2 bg-[#1F2933] rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-[#F59E0B] rounded-full transition-all duration-500"
+                      style={{ width: `${scoreData.outcome_count > 0 ? (scoreData.breakdown.partial / scoreData.outcome_count) * 100 : 0}%` }}
+                    />
+                  </div>
+                  <span className="text-[13px] font-medium text-[#F59E0B] w-8 text-right">{scoreData.breakdown.partial}</span>
+                </div>
+                
+                {/* Timeout */}
+                <div className="flex items-center gap-3">
+                  <span className="text-[12px] text-[#6B7280] w-16">Timeout</span>
+                  <div className="flex-1 h-2 bg-[#1F2933] rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-[#6B7280] rounded-full transition-all duration-500"
+                      style={{ width: `${scoreData.outcome_count > 0 ? (scoreData.breakdown.timeout / scoreData.outcome_count) * 100 : 0}%` }}
+                    />
+                  </div>
+                  <span className="text-[13px] font-medium text-[#6B7280] w-8 text-right">{scoreData.breakdown.timeout}</span>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Flags Card */}
           <div className="card-surface p-5">

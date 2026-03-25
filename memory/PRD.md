@@ -137,6 +137,18 @@ Build a Phase 1 MVP of Agent Reputation Ledger (RepLedger) - a track record API 
 - ✅ Created `/app/backend/utils/` - Utilities (password hashing)
 - ✅ Main server.py now ~170 lines - entry point only
 
+### Phase 1.7 - Score Breakdown (March 2025)
+#### Backend
+- ✅ Updated GET /v1/agents/{agent_id}/score to include breakdown field
+- ✅ Response now includes: `{ breakdown: { success, failure, partial, timeout } }`
+- ✅ Updated score_service.py to calculate and return breakdown counts
+
+#### Frontend
+- ✅ Added "Score Breakdown" card on Agent Detail page
+- ✅ Visual progress bars for each outcome type (success, failure, partial, timeout)
+- ✅ Color-coded bars: green (success), red (failure), amber (partial), gray (timeout)
+- ✅ Shows success rate percentage and total outcome count
+
 ### Scoring Logic
 - Score = (successful / total) * 100
 - Tiers:
@@ -154,6 +166,7 @@ Build a Phase 1 MVP of Agent Reputation Ledger (RepLedger) - a track record API 
 - ✅ Webhook system for outcome events
 - ✅ Flags system for problematic outcomes
 - ✅ Backend code refactoring
+- ✅ Score breakdown API and UI
 
 ### P1 (High Priority - Phase 2)
 - ⬜ Outcome filtering by result type (success/failure/partial/timeout)

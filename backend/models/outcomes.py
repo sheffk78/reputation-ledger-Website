@@ -24,9 +24,17 @@ class PaginatedOutcomesResponse(BaseModel):
     total: int
 
 
+class OutcomeBreakdown(BaseModel):
+    success: int = 0
+    failure: int = 0
+    partial: int = 0
+    timeout: int = 0
+
+
 class ScoreResponse(BaseModel):
     agent_id: str
     score: float
     tier: str
     outcome_count: int
     success_rate: float
+    breakdown: OutcomeBreakdown

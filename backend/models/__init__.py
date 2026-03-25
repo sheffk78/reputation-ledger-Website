@@ -7,7 +7,7 @@ from .agents import (
     DemoAgentResponse
 )
 from .outcomes import (
-    OutcomeCreate, OutcomeResponse, PaginatedOutcomesResponse, ScoreResponse
+    OutcomeCreate, OutcomeResponse, PaginatedOutcomesResponse, ScoreResponse, OutcomeBreakdown
 )
 from .webhooks import WebhookCreate, WebhookResponse, WebhookListResponse
 from .flags import FlagCreate, FlagResponse, FlagListResponse
@@ -19,7 +19,7 @@ __all__ = [
     # Agents
     "AgentCreate", "AgentCreateResponse", "AgentListResponse", "DemoAgentResponse",
     # Outcomes
-    "OutcomeCreate", "OutcomeResponse", "PaginatedOutcomesResponse", "ScoreResponse",
+    "OutcomeCreate", "OutcomeResponse", "PaginatedOutcomesResponse", "ScoreResponse", "OutcomeBreakdown",
     # Webhooks
     "WebhookCreate", "WebhookResponse", "WebhookListResponse",
     # Flags
