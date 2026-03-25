@@ -11,6 +11,7 @@ import { Textarea } from "../components/ui/textarea";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -104,6 +105,9 @@ export default function AgentsPage() {
             <DialogContent className="bg-[#0C1116] border-white/10 text-white">
               <DialogHeader>
                 <DialogTitle className="text-white">Register New Agent</DialogTitle>
+                <DialogDescription className="text-[#9CA3AF]">
+                  Create a new agent identity in RepLedger to start building its track record.
+                </DialogDescription>
               </DialogHeader>
               <form onSubmit={handleCreateAgent} className="space-y-4 mt-4">
                 <div className="space-y-2">
