@@ -86,10 +86,23 @@ Build a Phase 1 MVP of Agent Reputation Ledger (RepLedger) - a track record API 
 - ✅ Dashboard agent form: name required validation
 - ✅ Dashboard webhook form: URL format validation
 - ✅ parseApiError utility for consistent error handling
+
+### Phase 1.3 - Outcomes Pagination (December 2025)
+#### Backend
+- ✅ GET /v1/agents/{agent_id}/outcomes supports ?page=1&limit=20
+- ✅ Returns {data, page, limit, total} paginated response
+- ✅ Default limit 20, max limit 100
+
+#### Frontend
+- ✅ Agent detail page loads first page of outcomes by default
+- ✅ "Previous / Next" pagination controls
+- ✅ "Page X of Y" indicator
+- ✅ Total outcomes count in header
+- ✅ Loading state while fetching pages
 - ✅ Webhook delivery on outcome.created events
 - ✅ Webhook delivery logging
 
-#### Frontend
+#### Frontend (Webhooks)
 - ✅ Webhooks management section on Dashboard
 - ✅ Add Webhook dialog with URL input
 - ✅ Webhook list display with event tags
@@ -115,7 +128,7 @@ Build a Phase 1 MVP of Agent Reputation Ledger (RepLedger) - a track record API 
 ### P1 (High Priority - Phase 2)
 - ⬜ Password reset UI page (backend complete, need frontend page)
 - ⬜ Agent deletion
-- ⬜ Outcome filtering/pagination in UI
+- ✅ Outcome pagination in API and UI
 - ⬜ Email notification preferences (toggle on/off)
 
 ### P2 (Medium Priority)

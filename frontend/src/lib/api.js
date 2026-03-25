@@ -105,8 +105,10 @@ export const agentsAPI = {
 
 // Outcomes API (v1)
 export const outcomesAPI = {
-  list: async (agentId) => {
-    const response = await apiClientV1.get(`/agents/${agentId}/outcomes`);
+  list: async (agentId, page = 1, limit = 20) => {
+    const response = await apiClientV1.get(`/agents/${agentId}/outcomes`, {
+      params: { page, limit }
+    });
     return response.data;
   },
 

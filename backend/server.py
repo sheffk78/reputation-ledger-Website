@@ -145,6 +145,13 @@ class WebhookResponse(BaseModel):
 class WebhookListResponse(BaseModel):
     webhooks: List[WebhookResponse]
 
+# Paginated Outcomes Response
+class PaginatedOutcomesResponse(BaseModel):
+    data: List[OutcomeResponse]
+    page: int
+    limit: int
+    total: int
+
 # Password Reset models
 class PasswordResetRequest(BaseModel):
     email: EmailStr
@@ -780,9 +787,22 @@ async def create_outcome(agent_id: str, data: OutcomeCreate, background_tasks: B
         created_at=now
     )
 
-@v1_router.get("/agents/{agent_id}/outcomes", response_model=List[OutcomeResponse])
-async def list_outcomes(agent_id: str, user: dict = Depends(get_user_from_api_key)):
-    """List outcomes for an agent"""
+@v1_router.get("/agents/{agent_id}/outcomes", response_model=PaginatedOutcomesResponse)
+async def list_outcomes(
+    agent_id: str, 
+    page: int = 1,
+    limit: int = 20,
+    user: dict = Depends(get_user_from_api_key)
+):
+    """List outcomes for an agent with pagination"""
+    # Validate pagination params
+    if page < 1:
+        page = 1
+    if limit < 1:
+        limit = 1
+    if limit > 100:
+        limit = 100
+    
     # Verify agent belongs to user
     agent = await db.agents.find_one(
         {"agent_id": agent_id, "user_id": user["id"]}, 
@@ -804,12 +824,24 @@ async def list_outcomes(agent_id: str, user: dict = Depends(get_user_from_api_ke
             details={"agent_id": agent_id}
         )
     
+    # Get total count
+    total = await db.outcomes.count_documents({"agent_id": agent_id})
+    
+    # Calculate skip value
+    skip = (page - 1) * limit
+    
+    # Fetch paginated outcomes
     outcomes = await db.outcomes.find(
         {"agent_id": agent_id}, 
         {"_id": 0}
-    ).sort("created_at", -1).to_list(1000)
+    ).sort("created_at", -1).skip(skip).limit(limit).to_list(limit)
     
-    return [OutcomeResponse(**o) for o in outcomes]
+    return PaginatedOutcomesResponse(
+        data=[OutcomeResponse(**o) for o in outcomes],
+        page=page,
+        limit=limit,
+        total=total
+    )
 
 @v1_router.get("/agents/{agent_id}/score", response_model=ScoreResponse)
 async def get_agent_score(agent_id: str, user: dict = Depends(get_user_from_api_key)):

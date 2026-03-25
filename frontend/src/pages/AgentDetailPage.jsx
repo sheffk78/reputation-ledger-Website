@@ -4,11 +4,12 @@ import { useAuth } from "../context/AuthContext";
 import { agentsAPI, outcomesAPI } from "../lib/api";
 import { formatDateTime, getTierColorClass, getResultColorClass, copyToClipboard } from "../lib/utils";
 import { Button } from "../components/ui/button";
-import { ArrowLeft, RefreshCw, LogOut, Copy, Check, ExternalLink } from "lucide-react";
+import { ArrowLeft, RefreshCw, LogOut, Copy, Check, ExternalLink, ChevronLeft, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 
 const LOGO_URL = "https://customer-assets.emergentagent.com/job_ac636d4a-6ca2-497e-8615-5b0c10a94a77/artifacts/vcawrcg8_repledger-logo-dark.svg";
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+const PAGE_SIZE = 20;
 
 // Tier badge component
 function TierBadge({ tier, size = "default" }) {
@@ -34,22 +35,37 @@ export default function AgentDetailPage() {
   const [outcomes, setOutcomes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [copiedField, setCopiedField] = useState(null);
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalOutcomes, setTotalOutcomes] = useState(0);
+  const [outcomesLoading, setOutcomesLoading] = useState(false);
 
   const badgeUrl = `${BACKEND_URL}/api/v1/agents/${agentId}/badge.svg`;
   const embedSnippet = `<img src="${badgeUrl}" alt="RepLedger score badge" />`;
+
+  const totalPages = Math.ceil(totalOutcomes / PAGE_SIZE);
 
   useEffect(() => {
     loadData();
   }, [agentId]);
 
+  useEffect(() => {
+    if (agent) {
+      loadOutcomes(currentPage);
+    }
+  }, [currentPage]);
+
   const loadData = async () => {
     try {
       const [agentData, outcomesData] = await Promise.all([
         agentsAPI.get(agentId),
-        outcomesAPI.list(agentId),
+        outcomesAPI.list(agentId, 1, PAGE_SIZE),
       ]);
       setAgent(agentData);
-      setOutcomes(outcomesData);
+      setOutcomes(outcomesData.data || []);
+      setTotalOutcomes(outcomesData.total || 0);
+      setCurrentPage(1);
     } catch (error) {
       console.error("Failed to load agent:", error);
       toast.error("Agent not found");
@@ -57,6 +73,36 @@ export default function AgentDetailPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const loadOutcomes = async (page) => {
+    setOutcomesLoading(true);
+    try {
+      const outcomesData = await outcomesAPI.list(agentId, page, PAGE_SIZE);
+      setOutcomes(outcomesData.data || []);
+      setTotalOutcomes(outcomesData.total || 0);
+    } catch (error) {
+      console.error("Failed to load outcomes:", error);
+      toast.error("Failed to load outcomes");
+    } finally {
+      setOutcomesLoading(false);
+    }
+  };
+
+  const handlePreviousPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
+  const handleNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
+  const handleRefresh = () => {
+    loadOutcomes(currentPage);
   };
 
   const handleCopy = async (text, field) => {
@@ -261,18 +307,26 @@ export default function AgentDetailPage() {
           {/* Outcomes table */}
           <section>
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-[15px] font-semibold text-white">Outcome History</h2>
+              <div className="flex items-center gap-3">
+                <h2 className="text-[15px] font-semibold text-white">Outcome History</h2>
+                {totalOutcomes > 0 && (
+                  <span className="text-[12px] text-[#6B7280]">
+                    ({totalOutcomes} total)
+                  </span>
+                )}
+              </div>
               <button
-                onClick={loadData}
+                onClick={handleRefresh}
+                disabled={outcomesLoading}
                 data-testid="refresh-outcomes"
-                className="flex items-center gap-1.5 text-[12px] text-[#6B7280] hover:text-white transition-colors"
+                className="flex items-center gap-1.5 text-[12px] text-[#6B7280] hover:text-white transition-colors disabled:opacity-50"
               >
-                <RefreshCw className="w-3.5 h-3.5" />
+                <RefreshCw className={`w-3.5 h-3.5 ${outcomesLoading ? 'animate-spin' : ''}`} />
                 Refresh
               </button>
             </div>
 
-            {outcomes.length === 0 ? (
+            {outcomes.length === 0 && !outcomesLoading ? (
               <div className="card-surface empty-state">
                 <p className="text-[#6B7280] text-[13px]">No outcomes recorded</p>
                 <p className="text-[#4B5563] text-[12px] mt-1">
@@ -281,40 +335,75 @@ export default function AgentDetailPage() {
               </div>
             ) : (
               <div className="card-surface overflow-hidden">
-                <table className="data-table" data-testid="outcomes-table">
-                  <thead>
-                    <tr>
-                      <th>Timestamp</th>
-                      <th>Task Type</th>
-                      <th>Result</th>
-                      <th>Submitter</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {outcomes.map((outcome) => (
-                      <tr key={outcome.id} data-testid={`outcome-row-${outcome.id}`}>
-                        <td>
-                          <span className="text-[#9CA3AF] font-mono text-[12px]">
-                            {formatDateTime(outcome.created_at)}
-                          </span>
-                        </td>
-                        <td>
-                          <span className="text-white text-[13px]">{outcome.task_type}</span>
-                        </td>
-                        <td>
-                          <span className={`text-[13px] font-medium capitalize ${getResultColorClass(outcome.result)}`}>
-                            {outcome.result}
-                          </span>
-                        </td>
-                        <td>
-                          <span className="text-[#9CA3AF] text-[13px] capitalize">
-                            {outcome.submitter_type}
-                          </span>
-                        </td>
+                <div className={outcomesLoading ? 'opacity-50 pointer-events-none' : ''}>
+                  <table className="data-table" data-testid="outcomes-table">
+                    <thead>
+                      <tr>
+                        <th>Timestamp</th>
+                        <th>Task Type</th>
+                        <th>Result</th>
+                        <th>Submitter</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      {outcomes.map((outcome) => (
+                        <tr key={outcome.id} data-testid={`outcome-row-${outcome.id}`}>
+                          <td>
+                            <span className="text-[#9CA3AF] font-mono text-[12px]">
+                              {formatDateTime(outcome.created_at)}
+                            </span>
+                          </td>
+                          <td>
+                            <span className="text-white text-[13px]">{outcome.task_type}</span>
+                          </td>
+                          <td>
+                            <span className={`text-[13px] font-medium capitalize ${getResultColorClass(outcome.result)}`}>
+                              {outcome.result}
+                            </span>
+                          </td>
+                          <td>
+                            <span className="text-[#9CA3AF] text-[13px] capitalize">
+                              {outcome.submitter_type}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                
+                {/* Pagination Controls */}
+                {totalPages > 1 && (
+                  <div className="flex items-center justify-between px-5 py-4 border-t border-white/[0.06]">
+                    <div className="text-[12px] text-[#6B7280]">
+                      Page {currentPage} of {totalPages}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handlePreviousPage}
+                        disabled={currentPage === 1 || outcomesLoading}
+                        data-testid="pagination-prev"
+                        className="border-white/[0.08] bg-transparent text-white hover:bg-white/5 h-8 px-3 disabled:opacity-40 disabled:cursor-not-allowed"
+                      >
+                        <ChevronLeft className="w-3.5 h-3.5 mr-1" />
+                        Previous
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleNextPage}
+                        disabled={currentPage === totalPages || outcomesLoading}
+                        data-testid="pagination-next"
+                        className="border-white/[0.08] bg-transparent text-white hover:bg-white/5 h-8 px-3 disabled:opacity-40 disabled:cursor-not-allowed"
+                      >
+                        Next
+                        <ChevronRight className="w-3.5 h-3.5 ml-1" />
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </section>
