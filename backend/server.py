@@ -1,15 +1,18 @@
-from fastapi import FastAPI, APIRouter
+from fastapi import FastAPI, APIRouter, Depends, HTTPException, status, Response
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
 import os
 import logging
 from pathlib import Path
-from pydantic import BaseModel, Field, ConfigDict
-from typing import List
+from pydantic import BaseModel, Field, ConfigDict, EmailStr
+from typing import List, Optional, Literal
 import uuid
 from datetime import datetime, timezone
-
+import bcrypt
+import jwt
+import secrets
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -19,55 +22,473 @@ mongo_url = os.environ['MONGO_URL']
 client = AsyncIOMotorClient(mongo_url)
 db = client[os.environ['DB_NAME']]
 
+# JWT settings
+JWT_SECRET = os.environ.get('JWT_SECRET', secrets.token_hex(32))
+JWT_ALGORITHM = "HS256"
+JWT_EXPIRATION_HOURS = 24 * 7  # 7 days
+
 # Create the main app without a prefix
-app = FastAPI()
+app = FastAPI(title="RepLedger API", version="1.0.0")
 
-# Create a router with the /api prefix
+# Create routers
 api_router = APIRouter(prefix="/api")
+v1_router = APIRouter(prefix="/api/v1")
 
+security = HTTPBearer(auto_error=False)
 
-# Define Models
-class StatusCheck(BaseModel):
-    model_config = ConfigDict(extra="ignore")  # Ignore MongoDB's _id field
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
+
+# ============== MODELS ==============
+
+class UserCreate(BaseModel):
+    email: EmailStr
+    password: str = Field(min_length=6)
+
+class UserLogin(BaseModel):
+    email: EmailStr
+    password: str
+
+class UserResponse(BaseModel):
+    id: str
+    email: str
+    created_at: str
+
+class TokenResponse(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+    user: UserResponse
+
+class ApiKeyResponse(BaseModel):
+    api_key: str
+    created_at: str
+
+class AgentCreate(BaseModel):
+    name: str = Field(min_length=1, max_length=100)
+    description: Optional[str] = None
+    owner_handle: Optional[str] = None
+
+class AgentResponse(BaseModel):
+    agent_id: str
+    name: str
+    description: Optional[str] = None
+    owner_handle: Optional[str] = None
+    created_at: str
+    score: float = 0
+    tier: str = "Unrated"
+    outcome_count: int = 0
+    success_rate: float = 0
+    last_updated: Optional[str] = None
+
+class OutcomeCreate(BaseModel):
+    result: Literal["success", "failure", "partial", "timeout"]
+    task_type: str = Field(min_length=1, max_length=100)
+    submitter_type: Literal["self", "operator"]
+
+class OutcomeResponse(BaseModel):
+    id: str
+    agent_id: str
+    result: str
+    task_type: str
+    submitter_type: str
+    created_at: str
+
+class ScoreResponse(BaseModel):
+    agent_id: str
+    score: float
+    tier: str
+    outcome_count: int
+    success_rate: float
+
+# ============== UTILITY FUNCTIONS ==============
+
+def hash_password(password: str) -> str:
+    return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+
+def verify_password(password: str, hashed: str) -> bool:
+    return bcrypt.checkpw(password.encode('utf-8'), hashed.encode('utf-8'))
+
+def create_token(user_id: str, email: str) -> str:
+    payload = {
+        "sub": user_id,
+        "email": email,
+        "exp": datetime.now(timezone.utc).timestamp() + (JWT_EXPIRATION_HOURS * 3600)
+    }
+    return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
+
+def decode_token(token: str) -> dict:
+    try:
+        return jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=401, detail="Token expired")
+    except jwt.InvalidTokenError:
+        raise HTTPException(status_code=401, detail="Invalid token")
+
+async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    if not credentials:
+        raise HTTPException(status_code=401, detail="Not authenticated")
     
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    client_name: str
-    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    token = credentials.credentials
+    payload = decode_token(token)
+    user = await db.users.find_one({"id": payload["sub"]}, {"_id": 0})
+    if not user:
+        raise HTTPException(status_code=401, detail="User not found")
+    return user
 
-class StatusCheckCreate(BaseModel):
-    client_name: str
+async def get_user_from_api_key(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    if not credentials:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    
+    token = credentials.credentials
+    
+    # First try JWT token
+    try:
+        payload = decode_token(token)
+        user = await db.users.find_one({"id": payload["sub"]}, {"_id": 0})
+        if user:
+            return user
+    except (jwt.ExpiredSignatureError, jwt.InvalidTokenError, HTTPException):
+        pass
+    
+    # Then try API key
+    api_key_doc = await db.api_keys.find_one({"key": token, "revoked_at": None}, {"_id": 0})
+    if api_key_doc:
+        user = await db.users.find_one({"id": api_key_doc["user_id"]}, {"_id": 0})
+        if user:
+            return user
+    
+    raise HTTPException(status_code=401, detail="Invalid credentials")
 
-# Add your routes to the router instead of directly to app
+def calculate_score_and_tier(outcomes: List[dict]) -> tuple:
+    """Calculate score and tier from outcomes list"""
+    total = len(outcomes)
+    if total == 0:
+        return 0, "Unrated", 0
+    
+    successful = sum(1 for o in outcomes if o["result"] == "success")
+    success_rate = (successful / total) * 100
+    score = round(success_rate, 1)
+    
+    # Determine tier
+    if total < 5:
+        tier = "Unrated"
+    elif score < 50:
+        tier = "Bronze"
+    elif score < 75:
+        tier = "Silver"
+    elif score < 90:
+        tier = "Gold"
+    elif total >= 50:
+        tier = "Platinum"
+    else:
+        tier = "Gold"  # Score >= 90 but < 50 outcomes
+    
+    return score, tier, success_rate
+
+def generate_badge_svg(tier: str, score: float) -> str:
+    """Generate SVG badge for agent tier"""
+    tier_colors = {
+        "Unrated": {"fill": "#4B5563", "text": "#E5E7EB"},
+        "Bronze": {"fill": "#CD7F32", "text": "#111827"},
+        "Silver": {"fill": "#C0C0C0", "text": "#111827"},
+        "Gold": {"fill": "#FFD700", "text": "#111827"},
+        "Platinum": {"fill": "#01696F", "text": "#ECFEFF"},
+    }
+    
+    colors = tier_colors.get(tier, tier_colors["Unrated"])
+    score_display = str(int(score)) if score == int(score) else str(round(score, 1))
+    
+    svg = f'''<svg xmlns="http://www.w3.org/2000/svg" width="120" height="28" viewBox="0 0 120 28">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#0C1116"/>
+      <stop offset="100%" style="stop-color:#111827"/>
+    </linearGradient>
+  </defs>
+  <rect width="120" height="28" rx="4" fill="url(#bg)" stroke="#1F2933" stroke-width="1"/>
+  <rect x="4" y="4" width="52" height="20" rx="3" fill="{colors['fill']}"/>
+  <text x="30" y="18" font-family="Inter, sans-serif" font-size="11" font-weight="600" fill="{colors['text']}" text-anchor="middle">{tier}</text>
+  <text x="86" y="18" font-family="JetBrains Mono, monospace" font-size="12" font-weight="700" fill="#F9FAFB" text-anchor="middle">{score_display}</text>
+</svg>'''
+    return svg
+
+# ============== AUTH ROUTES ==============
+
+@api_router.post("/auth/signup", response_model=TokenResponse)
+async def signup(data: UserCreate):
+    # Check if user exists
+    existing = await db.users.find_one({"email": data.email.lower()})
+    if existing:
+        raise HTTPException(status_code=400, detail="Email already registered")
+    
+    user_id = str(uuid.uuid4())
+    now = datetime.now(timezone.utc).isoformat()
+    
+    user_doc = {
+        "id": user_id,
+        "email": data.email.lower(),
+        "password_hash": hash_password(data.password),
+        "created_at": now
+    }
+    
+    await db.users.insert_one(user_doc)
+    
+    # Generate API key for new user
+    api_key = f"arl_{secrets.token_hex(24)}"
+    api_key_doc = {
+        "id": str(uuid.uuid4()),
+        "user_id": user_id,
+        "key": api_key,
+        "created_at": now,
+        "revoked_at": None
+    }
+    await db.api_keys.insert_one(api_key_doc)
+    
+    token = create_token(user_id, data.email.lower())
+    
+    return TokenResponse(
+        access_token=token,
+        user=UserResponse(id=user_id, email=data.email.lower(), created_at=now)
+    )
+
+@api_router.post("/auth/login", response_model=TokenResponse)
+async def login(data: UserLogin):
+    user = await db.users.find_one({"email": data.email.lower()}, {"_id": 0})
+    if not user or not verify_password(data.password, user["password_hash"]):
+        raise HTTPException(status_code=401, detail="Invalid email or password")
+    
+    token = create_token(user["id"], user["email"])
+    
+    return TokenResponse(
+        access_token=token,
+        user=UserResponse(id=user["id"], email=user["email"], created_at=user["created_at"])
+    )
+
+@api_router.get("/auth/me", response_model=UserResponse)
+async def get_me(user: dict = Depends(get_current_user)):
+    return UserResponse(id=user["id"], email=user["email"], created_at=user["created_at"])
+
+# ============== API KEY ROUTES ==============
+
+@api_router.get("/api-key", response_model=ApiKeyResponse)
+async def get_api_key(user: dict = Depends(get_current_user)):
+    api_key = await db.api_keys.find_one(
+        {"user_id": user["id"], "revoked_at": None},
+        {"_id": 0}
+    )
+    if not api_key:
+        raise HTTPException(status_code=404, detail="No API key found")
+    
+    return ApiKeyResponse(api_key=api_key["key"], created_at=api_key["created_at"])
+
+@api_router.post("/api-key/regenerate", response_model=ApiKeyResponse)
+async def regenerate_api_key(user: dict = Depends(get_current_user)):
+    now = datetime.now(timezone.utc).isoformat()
+    
+    # Revoke existing keys
+    await db.api_keys.update_many(
+        {"user_id": user["id"], "revoked_at": None},
+        {"$set": {"revoked_at": now}}
+    )
+    
+    # Generate new key
+    api_key = f"arl_{secrets.token_hex(24)}"
+    api_key_doc = {
+        "id": str(uuid.uuid4()),
+        "user_id": user["id"],
+        "key": api_key,
+        "created_at": now,
+        "revoked_at": None
+    }
+    await db.api_keys.insert_one(api_key_doc)
+    
+    return ApiKeyResponse(api_key=api_key, created_at=now)
+
+# ============== V1 API ROUTES (for external use) ==============
+
+@v1_router.post("/agents", response_model=AgentResponse)
+async def create_agent(data: AgentCreate, user: dict = Depends(get_user_from_api_key)):
+    agent_id = f"agt_{secrets.token_hex(12)}"
+    now = datetime.now(timezone.utc).isoformat()
+    
+    agent_doc = {
+        "agent_id": agent_id,
+        "user_id": user["id"],
+        "name": data.name,
+        "description": data.description,
+        "owner_handle": data.owner_handle,
+        "created_at": now
+    }
+    
+    await db.agents.insert_one(agent_doc)
+    
+    return AgentResponse(
+        agent_id=agent_id,
+        name=data.name,
+        description=data.description,
+        owner_handle=data.owner_handle,
+        created_at=now,
+        score=0,
+        tier="Unrated",
+        outcome_count=0,
+        success_rate=0,
+        last_updated=None
+    )
+
+@v1_router.get("/agents", response_model=List[AgentResponse])
+async def list_agents(user: dict = Depends(get_user_from_api_key)):
+    agents = await db.agents.find({"user_id": user["id"]}, {"_id": 0}).to_list(1000)
+    
+    result = []
+    for agent in agents:
+        outcomes = await db.outcomes.find({"agent_id": agent["agent_id"]}, {"_id": 0}).to_list(10000)
+        score, tier, success_rate = calculate_score_and_tier(outcomes)
+        
+        last_outcome = await db.outcomes.find_one(
+            {"agent_id": agent["agent_id"]},
+            {"_id": 0},
+            sort=[("created_at", -1)]
+        )
+        
+        result.append(AgentResponse(
+            agent_id=agent["agent_id"],
+            name=agent["name"],
+            description=agent.get("description"),
+            owner_handle=agent.get("owner_handle"),
+            created_at=agent["created_at"],
+            score=score,
+            tier=tier,
+            outcome_count=len(outcomes),
+            success_rate=round(success_rate, 1),
+            last_updated=last_outcome["created_at"] if last_outcome else None
+        ))
+    
+    return result
+
+@v1_router.get("/agents/{agent_id}", response_model=AgentResponse)
+async def get_agent(agent_id: str, user: dict = Depends(get_user_from_api_key)):
+    agent = await db.agents.find_one({"agent_id": agent_id, "user_id": user["id"]}, {"_id": 0})
+    if not agent:
+        raise HTTPException(status_code=404, detail="Agent not found")
+    
+    outcomes = await db.outcomes.find({"agent_id": agent_id}, {"_id": 0}).to_list(10000)
+    score, tier, success_rate = calculate_score_and_tier(outcomes)
+    
+    last_outcome = await db.outcomes.find_one(
+        {"agent_id": agent_id},
+        {"_id": 0},
+        sort=[("created_at", -1)]
+    )
+    
+    return AgentResponse(
+        agent_id=agent["agent_id"],
+        name=agent["name"],
+        description=agent.get("description"),
+        owner_handle=agent.get("owner_handle"),
+        created_at=agent["created_at"],
+        score=score,
+        tier=tier,
+        outcome_count=len(outcomes),
+        success_rate=round(success_rate, 1),
+        last_updated=last_outcome["created_at"] if last_outcome else None
+    )
+
+@v1_router.post("/agents/{agent_id}/outcomes", response_model=OutcomeResponse, status_code=201)
+async def create_outcome(agent_id: str, data: OutcomeCreate, user: dict = Depends(get_user_from_api_key)):
+    agent = await db.agents.find_one({"agent_id": agent_id, "user_id": user["id"]}, {"_id": 0})
+    if not agent:
+        raise HTTPException(status_code=404, detail="Agent not found")
+    
+    outcome_id = str(uuid.uuid4())
+    now = datetime.now(timezone.utc).isoformat()
+    
+    outcome_doc = {
+        "id": outcome_id,
+        "agent_id": agent_id,
+        "result": data.result,
+        "task_type": data.task_type,
+        "submitter_type": data.submitter_type,
+        "created_at": now
+    }
+    
+    await db.outcomes.insert_one(outcome_doc)
+    
+    return OutcomeResponse(
+        id=outcome_id,
+        agent_id=agent_id,
+        result=data.result,
+        task_type=data.task_type,
+        submitter_type=data.submitter_type,
+        created_at=now
+    )
+
+@v1_router.get("/agents/{agent_id}/outcomes", response_model=List[OutcomeResponse])
+async def list_outcomes(
+    agent_id: str,
+    page: int = 1,
+    limit: int = 20,
+    user: dict = Depends(get_user_from_api_key)
+):
+    agent = await db.agents.find_one({"agent_id": agent_id, "user_id": user["id"]}, {"_id": 0})
+    if not agent:
+        raise HTTPException(status_code=404, detail="Agent not found")
+    
+    skip = (page - 1) * limit
+    outcomes = await db.outcomes.find(
+        {"agent_id": agent_id},
+        {"_id": 0}
+    ).sort("created_at", -1).skip(skip).limit(limit).to_list(limit)
+    
+    return [OutcomeResponse(**o) for o in outcomes]
+
+@v1_router.get("/agents/{agent_id}/score", response_model=ScoreResponse)
+async def get_agent_score(agent_id: str, user: dict = Depends(get_user_from_api_key)):
+    agent = await db.agents.find_one({"agent_id": agent_id, "user_id": user["id"]}, {"_id": 0})
+    if not agent:
+        raise HTTPException(status_code=404, detail="Agent not found")
+    
+    outcomes = await db.outcomes.find({"agent_id": agent_id}, {"_id": 0}).to_list(10000)
+    score, tier, success_rate = calculate_score_and_tier(outcomes)
+    
+    return ScoreResponse(
+        agent_id=agent_id,
+        score=score,
+        tier=tier,
+        outcome_count=len(outcomes),
+        success_rate=round(success_rate, 1)
+    )
+
+@v1_router.get("/agents/{agent_id}/badge.svg")
+async def get_agent_badge(agent_id: str):
+    """Public endpoint - no auth required for badge embedding"""
+    agent = await db.agents.find_one({"agent_id": agent_id}, {"_id": 0})
+    if not agent:
+        raise HTTPException(status_code=404, detail="Agent not found")
+    
+    outcomes = await db.outcomes.find({"agent_id": agent_id}, {"_id": 0}).to_list(10000)
+    score, tier, _ = calculate_score_and_tier(outcomes)
+    
+    svg = generate_badge_svg(tier, score)
+    
+    return Response(content=svg, media_type="image/svg+xml")
+
+# ============== BASIC ROUTES ==============
+
 @api_router.get("/")
 async def root():
-    return {"message": "Hello World"}
+    return {"message": "RepLedger API", "version": "1.0.0"}
 
-@api_router.post("/status", response_model=StatusCheck)
-async def create_status_check(input: StatusCheckCreate):
-    status_dict = input.model_dump()
-    status_obj = StatusCheck(**status_dict)
-    
-    # Convert to dict and serialize datetime to ISO string for MongoDB
-    doc = status_obj.model_dump()
-    doc['timestamp'] = doc['timestamp'].isoformat()
-    
-    _ = await db.status_checks.insert_one(doc)
-    return status_obj
+@api_router.get("/health")
+async def health():
+    return {"status": "healthy"}
 
-@api_router.get("/status", response_model=List[StatusCheck])
-async def get_status_checks():
-    # Exclude MongoDB's _id field from the query results
-    status_checks = await db.status_checks.find({}, {"_id": 0}).to_list(1000)
-    
-    # Convert ISO string timestamps back to datetime objects
-    for check in status_checks:
-        if isinstance(check['timestamp'], str):
-            check['timestamp'] = datetime.fromisoformat(check['timestamp'])
-    
-    return status_checks
-
-# Include the router in the main app
+# Include routers
 app.include_router(api_router)
+app.include_router(v1_router)
 
 app.add_middleware(
     CORSMiddleware,
@@ -76,13 +497,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
-logger = logging.getLogger(__name__)
 
 @app.on_event("shutdown")
 async def shutdown_db_client():
