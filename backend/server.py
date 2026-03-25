@@ -72,7 +72,16 @@ class AgentCreate(BaseModel):
     description: Optional[str] = None
     owner_handle: Optional[str] = None
 
+class AgentCreateResponse(BaseModel):
+    """Response for POST /v1/agents per spec"""
+    agent_id: str
+    name: str
+    description: Optional[str] = None
+    owner_handle: Optional[str] = None
+    created_at: str
+
 class AgentResponse(BaseModel):
+    """Response for GET /v1/agents with computed fields"""
     agent_id: str
     name: str
     description: Optional[str] = None
@@ -310,7 +319,7 @@ async def regenerate_api_key(user: dict = Depends(get_current_user)):
 
 # ============== V1 API ROUTES (for external use) ==============
 
-@v1_router.post("/agents", response_model=AgentResponse)
+@v1_router.post("/agents", response_model=AgentCreateResponse, status_code=201)
 async def create_agent(data: AgentCreate, user: dict = Depends(get_user_from_api_key)):
     agent_id = f"agt_{secrets.token_hex(12)}"
     now = datetime.now(timezone.utc).isoformat()
@@ -326,17 +335,12 @@ async def create_agent(data: AgentCreate, user: dict = Depends(get_user_from_api
     
     await db.agents.insert_one(agent_doc)
     
-    return AgentResponse(
+    return AgentCreateResponse(
         agent_id=agent_id,
         name=data.name,
         description=data.description,
         owner_handle=data.owner_handle,
-        created_at=now,
-        score=0,
-        tier="Unrated",
-        outcome_count=0,
-        success_rate=0,
-        last_updated=None
+        created_at=now
     )
 
 @v1_router.get("/agents", response_model=List[AgentResponse])

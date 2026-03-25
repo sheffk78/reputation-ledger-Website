@@ -153,13 +153,26 @@ class RepLedgerAPITester:
             "Create Agent",
             "POST",
             "api/v1/agents",
-            200,
+            201,
             data=agent_data
         )
         
         if response:
             self.agent_id = response.get('agent_id')
             print(f"   Agent ID: {self.agent_id}")
+            
+            # Verify response format per spec - should only have base fields
+            expected_fields = {'agent_id', 'name', 'description', 'owner_handle', 'created_at'}
+            actual_fields = set(response.keys())
+            
+            if actual_fields == expected_fields:
+                self.log_test("POST /v1/agents Response Format", True, "Contains only base fields as per spec")
+            else:
+                extra_fields = actual_fields - expected_fields
+                missing_fields = expected_fields - actual_fields
+                details = f"Extra fields: {extra_fields}, Missing fields: {missing_fields}"
+                self.log_test("POST /v1/agents Response Format", False, details)
+            
             return self.agent_id
         return None
 
@@ -167,8 +180,23 @@ class RepLedgerAPITester:
         """Test agent listing"""
         print("\n🔍 Testing Agent Listing...")
         response = self.run_test("List Agents", "GET", "api/v1/agents", 200)
-        if response and isinstance(response, list):
+        if response and isinstance(response, list) and len(response) > 0:
             print(f"   Found {len(response)} agents")
+            
+            # Verify response format per spec - should have computed fields
+            agent = response[0]
+            expected_fields = {'agent_id', 'name', 'description', 'owner_handle', 'created_at', 
+                             'score', 'tier', 'outcome_count', 'success_rate', 'last_updated'}
+            actual_fields = set(agent.keys())
+            
+            if actual_fields == expected_fields:
+                self.log_test("GET /v1/agents Response Format", True, "Contains computed fields as per spec")
+                print(f"   Agent has computed fields: score={agent.get('score')}, tier={agent.get('tier')}")
+            else:
+                extra_fields = actual_fields - expected_fields
+                missing_fields = expected_fields - actual_fields
+                details = f"Extra fields: {extra_fields}, Missing fields: {missing_fields}"
+                self.log_test("GET /v1/agents Response Format", False, details)
 
     def test_agent_details(self):
         """Test getting agent details"""
