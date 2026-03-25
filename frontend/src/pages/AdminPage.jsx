@@ -45,6 +45,8 @@ export default function AdminPage() {
   const [apiKeys, setApiKeys] = useState([]);
   const [apiKeysTotal, setApiKeysTotal] = useState(0);
   const [apiKeyStatusFilter, setApiKeyStatusFilter] = useState(null);
+  const [agentTierFilter, setAgentTierFilter] = useState(null);
+  const [agentPublicFilter, setAgentPublicFilter] = useState(null);
   const [auditLogs, setAuditLogs] = useState([]);
   const [auditLogsTotal, setAuditLogsTotal] = useState(0);
   const [auditLogsPage, setAuditLogsPage] = useState(1);
@@ -105,6 +107,28 @@ export default function AdminPage() {
   const handleApiKeyStatusFilter = (newStatus) => {
     setApiKeyStatusFilter(newStatus);
     fetchApiKeys(newStatus);
+  };
+
+  // Fetch agents with filters
+  const fetchAgents = async (tierFilter = null, publicFilter = null) => {
+    try {
+      const filters = {};
+      if (tierFilter) filters.tier = tierFilter;
+      if (publicFilter !== null) filters.is_public = publicFilter;
+      
+      const data = await adminAPI.getAgents(50, 0, filters);
+      setAgents(data.agents);
+      setAgentsTotal(data.total);
+    } catch (error) {
+      console.error("Failed to fetch agents:", error);
+    }
+  };
+
+  // Handle agent filter changes
+  const handleAgentFilters = (tierFilter, publicFilter) => {
+    setAgentTierFilter(tierFilter);
+    setAgentPublicFilter(publicFilter);
+    fetchAgents(tierFilter, publicFilter);
   };
 
   // Fetch audit logs
@@ -453,6 +477,41 @@ export default function AdminPage() {
             <div data-testid="admin-agents">
               <div className="flex items-center justify-between mb-6">
                 <p className="text-sm text-gray-400">{agentsTotal} total agents</p>
+                {/* Filters */}
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-gray-500">Tier:</span>
+                    <select
+                      value={agentTierFilter || ""}
+                      onChange={(e) => handleAgentFilters(e.target.value || null, agentPublicFilter)}
+                      className="bg-[#0C1116] border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:ring-1 focus:ring-[#01696F]"
+                      data-testid="agent-tier-filter"
+                    >
+                      <option value="">All</option>
+                      <option value="Platinum">Platinum</option>
+                      <option value="Gold">Gold</option>
+                      <option value="Silver">Silver</option>
+                      <option value="Bronze">Bronze</option>
+                      <option value="Unrated">Unrated</option>
+                    </select>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-gray-500">Visibility:</span>
+                    <select
+                      value={agentPublicFilter ?? ""}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        handleAgentFilters(agentTierFilter, val === "" ? null : val === "true");
+                      }}
+                      className="bg-[#0C1116] border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:ring-1 focus:ring-[#01696F]"
+                      data-testid="agent-public-filter"
+                    >
+                      <option value="">All</option>
+                      <option value="true">Public</option>
+                      <option value="false">Private</option>
+                    </select>
+                  </div>
+                </div>
               </div>
               <div className="card-surface overflow-hidden">
                 <div className="overflow-x-auto">
@@ -466,11 +525,17 @@ export default function AdminPage() {
                         <th className="text-left py-3 px-4 text-gray-500 font-medium">Outcomes</th>
                         <th className="text-left py-3 px-4 text-gray-500 font-medium">Public</th>
                         <th className="text-left py-3 px-4 text-gray-500 font-medium">Created</th>
+                        <th className="text-left py-3 px-4 text-gray-500 font-medium"></th>
                       </tr>
                     </thead>
                     <tbody>
                       {agents.map((a) => (
-                        <tr key={a.agent_id} className="border-b border-white/[0.03] hover:bg-white/[0.02]">
+                        <tr 
+                          key={a.agent_id} 
+                          className="border-b border-white/[0.03] hover:bg-white/[0.02] cursor-pointer"
+                          onClick={() => navigate(`/admin/agents/${a.agent_id}`)}
+                          data-testid={`agent-row-${a.agent_id}`}
+                        >
                           <td className="py-3 px-4 text-white">{a.name}</td>
                           <td className="py-3 px-4 text-gray-400 text-xs">{a.owner_email}</td>
                           <td className="py-3 px-4 text-white font-mono">{a.score}</td>
@@ -487,6 +552,9 @@ export default function AdminPage() {
                           </td>
                           <td className="py-3 px-4 text-gray-500 text-xs">
                             {new Date(a.created_at).toLocaleDateString()}
+                          </td>
+                          <td className="py-3 px-4 text-gray-500">
+                            <ChevronRight className="w-4 h-4" />
                           </td>
                         </tr>
                       ))}

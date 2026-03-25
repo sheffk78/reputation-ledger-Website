@@ -196,8 +196,13 @@ Build a Phase 1 MVP of Agent Reputation Ledger (RepLedger) - a track record API 
 - ✅ Created AdminPage at /admin route with sidebar navigation
 - ✅ Platform Overview stats (users, agents, outcomes, 24h/7d activity)
 - ✅ Users section: Full table with email, role, agents, outcomes, created date
+- ✅ Users: Clickable rows navigate to user detail page
 - ✅ User detail page: Shows user info and their agents
 - ✅ Agents section: Table with name, owner, score, tier, outcomes, public status
+- ✅ Agents: Clickable rows navigate to agent detail page
+- ✅ Agents: Tier filter dropdown (All/Platinum/Gold/Silver/Bronze/Unrated)
+- ✅ Agents: Visibility filter dropdown (All/Public/Private)
+- ✅ Agent detail page: Shows agent summary, owner, score breakdown, recent outcomes, flags
 - ✅ API Keys section: Table with user email, partial key, status (Active/Revoked), created/last used dates
 - ✅ API Keys status filter dropdown (All/Active/Revoked)
 - ✅ Logs section: Audit log table with timestamp, event badges, actor, description
@@ -250,8 +255,9 @@ db.users.updateOne({email: "admin@example.com"}, {$set: {is_admin: true}})
 - ✅ Public agent profiles
 - ✅ Usage overview dashboard
 - ✅ Admin system with role-based access
-- ✅ Admin API Keys view
+- ✅ Admin API Keys view with last_used_at tracking
 - ✅ Audit logging system
+- ✅ Admin Agents section with filtering and detail pages
 
 ### P1 (High Priority - Phase 2)
 - ⬜ Outcome filtering by result type (success/failure/partial/timeout)
