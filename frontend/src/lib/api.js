@@ -83,8 +83,31 @@ export const agentsAPI = {
     return response.data;
   },
 
+  get: async (agentId) => {
+    const response = await apiClientV1.get(`/agents/${agentId}`);
+    return response.data;
+  },
+
   create: async (data) => {
     const response = await apiClientV1.post("/agents", data);
+    return response.data;
+  },
+
+  getScore: async (agentId) => {
+    const response = await apiClientV1.get(`/agents/${agentId}/score`);
+    return response.data;
+  },
+};
+
+// Outcomes API (v1)
+export const outcomesAPI = {
+  list: async (agentId) => {
+    const response = await apiClientV1.get(`/agents/${agentId}/outcomes`);
+    return response.data;
+  },
+
+  create: async (agentId, data) => {
+    const response = await apiClientV1.post(`/agents/${agentId}/outcomes`, data);
     return response.data;
   },
 };

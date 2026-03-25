@@ -177,36 +177,49 @@ class RepLedgerAPITester:
         return None
 
     def test_agent_listing(self):
-        """Test agent listing"""
+        """Test agent listing with computed fields"""
         print("\n🔍 Testing Agent Listing...")
         response = self.run_test("List Agents", "GET", "api/v1/agents", 200)
         if response and isinstance(response, list) and len(response) > 0:
             print(f"   Found {len(response)} agents")
             
-            # Verify response format per spec - should only have base fields (simplified implementation)
+            # Verify response format includes computed fields
             agent = response[0]
-            expected_fields = {'agent_id', 'name', 'description', 'owner_handle', 'created_at'}
+            expected_fields = {'agent_id', 'name', 'description', 'owner_handle', 'created_at', 'score', 'tier', 'outcome_count', 'success_rate'}
             actual_fields = set(agent.keys())
             
-            if actual_fields == expected_fields:
-                self.log_test("GET /v1/agents Response Format", True, "Contains only base fields as per simplified spec")
+            if expected_fields.issubset(actual_fields):
+                self.log_test("GET /v1/agents Response Format", True, "Contains all required fields including computed ones")
+                print(f"   Agent: {agent['name']}, Score: {agent['score']}, Tier: {agent['tier']}, Outcomes: {agent['outcome_count']}")
             else:
-                extra_fields = actual_fields - expected_fields
                 missing_fields = expected_fields - actual_fields
-                details = f"Extra fields: {extra_fields}, Missing fields: {missing_fields}"
+                details = f"Missing fields: {missing_fields}"
                 self.log_test("GET /v1/agents Response Format", False, details)
 
     def test_agent_details(self):
-        """Test getting agent details"""
+        """Test getting agent details with computed fields"""
         if not self.agent_id:
             print("⚠️  Skipping agent details test - no agent ID")
             return
             
         print("\n🔍 Testing Agent Details...")
-        self.run_test(f"Get Agent {self.agent_id}", "GET", f"api/v1/agents/{self.agent_id}", 200)
+        response = self.run_test(f"Get Agent {self.agent_id}", "GET", f"api/v1/agents/{self.agent_id}", 200)
+        
+        if response:
+            # Verify response format includes computed fields
+            expected_fields = {'agent_id', 'name', 'description', 'owner_handle', 'created_at', 'score', 'tier', 'outcome_count', 'success_rate'}
+            actual_fields = set(response.keys())
+            
+            if expected_fields.issubset(actual_fields):
+                self.log_test("GET /v1/agents/{id} Response Format", True, "Contains all required fields including computed ones")
+                print(f"   Agent Details: Score: {response['score']}, Tier: {response['tier']}, Outcomes: {response['outcome_count']}")
+            else:
+                missing_fields = expected_fields - actual_fields
+                details = f"Missing fields: {missing_fields}"
+                self.log_test("GET /v1/agents/{id} Response Format", False, details)
 
     def test_outcome_submission(self):
-        """Test outcome submission"""
+        """Test outcome submission with validation"""
         if not self.agent_id:
             print("⚠️  Skipping outcome submission test - no agent ID")
             return
@@ -219,15 +232,46 @@ class RepLedgerAPITester:
             {"result": "success", "task_type": "api_call", "submitter_type": "operator"},
             {"result": "failure", "task_type": "data_processing", "submitter_type": "self"},
             {"result": "success", "task_type": "analysis", "submitter_type": "self"},
-            {"result": "partial", "task_type": "report_generation", "submitter_type": "operator"},
+            {"result": "success", "task_type": "report_generation", "submitter_type": "operator"},
+            {"result": "success", "task_type": "data_validation", "submitter_type": "self"},
         ]
         
         for i, outcome in enumerate(outcomes):
-            self.run_test(
+            response = self.run_test(
                 f"Submit Outcome {i+1}",
                 "POST",
                 f"api/v1/agents/{self.agent_id}/outcomes",
                 201,
+                data=outcome
+            )
+            
+            # Validate response format
+            if response:
+                expected_fields = {'id', 'agent_id', 'result', 'task_type', 'submitter_type', 'created_at'}
+                actual_fields = set(response.keys())
+                
+                if expected_fields == actual_fields:
+                    self.log_test(f"Outcome {i+1} Response Format", True, "Contains all required fields")
+                else:
+                    missing_fields = expected_fields - actual_fields
+                    extra_fields = actual_fields - expected_fields
+                    details = f"Missing: {missing_fields}, Extra: {extra_fields}"
+                    self.log_test(f"Outcome {i+1} Response Format", False, details)
+        
+        # Test invalid outcome data
+        print("\n🔍 Testing Invalid Outcome Submission...")
+        invalid_outcomes = [
+            {"result": "invalid", "task_type": "test", "submitter_type": "self"},  # Invalid result
+            {"result": "success", "task_type": "", "submitter_type": "self"},  # Empty task_type
+            {"result": "success", "task_type": "test", "submitter_type": "invalid"},  # Invalid submitter_type
+        ]
+        
+        for i, outcome in enumerate(invalid_outcomes):
+            self.run_test(
+                f"Submit Invalid Outcome {i+1}",
+                "POST",
+                f"api/v1/agents/{self.agent_id}/outcomes",
+                422,  # Validation error
                 data=outcome
             )
 
@@ -248,7 +292,7 @@ class RepLedgerAPITester:
             print(f"   Found {len(response)} outcomes")
 
     def test_agent_score(self):
-        """Test agent score calculation"""
+        """Test agent score calculation and tier logic"""
         if not self.agent_id:
             print("⚠️  Skipping agent score test - no agent ID")
             return
@@ -261,10 +305,41 @@ class RepLedgerAPITester:
             200
         )
         if response:
-            print(f"   Score: {response.get('score')}")
-            print(f"   Tier: {response.get('tier')}")
-            print(f"   Outcome Count: {response.get('outcome_count')}")
-            print(f"   Success Rate: {response.get('success_rate')}%")
+            score = response.get('score')
+            tier = response.get('tier')
+            outcome_count = response.get('outcome_count')
+            success_rate = response.get('success_rate')
+            
+            print(f"   Score: {score}")
+            print(f"   Tier: {tier}")
+            print(f"   Outcome Count: {outcome_count}")
+            print(f"   Success Rate: {success_rate}%")
+            
+            # Validate score calculation (5 success out of 6 total = 83.3%)
+            expected_score = round((5/6) * 100, 1)  # 83.3
+            if abs(score - expected_score) < 0.1:
+                self.log_test("Score Calculation", True, f"Score {score} matches expected {expected_score}")
+            else:
+                self.log_test("Score Calculation", False, f"Score {score} doesn't match expected {expected_score}")
+            
+            # Validate tier logic (83.3% with 6 outcomes should be Gold)
+            expected_tier = "Gold"  # 75-89% range
+            if tier == expected_tier:
+                self.log_test("Tier Calculation", True, f"Tier {tier} matches expected {expected_tier}")
+            else:
+                self.log_test("Tier Calculation", False, f"Tier {tier} doesn't match expected {expected_tier}")
+            
+            # Validate response format
+            expected_fields = {'agent_id', 'score', 'tier', 'outcome_count', 'success_rate'}
+            actual_fields = set(response.keys())
+            
+            if expected_fields == actual_fields:
+                self.log_test("Score Response Format", True, "Contains all required fields")
+            else:
+                missing_fields = expected_fields - actual_fields
+                extra_fields = actual_fields - expected_fields
+                details = f"Missing: {missing_fields}, Extra: {extra_fields}"
+                self.log_test("Score Response Format", False, details)
 
     def test_badge_svg(self):
         """Test SVG badge generation (public endpoint)"""
@@ -348,8 +423,18 @@ class RepLedgerAPITester:
             # API key management
             self.test_api_key_management()
             
-            # Agent management (simplified - only creation and listing)
+            # Agent management with computed fields
             self.test_agent_creation()
+            self.test_agent_listing()
+            self.test_agent_details()
+            
+            # Outcome management and scoring
+            self.test_outcome_submission()
+            self.test_outcome_listing()
+            self.test_agent_score()
+            
+            # Test updated agent listing with scores
+            print("\n🔍 Re-testing Agent Listing with Scores...")
             self.test_agent_listing()
             
             # API key authentication for v1 endpoints

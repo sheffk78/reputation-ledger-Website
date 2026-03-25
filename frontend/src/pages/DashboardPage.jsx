@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { agentsAPI, apiKeyAPI } from "../lib/api";
-import { formatDateTime, copyToClipboard } from "../lib/utils";
+import { formatDateTime, copyToClipboard, getTierColorClass } from "../lib/utils";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
@@ -35,11 +35,21 @@ import {
   Bot,
   LogOut,
   AlertTriangle,
-  Loader2
+  Loader2,
+  ChevronRight
 } from "lucide-react";
 import { toast } from "sonner";
 
 const LOGO_URL = "https://customer-assets.emergentagent.com/job_ac636d4a-6ca2-497e-8615-5b0c10a94a77/artifacts/vcawrcg8_repledger-logo-dark.svg";
+
+// Tier badge component
+function TierBadge({ tier }) {
+  return (
+    <span className={`tier-badge ${getTierColorClass(tier)}`} data-testid={`tier-badge-${tier.toLowerCase()}`}>
+      {tier}
+    </span>
+  );
+}
 
 export default function DashboardPage() {
   const { user, logout } = useAuth();
@@ -105,12 +115,14 @@ export default function DashboardPage() {
     setCreating(true);
 
     try {
-      const newAgent = await agentsAPI.create({
+      await agentsAPI.create({
         name: formData.name,
         description: formData.description || null,
         owner_handle: formData.owner_handle || null,
       });
-      setAgents([newAgent, ...agents]);
+      // Reload agents to get computed fields
+      const agentsData = await agentsAPI.list();
+      setAgents(agentsData);
       setDialogOpen(false);
       setFormData({ name: "", description: "", owner_handle: "" });
       toast.success("Agent created successfully");
@@ -226,8 +238,7 @@ export default function DashboardPage() {
                       Regenerate API Key?
                     </AlertDialogTitle>
                     <AlertDialogDescription className="text-[#9CA3AF]">
-                      This will immediately invalidate your current API key. Any applications
-                      using this key will stop working.
+                      This will immediately invalidate your current API key.
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
@@ -371,14 +382,18 @@ export default function DashboardPage() {
                   <thead>
                     <tr className="border-b border-white/10">
                       <th className="text-left px-6 py-4 text-xs font-medium text-[#9CA3AF] uppercase tracking-wider">
-                        Name
+                        Agent
                       </th>
                       <th className="text-left px-6 py-4 text-xs font-medium text-[#9CA3AF] uppercase tracking-wider">
-                        Agent ID
+                        Tier
                       </th>
                       <th className="text-left px-6 py-4 text-xs font-medium text-[#9CA3AF] uppercase tracking-wider">
-                        Created
+                        Score
                       </th>
+                      <th className="text-left px-6 py-4 text-xs font-medium text-[#9CA3AF] uppercase tracking-wider">
+                        Outcomes
+                      </th>
+                      <th className="px-6 py-4"></th>
                     </tr>
                   </thead>
                   <tbody>
@@ -391,20 +406,30 @@ export default function DashboardPage() {
                         <td className="px-6 py-4">
                           <div>
                             <div className="text-white font-medium">{agent.name}</div>
-                            {agent.description && (
-                              <div className="text-sm text-[#6B7280] mt-0.5 truncate max-w-xs">
-                                {agent.description}
-                              </div>
-                            )}
+                            <code className="text-xs text-[#6B7280] font-mono">
+                              {agent.agent_id}
+                            </code>
                           </div>
                         </td>
                         <td className="px-6 py-4">
-                          <code className="text-sm text-[#9CA3AF] font-mono">
-                            {agent.agent_id}
-                          </code>
+                          <TierBadge tier={agent.tier} />
                         </td>
-                        <td className="px-6 py-4 text-sm text-[#9CA3AF]">
-                          {formatDateTime(agent.created_at)}
+                        <td className="px-6 py-4">
+                          <span className="font-mono text-white font-semibold">
+                            {agent.score}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-[#9CA3AF]">
+                          {agent.outcome_count}
+                        </td>
+                        <td className="px-6 py-4">
+                          <Link
+                            to={`/agents/${agent.agent_id}`}
+                            className="text-[#01696F] hover:text-[#028C94] transition-colors"
+                            data-testid={`view-agent-${agent.agent_id}`}
+                          >
+                            <ChevronRight className="w-5 h-5" />
+                          </Link>
                         </td>
                       </tr>
                     ))}

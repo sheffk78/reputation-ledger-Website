@@ -8,6 +8,7 @@ import { AuthProvider, useAuth } from "./context/AuthContext";
 import LoginPage from "./pages/LoginPage";
 import SignupPage from "./pages/SignupPage";
 import DashboardPage from "./pages/DashboardPage";
+import AgentDetailPage from "./pages/AgentDetailPage";
 
 // Protected route wrapper
 function ProtectedRoute({ children }) {
@@ -74,6 +75,14 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <DashboardPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/agents/:agentId"
+        element={
+          <ProtectedRoute>
+            <AgentDetailPage />
           </ProtectedRoute>
         }
       />

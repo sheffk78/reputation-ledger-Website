@@ -84,12 +84,37 @@ class AgentCreateResponse(BaseModel):
     created_at: str
 
 class AgentListResponse(BaseModel):
-    """Response for GET /v1/agents"""
+    """Response for GET /v1/agents with computed fields"""
     agent_id: str
     name: str
     description: Optional[str] = None
     owner_handle: Optional[str] = None
     created_at: str
+    score: float = 0
+    tier: str = "Unrated"
+    outcome_count: int = 0
+    success_rate: float = 0
+
+# Outcome models
+class OutcomeCreate(BaseModel):
+    result: str = Field(..., pattern="^(success|failure|partial|timeout)$")
+    task_type: str = Field(min_length=1, max_length=100)
+    submitter_type: str = Field(..., pattern="^(self|operator)$")
+
+class OutcomeResponse(BaseModel):
+    id: str
+    agent_id: str
+    result: str
+    task_type: str
+    submitter_type: str
+    created_at: str
+
+class ScoreResponse(BaseModel):
+    agent_id: str
+    score: float
+    tier: str
+    outcome_count: int
+    success_rate: float
 
 # ============== UTILITY FUNCTIONS ==============
 
@@ -114,6 +139,32 @@ def decode_token(token: str) -> dict:
         raise HTTPException(status_code=401, detail="Token expired")
     except jwt.InvalidTokenError:
         raise HTTPException(status_code=401, detail="Invalid token")
+
+def calculate_score_and_tier(outcomes: List[dict]) -> tuple:
+    """Calculate score and tier from outcomes list"""
+    total = len(outcomes)
+    if total == 0:
+        return 0.0, "Unrated", 0.0
+    
+    successful = sum(1 for o in outcomes if o["result"] == "success")
+    success_rate = (successful / total) * 100
+    score = round(success_rate, 1)
+    
+    # Determine tier based on spec
+    if total < 5:
+        tier = "Unrated"
+    elif score < 50:
+        tier = "Bronze"
+    elif score < 75:
+        tier = "Silver"
+    elif score < 90:
+        tier = "Gold"
+    elif total >= 50:
+        tier = "Platinum"
+    else:
+        tier = "Gold"  # Score >= 90 but < 50 outcomes
+    
+    return score, tier, round(success_rate, 1)
 
 async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
     """Get user from JWT token (for dashboard auth)"""
@@ -278,19 +329,142 @@ async def create_agent(data: AgentCreate, user: dict = Depends(get_user_from_api
 
 @v1_router.get("/agents", response_model=List[AgentListResponse])
 async def list_agents(user: dict = Depends(get_user_from_api_key)):
-    """List all agents for the authenticated user"""
+    """List all agents for the authenticated user with computed scores"""
     agents = await db.agents.find(
         {"user_id": user["id"]}, 
         {"_id": 0}
     ).sort("created_at", -1).to_list(1000)
     
-    return [AgentListResponse(
-        agent_id=a["agent_id"],
-        name=a["name"],
-        description=a.get("description"),
-        owner_handle=a.get("owner_handle"),
-        created_at=a["created_at"]
-    ) for a in agents]
+    result = []
+    for a in agents:
+        # Get outcomes for this agent
+        outcomes = await db.outcomes.find(
+            {"agent_id": a["agent_id"]}, 
+            {"_id": 0}
+        ).to_list(10000)
+        
+        score, tier, success_rate = calculate_score_and_tier(outcomes)
+        
+        result.append(AgentListResponse(
+            agent_id=a["agent_id"],
+            name=a["name"],
+            description=a.get("description"),
+            owner_handle=a.get("owner_handle"),
+            created_at=a["created_at"],
+            score=score,
+            tier=tier,
+            outcome_count=len(outcomes),
+            success_rate=success_rate
+        ))
+    
+    return result
+
+@v1_router.get("/agents/{agent_id}", response_model=AgentListResponse)
+async def get_agent(agent_id: str, user: dict = Depends(get_user_from_api_key)):
+    """Get a single agent with computed score"""
+    agent = await db.agents.find_one(
+        {"agent_id": agent_id, "user_id": user["id"]}, 
+        {"_id": 0}
+    )
+    if not agent:
+        raise HTTPException(status_code=404, detail="Agent not found")
+    
+    outcomes = await db.outcomes.find(
+        {"agent_id": agent_id}, 
+        {"_id": 0}
+    ).to_list(10000)
+    
+    score, tier, success_rate = calculate_score_and_tier(outcomes)
+    
+    return AgentListResponse(
+        agent_id=agent["agent_id"],
+        name=agent["name"],
+        description=agent.get("description"),
+        owner_handle=agent.get("owner_handle"),
+        created_at=agent["created_at"],
+        score=score,
+        tier=tier,
+        outcome_count=len(outcomes),
+        success_rate=success_rate
+    )
+
+@v1_router.post("/agents/{agent_id}/outcomes", response_model=OutcomeResponse, status_code=201)
+async def create_outcome(agent_id: str, data: OutcomeCreate, user: dict = Depends(get_user_from_api_key)):
+    """Submit an outcome for an agent"""
+    # Verify agent belongs to user
+    agent = await db.agents.find_one(
+        {"agent_id": agent_id, "user_id": user["id"]}, 
+        {"_id": 0}
+    )
+    if not agent:
+        raise HTTPException(status_code=404, detail="Agent not found")
+    
+    outcome_id = str(uuid.uuid4())
+    now = datetime.now(timezone.utc).isoformat()
+    
+    outcome_doc = {
+        "id": outcome_id,
+        "agent_id": agent_id,
+        "result": data.result,
+        "task_type": data.task_type,
+        "submitter_type": data.submitter_type,
+        "created_at": now
+    }
+    
+    await db.outcomes.insert_one(outcome_doc)
+    
+    return OutcomeResponse(
+        id=outcome_id,
+        agent_id=agent_id,
+        result=data.result,
+        task_type=data.task_type,
+        submitter_type=data.submitter_type,
+        created_at=now
+    )
+
+@v1_router.get("/agents/{agent_id}/outcomes", response_model=List[OutcomeResponse])
+async def list_outcomes(agent_id: str, user: dict = Depends(get_user_from_api_key)):
+    """List outcomes for an agent"""
+    # Verify agent belongs to user
+    agent = await db.agents.find_one(
+        {"agent_id": agent_id, "user_id": user["id"]}, 
+        {"_id": 0}
+    )
+    if not agent:
+        raise HTTPException(status_code=404, detail="Agent not found")
+    
+    outcomes = await db.outcomes.find(
+        {"agent_id": agent_id}, 
+        {"_id": 0}
+    ).sort("created_at", -1).to_list(1000)
+    
+    return [OutcomeResponse(**o) for o in outcomes]
+
+@v1_router.get("/agents/{agent_id}/score", response_model=ScoreResponse)
+async def get_agent_score(agent_id: str, user: dict = Depends(get_user_from_api_key)):
+    """Get computed score and tier for an agent"""
+    # Verify agent belongs to user
+    agent = await db.agents.find_one(
+        {"agent_id": agent_id, "user_id": user["id"]}, 
+        {"_id": 0}
+    )
+    if not agent:
+        raise HTTPException(status_code=404, detail="Agent not found")
+    
+    outcomes = await db.outcomes.find(
+        {"agent_id": agent_id}, 
+        {"_id": 0}
+    ).to_list(10000)
+    
+    score, tier, success_rate = calculate_score_and_tier(outcomes)
+    
+    return ScoreResponse(
+        agent_id=agent_id,
+        score=score,
+        tier=tier,
+        outcome_count=len(outcomes),
+        success_rate=success_rate
+    )
 
 # ============== BASIC ROUTES ==============
 
