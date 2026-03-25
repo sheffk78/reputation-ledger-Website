@@ -1,4 +1,4 @@
-from fastapi import FastAPI, APIRouter, Depends, HTTPException, status
+from fastapi import FastAPI, APIRouter, Depends, HTTPException, status, Response
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
@@ -464,6 +464,65 @@ async def get_agent_score(agent_id: str, user: dict = Depends(get_user_from_api_
         tier=tier,
         outcome_count=len(outcomes),
         success_rate=success_rate
+    )
+
+def generate_badge_svg(tier: str, score: float) -> str:
+    """Generate SVG badge for agent tier and score"""
+    # Tier colors from brand guide
+    tier_colors = {
+        "Unrated": {"bg": "#4B5563", "text": "#E5E7EB"},
+        "Bronze": {"bg": "#CD7F32", "text": "#1F2937"},
+        "Silver": {"bg": "#C0C0C0", "text": "#1F2937"},
+        "Gold": {"bg": "#FFD700", "text": "#1F2937"},
+        "Platinum": {"bg": "#01696F", "text": "#ECFEFF"},
+    }
+    
+    colors = tier_colors.get(tier, tier_colors["Unrated"])
+    score_display = str(int(score)) if score == int(score) else str(round(score, 1))
+    
+    svg = f'''<svg xmlns="http://www.w3.org/2000/svg" width="120" height="28" viewBox="0 0 120 28">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#0C1116"/>
+      <stop offset="100%" style="stop-color:#111827"/>
+    </linearGradient>
+  </defs>
+  <rect width="120" height="28" rx="6" fill="url(#bg)" stroke="#1F2933" stroke-width="1"/>
+  <rect x="4" y="4" width="52" height="20" rx="4" fill="{colors['bg']}"/>
+  <text x="30" y="17.5" font-family="system-ui, -apple-system, sans-serif" font-size="10" font-weight="600" fill="{colors['text']}" text-anchor="middle">{tier}</text>
+  <text x="86" y="18" font-family="ui-monospace, monospace" font-size="13" font-weight="700" fill="#F9FAFB" text-anchor="middle">{score_display}</text>
+</svg>'''
+    return svg
+
+@v1_router.get("/agents/{agent_id}/badge.svg")
+async def get_agent_badge(agent_id: str):
+    """
+    Get embeddable SVG badge for an agent.
+    This is a PUBLIC endpoint - no authentication required for embedding.
+    """
+    # Look up agent (no user check - public endpoint)
+    agent = await db.agents.find_one({"agent_id": agent_id}, {"_id": 0})
+    if not agent:
+        raise HTTPException(status_code=404, detail="Agent not found")
+    
+    # Get outcomes and calculate score
+    outcomes = await db.outcomes.find(
+        {"agent_id": agent_id}, 
+        {"_id": 0}
+    ).to_list(10000)
+    
+    score, tier, _ = calculate_score_and_tier(outcomes)
+    
+    # Generate SVG
+    svg = generate_badge_svg(tier, score)
+    
+    return Response(
+        content=svg,
+        media_type="image/svg+xml",
+        headers={
+            "Cache-Control": "public, max-age=300",  # Cache for 5 minutes
+            "Content-Type": "image/svg+xml; charset=utf-8"
+        }
     )
 
 # ============== BASIC ROUTES ==============

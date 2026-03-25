@@ -353,13 +353,42 @@ class RepLedgerAPITester:
         try:
             # Test without auth (public endpoint)
             response = requests.get(url)
-            success = response.status_code == 200 and 'svg' in response.text.lower()
+            success = response.status_code == 200
             details = f"Status: {response.status_code}, Content-Type: {response.headers.get('content-type', 'unknown')}"
             
-            self.log_test("Get SVG Badge (Public)", success, details)
+            self.log_test("Badge Endpoint Returns 200", success, details)
             
             if success:
-                print(f"   Badge SVG length: {len(response.text)} chars")
+                # Test Content-Type header
+                content_type = response.headers.get('content-type', '')
+                svg_content_type = 'image/svg+xml' in content_type
+                self.log_test("Badge Content-Type is image/svg+xml", svg_content_type, f"Content-Type: {content_type}")
+                
+                # Test SVG content
+                svg_content = response.text
+                is_svg = '<svg' in svg_content and '</svg>' in svg_content
+                self.log_test("Badge Returns Valid SVG", is_svg, f"SVG length: {len(svg_content)} chars")
+                
+                if is_svg:
+                    # Test tier colors are present (Gold tier expected)
+                    has_gold_color = '#FFD700' in svg_content
+                    self.log_test("Badge Contains Gold Tier Color", has_gold_color, "Gold color #FFD700 found" if has_gold_color else "Gold color not found")
+                    
+                    # Test score is present (83.3 expected)
+                    has_score = '83.3' in svg_content or '83' in svg_content
+                    self.log_test("Badge Contains Score", has_score, "Score found in SVG" if has_score else "Score not found")
+                    
+                    # Test tier text is present
+                    has_tier_text = 'Gold' in svg_content
+                    self.log_test("Badge Contains Tier Text", has_tier_text, "Tier text found" if has_tier_text else "Tier text not found")
+                    
+                    print(f"   Badge SVG preview (first 200 chars): {svg_content[:200]}...")
+                
+            # Test with invalid agent ID (should return 404)
+            invalid_url = f"{self.base_url}/api/v1/agents/invalid_agent_id/badge.svg"
+            invalid_response = requests.get(invalid_url)
+            not_found = invalid_response.status_code == 404
+            self.log_test("Badge 404 for Invalid Agent", not_found, f"Status: {invalid_response.status_code}")
                 
         except Exception as e:
             self.log_test("Get SVG Badge (Public)", False, f"Exception: {str(e)}")
@@ -439,6 +468,9 @@ class RepLedgerAPITester:
             
             # API key authentication for v1 endpoints
             self.test_api_with_api_key()
+            
+            # Badge testing (public endpoint)
+            self.test_badge_svg()
         
         # Print summary
         print(f"\n📊 Test Summary:")

@@ -2,12 +2,13 @@ import React, { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { agentsAPI, outcomesAPI } from "../lib/api";
-import { formatDateTime, getTierColorClass, getResultColorClass } from "../lib/utils";
+import { formatDateTime, getTierColorClass, getResultColorClass, copyToClipboard } from "../lib/utils";
 import { Button } from "../components/ui/button";
-import { ArrowLeft, RefreshCw, LogOut } from "lucide-react";
+import { ArrowLeft, RefreshCw, LogOut, Copy, Check, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 
 const LOGO_URL = "https://customer-assets.emergentagent.com/job_ac636d4a-6ca2-497e-8615-5b0c10a94a77/artifacts/vcawrcg8_repledger-logo-dark.svg";
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
 // Tier badge component
 function TierBadge({ tier, size = "default" }) {
@@ -32,6 +33,11 @@ export default function AgentDetailPage() {
   const [agent, setAgent] = useState(null);
   const [outcomes, setOutcomes] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [copiedField, setCopiedField] = useState(null);
+
+  // Badge URL
+  const badgeUrl = `${BACKEND_URL}/api/v1/agents/${agentId}/badge.svg`;
+  const embedSnippet = `<img src="${badgeUrl}" alt="RepLedger score badge" />`;
 
   useEffect(() => {
     loadData();
@@ -52,6 +58,13 @@ export default function AgentDetailPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleCopy = async (text, field) => {
+    await copyToClipboard(text);
+    setCopiedField(field);
+    toast.success("Copied to clipboard");
+    setTimeout(() => setCopiedField(null), 2000);
   };
 
   const handleLogout = () => {
@@ -156,6 +169,79 @@ export default function AgentDetailPage() {
                   {agent.tier}
                 </div>
                 <div className="text-sm text-[#6B7280]">Trust Tier</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Badge section */}
+          <div className="bg-[#0C1116] border border-white/10 rounded-sm p-6">
+            <h2 className="text-lg font-semibold text-white mb-4">Embeddable Badge</h2>
+            
+            {/* Badge preview */}
+            <div className="flex items-center justify-center p-6 mb-6 rounded-sm" style={{
+              background: "repeating-linear-gradient(45deg, #0C1116, #0C1116 10px, #151B23 10px, #151B23 20px)"
+            }}>
+              <img 
+                src={badgeUrl} 
+                alt="RepLedger Badge" 
+                data-testid="badge-preview"
+                className="h-7"
+              />
+            </div>
+
+            {/* Badge URL */}
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm text-[#6B7280] mb-2 block">Badge URL</label>
+                <div className="flex items-center gap-2">
+                  <code className="flex-1 bg-[#050709] border border-white/10 rounded-sm px-4 py-2.5 text-sm text-[#9CA3AF] font-mono truncate">
+                    {badgeUrl}
+                  </code>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleCopy(badgeUrl, "url")}
+                    data-testid="copy-badge-url"
+                    className="border-white/10 text-white hover:bg-white/5 h-10 px-3"
+                  >
+                    {copiedField === "url" ? (
+                      <Check className="w-4 h-4 text-[#22C55E]" />
+                    ) : (
+                      <Copy className="w-4 h-4" />
+                    )}
+                  </Button>
+                  <a
+                    href={badgeUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center justify-center h-10 px-3 rounded-sm border border-white/10 hover:bg-white/5 transition-colors"
+                  >
+                    <ExternalLink className="w-4 h-4 text-[#9CA3AF]" />
+                  </a>
+                </div>
+              </div>
+
+              {/* HTML Embed */}
+              <div>
+                <label className="text-sm text-[#6B7280] mb-2 block">HTML Embed</label>
+                <div className="flex items-center gap-2">
+                  <code className="flex-1 bg-[#050709] border border-white/10 rounded-sm px-4 py-2.5 text-sm text-[#9CA3AF] font-mono overflow-x-auto">
+                    {embedSnippet}
+                  </code>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleCopy(embedSnippet, "embed")}
+                    data-testid="copy-embed-snippet"
+                    className="border-white/10 text-white hover:bg-white/5 h-10 px-3"
+                  >
+                    {copiedField === "embed" ? (
+                      <Check className="w-4 h-4 text-[#22C55E]" />
+                    ) : (
+                      <Copy className="w-4 h-4" />
+                    )}
+                  </Button>
+                </div>
               </div>
             </div>
           </div>
