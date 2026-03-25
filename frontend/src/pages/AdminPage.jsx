@@ -15,7 +15,10 @@ import {
   LayoutDashboard,
   FileText,
   ChevronRight,
-  TrendingUp
+  TrendingUp,
+  Key,
+  CheckCircle2,
+  XCircle
 } from "lucide-react";
 
 // Navigation items
@@ -23,6 +26,7 @@ const NAV_ITEMS = [
   { id: "overview", label: "Overview", icon: LayoutDashboard },
   { id: "users", label: "Users", icon: Users },
   { id: "agents", label: "Agents", icon: Bot },
+  { id: "api-keys", label: "API Keys", icon: Key },
   { id: "logs", label: "Logs", icon: FileText },
 ];
 
@@ -38,6 +42,9 @@ export default function AdminPage() {
   const [usersTotal, setUsersTotal] = useState(0);
   const [agents, setAgents] = useState([]);
   const [agentsTotal, setAgentsTotal] = useState(0);
+  const [apiKeys, setApiKeys] = useState([]);
+  const [apiKeysTotal, setApiKeysTotal] = useState(0);
+  const [apiKeyStatusFilter, setApiKeyStatusFilter] = useState(null);
 
   useEffect(() => {
     checkAdminAccess();
@@ -47,10 +54,11 @@ export default function AdminPage() {
     try {
       await adminAPI.verifyAccess();
       
-      const [statsData, usersData, agentsData] = await Promise.all([
+      const [statsData, usersData, agentsData, apiKeysData] = await Promise.all([
         adminAPI.getStats(),
         adminAPI.getUsers(50),
         adminAPI.getAgents(50),
+        adminAPI.getApiKeys(50),
       ]);
       
       setStats(statsData);
@@ -58,6 +66,8 @@ export default function AdminPage() {
       setUsersTotal(usersData.total);
       setAgents(agentsData.agents);
       setAgentsTotal(agentsData.total);
+      setApiKeys(apiKeysData.api_keys);
+      setApiKeysTotal(apiKeysData.total);
     } catch (error) {
       console.error("Admin access check failed:", error);
       if (error.response?.status === 403) {
@@ -73,6 +83,23 @@ export default function AdminPage() {
   const handleLogout = () => {
     logout();
     navigate("/");
+  };
+
+  // Fetch API keys with optional status filter
+  const fetchApiKeys = async (statusFilter = null) => {
+    try {
+      const data = await adminAPI.getApiKeys(50, 0, statusFilter);
+      setApiKeys(data.api_keys);
+      setApiKeysTotal(data.total);
+    } catch (error) {
+      console.error("Failed to fetch API keys:", error);
+    }
+  };
+
+  // Handle API key status filter change
+  const handleApiKeyStatusFilter = (newStatus) => {
+    setApiKeyStatusFilter(newStatus);
+    fetchApiKeys(newStatus);
   };
 
   if (loading) {
@@ -430,6 +457,81 @@ export default function AdminPage() {
                           </td>
                         </tr>
                       ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* API Keys Section */}
+          {activeSection === "api-keys" && (
+            <div data-testid="admin-api-keys">
+              <div className="flex items-center justify-between mb-6">
+                <p className="text-sm text-gray-400">{apiKeysTotal} total API keys</p>
+                {/* Status filter */}
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-gray-500">Filter:</span>
+                  <select
+                    value={apiKeyStatusFilter || ""}
+                    onChange={(e) => handleApiKeyStatusFilter(e.target.value || null)}
+                    className="bg-[#0C1116] border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:ring-1 focus:ring-[#01696F]"
+                    data-testid="api-key-status-filter"
+                  >
+                    <option value="">All</option>
+                    <option value="active">Active</option>
+                    <option value="revoked">Revoked</option>
+                  </select>
+                </div>
+              </div>
+              <div className="card-surface overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-white/[0.06]">
+                        <th className="text-left py-3 px-4 text-gray-500 font-medium">User Email</th>
+                        <th className="text-left py-3 px-4 text-gray-500 font-medium">Partial Key</th>
+                        <th className="text-left py-3 px-4 text-gray-500 font-medium">Status</th>
+                        <th className="text-left py-3 px-4 text-gray-500 font-medium">Created</th>
+                        <th className="text-left py-3 px-4 text-gray-500 font-medium">Last Used</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {apiKeys.map((key) => (
+                        <tr key={key.id} className="border-b border-white/[0.03] hover:bg-white/[0.02]">
+                          <td className="py-3 px-4 text-white">{key.user_email}</td>
+                          <td className="py-3 px-4 font-mono text-gray-400">{key.partial_key}</td>
+                          <td className="py-3 px-4">
+                            {key.status === "active" ? (
+                              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs bg-green-500/20 text-green-400 font-medium">
+                                <CheckCircle2 className="w-3 h-3" />
+                                Active
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs bg-red-500/20 text-red-400 font-medium">
+                                <XCircle className="w-3 h-3" />
+                                Revoked
+                              </span>
+                            )}
+                          </td>
+                          <td className="py-3 px-4 text-gray-500 text-xs">
+                            {new Date(key.created_at).toLocaleDateString()}
+                          </td>
+                          <td className="py-3 px-4 text-gray-500 text-xs">
+                            {key.last_used_at 
+                              ? new Date(key.last_used_at).toLocaleDateString() 
+                              : <span className="text-gray-600">Never</span>
+                            }
+                          </td>
+                        </tr>
+                      ))}
+                      {apiKeys.length === 0 && (
+                        <tr>
+                          <td colSpan={5} className="py-8 text-center text-gray-500">
+                            No API keys found
+                          </td>
+                        </tr>
+                      )}
                     </tbody>
                   </table>
                 </div>

@@ -126,6 +126,25 @@ class AdminStatsResponse(BaseModel):
     new_users_last_7_days: int
 
 
+# ============== API KEY MODELS ==============
+
+class AdminApiKeyResponse(BaseModel):
+    """API key info for admin view"""
+    id: str
+    user_id: str
+    user_email: str
+    partial_key: str
+    status: str  # "active" or "revoked"
+    created_at: str
+    last_used_at: Optional[str] = None
+
+
+class AdminApiKeyListResponse(BaseModel):
+    """Paginated list of API keys"""
+    api_keys: List[AdminApiKeyResponse]
+    total: int
+
+
 # ============== ADMIN ROUTES ==============
 
 @router.get("/stats", response_model=AdminStatsResponse)
@@ -398,6 +417,54 @@ async def get_agent_detail(agent_id: str, admin: dict = Depends(get_admin_user))
         flags=flags,
         flags_count=len(flags)
     )
+
+
+@router.get("/api-keys", response_model=AdminApiKeyListResponse)
+async def list_all_api_keys(
+    limit: int = 50,
+    skip: int = 0,
+    status: Optional[str] = None,  # "active" or "revoked"
+    admin: dict = Depends(get_admin_user)
+):
+    """List all API keys with user info (admin only)"""
+    # Build filter query
+    query = {}
+    if status == "active":
+        query["revoked_at"] = None
+    elif status == "revoked":
+        query["revoked_at"] = {"$ne": None}
+    
+    total = await db.api_keys.count_documents(query)
+    
+    api_keys = await db.api_keys.find(
+        query, 
+        {"_id": 0}
+    ).sort("created_at", -1).skip(skip).limit(limit).to_list(limit)
+    
+    result = []
+    for key in api_keys:
+        # Get user email
+        user = await db.users.find_one({"id": key["user_id"]}, {"_id": 0, "email": 1})
+        user_email = user["email"] if user else "unknown"
+        
+        # Create partial key (show last 6 characters)
+        full_key = key["key"]
+        partial_key = f"...{full_key[-6:]}" if len(full_key) > 6 else full_key
+        
+        # Determine status
+        key_status = "revoked" if key.get("revoked_at") else "active"
+        
+        result.append(AdminApiKeyResponse(
+            id=key["id"],
+            user_id=key["user_id"],
+            user_email=user_email,
+            partial_key=partial_key,
+            status=key_status,
+            created_at=key["created_at"],
+            last_used_at=key.get("last_used_at")
+        ))
+    
+    return AdminApiKeyListResponse(api_keys=result, total=total)
 
 
 @router.get("/me")

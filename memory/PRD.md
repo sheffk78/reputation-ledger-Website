@@ -186,15 +186,25 @@ Build a Phase 1 MVP of Agent Reputation Ledger (RepLedger) - a track record API 
   - GET /admin/me - Verify admin access
   - GET /admin/stats - Platform-wide statistics
   - GET /admin/users - List all users with stats
-  - GET /admin/agents - List all agents across users
+  - GET /admin/users/{id} - Get user details with their agents
+  - GET /admin/agents - List all agents across users (with tier/public filtering)
+  - GET /admin/agents/{id} - Get agent details with outcomes and flags
+  - GET /admin/api-keys - List all API keys with user info and usage stats
 
 #### Frontend
-- ✅ Created AdminPage at /admin route
+- ✅ Created AdminPage at /admin route with sidebar navigation
 - ✅ Platform Overview stats (users, agents, outcomes, 24h/7d activity)
-- ✅ Recent Users table with role badges
-- ✅ Recent Agents table with tier badges and public status
+- ✅ Users section: Full table with email, role, agents, outcomes, created date
+- ✅ User detail page: Shows user info and their agents
+- ✅ Agents section: Table with name, owner, score, tier, outcomes, public status
+- ✅ API Keys section: Table with user email, partial key, status (Active/Revoked), created/last used dates
+- ✅ API Keys status filter dropdown (All/Active/Revoked)
 - ✅ Access Denied page for non-admin users
 - ✅ Login response includes is_admin field
+
+#### Backend - API Key Tracking
+- ✅ Added `last_used_at` field tracking when API keys are used
+- ✅ Updates timestamp each time API key is used for authentication
 
 #### Admin Promotion
 To promote a user to admin, run in MongoDB shell:
@@ -310,6 +320,13 @@ db.users.updateOne({email: "admin@example.com"}, {$set: {is_admin: true}})
 | /api/api-key | GET | JWT | Get API key |
 | /api/api-key/regenerate | POST | JWT | Regenerate API key |
 | /api/usage-stats | GET | JWT | Get usage statistics |
+| /api/admin/me | GET | Admin | Verify admin access |
+| /api/admin/stats | GET | Admin | Platform statistics |
+| /api/admin/users | GET | Admin | List all users |
+| /api/admin/users/{id} | GET | Admin | Get user details |
+| /api/admin/agents | GET | Admin | List all agents |
+| /api/admin/agents/{id} | GET | Admin | Get agent details |
+| /api/admin/api-keys | GET | Admin | List all API keys |
 
 ## Third-Party Integrations
 - **Postmark**: Transactional emails (welcome, password reset, outcome notifications)

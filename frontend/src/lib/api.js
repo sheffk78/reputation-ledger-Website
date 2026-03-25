@@ -225,6 +225,13 @@ export const adminAPI = {
     return response.data;
   },
 
+  getApiKeys: async (limit = 50, skip = 0, status = null) => {
+    const params = new URLSearchParams({ limit, skip });
+    if (status) params.append('status', status);
+    const response = await apiClient.get(`/admin/api-keys?${params.toString()}`);
+    return response.data;
+  },
+
   verifyAccess: async () => {
     const response = await apiClient.get("/admin/me");
     return response.data;

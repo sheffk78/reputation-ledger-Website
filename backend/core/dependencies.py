@@ -82,6 +82,11 @@ async def get_user_from_api_key(credentials: HTTPAuthorizationCredentials = Depe
     # Then try API key
     api_key_doc = await db.api_keys.find_one({"key": token, "revoked_at": None}, {"_id": 0})
     if api_key_doc:
+        # Update last_used_at timestamp
+        await db.api_keys.update_one(
+            {"id": api_key_doc["id"]},
+            {"$set": {"last_used_at": datetime.now(timezone.utc).isoformat()}}
+        )
         user = await db.users.find_one({"id": api_key_doc["user_id"]}, {"_id": 0})
         if user:
             return user
