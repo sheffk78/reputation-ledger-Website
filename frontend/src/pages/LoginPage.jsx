@@ -22,10 +22,9 @@ export default function LoginPage() {
 
     try {
       await login(email, password);
-      toast.success("Logged in successfully");
       navigate("/dashboard");
     } catch (error) {
-      const message = error.response?.data?.detail || "Login failed";
+      const message = error.response?.data?.detail || "Invalid credentials";
       toast.error(message);
     } finally {
       setLoading(false);
@@ -34,36 +33,27 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen bg-[#050709] flex flex-col">
-      {/* Header */}
-      <header className="p-6">
-        <Link to="/" className="inline-flex items-center gap-2 text-[#9CA3AF] hover:text-white transition-colors">
-          <ArrowLeft className="w-4 h-4" />
-          Back to home
-        </Link>
-      </header>
-
-      {/* Main content */}
       <div className="flex-1 flex items-center justify-center px-4">
-        <div className="w-full max-w-md">
+        <div className="w-full max-w-sm">
           {/* Logo */}
-          <div className="text-center mb-8">
+          <div className="text-center mb-10">
             <img 
               src={LOGO_URL} 
               alt="RepLedger" 
-              className="h-8 mx-auto mb-6"
+              className="h-7 mx-auto mb-8"
             />
-            <h1 className="text-2xl font-semibold tracking-tight text-white">
+            <h1 className="text-[18px] font-semibold text-white tracking-tight">
               Sign in to RepLedger
             </h1>
-            <p className="text-[#9CA3AF] mt-2">
+            <p className="text-[13px] text-[#6B7280] mt-2">
               Access your agent reputation dashboard
             </p>
           </div>
 
           {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-5">
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-[#9CA3AF]">Email</Label>
+              <Label htmlFor="email" className="form-label">Email</Label>
               <Input
                 id="email"
                 type="email"
@@ -72,12 +62,12 @@ export default function LoginPage() {
                 placeholder="you@example.com"
                 required
                 data-testid="login-email-input"
-                className="bg-[#0C1116] border-white/10 text-white placeholder:text-[#6B7280] focus:border-[#01696F] focus:ring-[#01696F]"
+                className="form-input"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password" className="text-[#9CA3AF]">Password</Label>
+              <Label htmlFor="password" className="form-label">Password</Label>
               <Input
                 id="password"
                 type="password"
@@ -86,7 +76,7 @@ export default function LoginPage() {
                 placeholder="Enter your password"
                 required
                 data-testid="login-password-input"
-                className="bg-[#0C1116] border-white/10 text-white placeholder:text-[#6B7280] focus:border-[#01696F] focus:ring-[#01696F]"
+                className="form-input"
               />
             </div>
 
@@ -94,7 +84,7 @@ export default function LoginPage() {
               type="submit"
               disabled={loading}
               data-testid="login-submit-btn"
-              className="w-full bg-[#01696F] hover:bg-[#028C94] text-white h-12 rounded-sm"
+              className="w-full bg-[#01696F] hover:bg-[#028C94] text-white h-11 text-[13px] font-medium"
             >
               {loading ? (
                 <>
@@ -108,11 +98,11 @@ export default function LoginPage() {
           </form>
 
           {/* Sign up link */}
-          <p className="text-center mt-6 text-[#9CA3AF]">
+          <p className="text-center mt-8 text-[13px] text-[#6B7280]">
             Don't have an account?{" "}
             <Link 
               to="/signup" 
-              className="text-[#01696F] hover:text-[#028C94] font-medium transition-colors"
+              className="text-[#01696F] hover:text-[#028C94] font-medium"
               data-testid="signup-link"
             >
               Create one

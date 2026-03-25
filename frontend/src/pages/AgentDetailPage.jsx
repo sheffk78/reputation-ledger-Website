@@ -13,9 +13,9 @@ const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 // Tier badge component
 function TierBadge({ tier, size = "default" }) {
   const sizeClasses = {
-    small: "px-2 py-0.5 text-[10px]",
-    default: "px-3 py-1 text-xs",
-    large: "px-4 py-1.5 text-sm",
+    small: "px-2 py-0.5 text-[9px]",
+    default: "px-2.5 py-1 text-[10px]",
+    large: "px-3 py-1.5 text-[11px]",
   };
 
   return (
@@ -35,7 +35,6 @@ export default function AgentDetailPage() {
   const [loading, setLoading] = useState(true);
   const [copiedField, setCopiedField] = useState(null);
 
-  // Badge URL
   const badgeUrl = `${BACKEND_URL}/api/v1/agents/${agentId}/badge.svg`;
   const embedSnippet = `<img src="${badgeUrl}" alt="RepLedger score badge" />`;
 
@@ -53,7 +52,7 @@ export default function AgentDetailPage() {
       setOutcomes(outcomesData);
     } catch (error) {
       console.error("Failed to load agent:", error);
-      toast.error("Failed to load agent details");
+      toast.error("Agent not found");
       navigate("/dashboard");
     } finally {
       setLoading(false);
@@ -63,7 +62,7 @@ export default function AgentDetailPage() {
   const handleCopy = async (text, field) => {
     await copyToClipboard(text);
     setCopiedField(field);
-    toast.success("Copied to clipboard");
+    toast.success("Copied");
     setTimeout(() => setCopiedField(null), 2000);
   };
 
@@ -84,8 +83,8 @@ export default function AgentDetailPage() {
     return (
       <div className="min-h-screen bg-[#050709] flex items-center justify-center">
         <div className="text-center">
-          <h2 className="text-xl text-white mb-4">Agent not found</h2>
-          <Link to="/dashboard" className="text-[#01696F] hover:underline">
+          <h2 className="text-[15px] text-white mb-3">Agent not found</h2>
+          <Link to="/dashboard" className="text-[13px] text-[#01696F] hover:underline">
             Back to dashboard
           </Link>
         </div>
@@ -96,91 +95,110 @@ export default function AgentDetailPage() {
   return (
     <div className="min-h-screen bg-[#050709]">
       {/* Header */}
-      <header className="h-16 border-b border-white/10 bg-[#0C1116]/80 backdrop-blur-xl">
-        <div className="max-w-6xl mx-auto px-6 flex items-center justify-between h-full">
-          <img src={LOGO_URL} alt="RepLedger" className="h-7" />
+      <header className="h-14 border-b border-white/[0.08] bg-[#050709]">
+        <div className="container-app flex items-center justify-between h-full">
+          <div className="flex items-center gap-3">
+            <img src={LOGO_URL} alt="RepLedger" className="h-6" />
+            <span className="text-[11px] font-medium text-[#01696F] uppercase tracking-wider">Agent Detail</span>
+          </div>
           
-          <div className="flex items-center gap-4">
-            <span className="text-sm text-[#9CA3AF]">{user?.email}</span>
+          <div className="flex items-center gap-5">
+            <span className="text-[13px] text-[#6B7280]">{user?.email}</span>
             <button
               onClick={handleLogout}
               data-testid="logout-btn"
-              className="flex items-center gap-2 text-sm text-[#9CA3AF] hover:text-white transition-colors duration-150"
+              className="flex items-center gap-1.5 text-[13px] text-[#6B7280] hover:text-white transition-colors"
             >
-              <LogOut className="w-4 h-4" />
+              <LogOut className="w-3.5 h-3.5" />
               Logout
             </button>
           </div>
         </div>
       </header>
 
-      <main className="max-w-6xl mx-auto px-6 py-8">
+      <main className="container-app py-8">
         <div className="space-y-8">
           {/* Back link */}
           <Link
             to="/dashboard"
-            className="inline-flex items-center gap-2 text-[#9CA3AF] hover:text-white transition-colors"
+            className="inline-flex items-center gap-1.5 text-[13px] text-[#6B7280] hover:text-white transition-colors"
             data-testid="back-to-dashboard"
           >
-            <ArrowLeft className="w-4 h-4" />
+            <ArrowLeft className="w-3.5 h-3.5" />
             Back to dashboard
           </Link>
 
-          {/* Agent header */}
-          <div className="bg-[#0C1116] border border-white/10 rounded-sm p-8">
-            <div className="flex items-start justify-between">
-              <div>
-                <div className="flex items-center gap-4 mb-2">
-                  <h1 className="text-2xl font-semibold text-white">{agent.name}</h1>
+          {/* Agent header card with prominent score */}
+          <div className="card-surface p-6">
+            <div className="flex items-start gap-8">
+              {/* Left: Agent info */}
+              <div className="flex-1">
+                <div className="flex items-center gap-3 mb-3">
+                  <h1 className="text-[20px] font-semibold text-white tracking-tight">{agent.name}</h1>
                   <TierBadge tier={agent.tier} size="large" />
                 </div>
-                <code className="text-sm text-[#6B7280] font-mono">
-                  {agent.agent_id}
-                </code>
+                <div className="flex items-center gap-2 mb-4">
+                  <code className="text-[12px] text-[#6B7280] font-mono">{agent.agent_id}</code>
+                  <button
+                    onClick={() => handleCopy(agent.agent_id, "id")}
+                    className="p-1 rounded hover:bg-white/5"
+                  >
+                    {copiedField === "id" ? (
+                      <Check className="w-3 h-3 text-[#22C55E]" />
+                    ) : (
+                      <Copy className="w-3 h-3 text-[#6B7280]" />
+                    )}
+                  </button>
+                </div>
                 {agent.description && (
-                  <p className="text-[#9CA3AF] mt-4 max-w-xl">{agent.description}</p>
+                  <p className="text-[13px] text-[#9CA3AF] max-w-md leading-relaxed">{agent.description}</p>
+                )}
+                {agent.owner_handle && (
+                  <p className="text-[12px] text-[#6B7280] mt-2">Owner: {agent.owner_handle}</p>
                 )}
               </div>
 
+              {/* Right: Score display */}
               <div className="text-right">
-                <div className="text-5xl font-mono font-bold text-white" data-testid="agent-score">
+                <div className="score-display-xl" data-testid="agent-score">
                   {agent.score}
                 </div>
-                <div className="text-sm text-[#6B7280] mt-1">RepLedger Score</div>
+                <div className="text-[11px] text-[#6B7280] uppercase tracking-wider mt-2">
+                  RepLedger Score
+                </div>
               </div>
             </div>
 
             {/* Stats row */}
-            <div className="grid grid-cols-3 gap-6 mt-8 pt-6 border-t border-white/10">
-              <div>
-                <div className="text-3xl font-mono font-bold text-white">
-                  {agent.outcome_count}
-                </div>
-                <div className="text-sm text-[#6B7280]">Total Outcomes</div>
+            <div className="grid grid-cols-4 gap-6 mt-8 pt-6 border-t border-white/[0.06]">
+              <div className="stat-card">
+                <div className="stat-card-value">{agent.outcome_count}</div>
+                <div className="stat-card-label">Total Outcomes</div>
               </div>
-              <div>
-                <div className="text-3xl font-mono font-bold text-white">
-                  {agent.success_rate}%
-                </div>
-                <div className="text-sm text-[#6B7280]">Success Rate</div>
+              <div className="stat-card">
+                <div className="stat-card-value">{agent.success_rate}%</div>
+                <div className="stat-card-label">Success Rate</div>
               </div>
-              <div>
-                <div className="text-3xl font-mono font-bold text-white">
-                  {agent.tier}
+              <div className="stat-card">
+                <div className="stat-card-value">{agent.tier}</div>
+                <div className="stat-card-label">Trust Tier</div>
+              </div>
+              <div className="stat-card">
+                <div className="stat-card-value">
+                  {agent.outcome_count >= 50 ? "✓" : `${50 - agent.outcome_count}`}
                 </div>
-                <div className="text-sm text-[#6B7280]">Trust Tier</div>
+                <div className="stat-card-label">
+                  {agent.outcome_count >= 50 ? "Platinum Eligible" : "To Platinum"}
+                </div>
               </div>
             </div>
           </div>
 
           {/* Badge section */}
-          <div className="bg-[#0C1116] border border-white/10 rounded-sm p-6">
-            <h2 className="text-lg font-semibold text-white mb-4">Embeddable Badge</h2>
+          <div className="card-surface p-6">
+            <h2 className="text-[14px] font-semibold text-white mb-5">Embeddable Badge</h2>
             
-            {/* Badge preview */}
-            <div className="flex items-center justify-center p-6 mb-6 rounded-sm" style={{
-              background: "repeating-linear-gradient(45deg, #0C1116, #0C1116 10px, #151B23 10px, #151B23 20px)"
-            }}>
+            <div className="badge-preview-area mb-5">
               <img 
                 src={badgeUrl} 
                 alt="RepLedger Badge" 
@@ -189,56 +207,50 @@ export default function AgentDetailPage() {
               />
             </div>
 
-            {/* Badge URL */}
             <div className="space-y-4">
               <div>
-                <label className="text-sm text-[#6B7280] mb-2 block">Badge URL</label>
+                <label className="form-label">Badge URL</label>
                 <div className="flex items-center gap-2">
-                  <code className="flex-1 bg-[#050709] border border-white/10 rounded-sm px-4 py-2.5 text-sm text-[#9CA3AF] font-mono truncate">
-                    {badgeUrl}
-                  </code>
+                  <code className="code-snippet flex-1 truncate">{badgeUrl}</code>
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => handleCopy(badgeUrl, "url")}
                     data-testid="copy-badge-url"
-                    className="border-white/10 text-white hover:bg-white/5 h-10 px-3"
+                    className="border-white/[0.08] bg-transparent text-white hover:bg-white/5 h-9 px-3"
                   >
                     {copiedField === "url" ? (
-                      <Check className="w-4 h-4 text-[#22C55E]" />
+                      <Check className="w-3.5 h-3.5 text-[#22C55E]" />
                     ) : (
-                      <Copy className="w-4 h-4" />
+                      <Copy className="w-3.5 h-3.5" />
                     )}
                   </Button>
                   <a
                     href={badgeUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center justify-center h-10 px-3 rounded-sm border border-white/10 hover:bg-white/5 transition-colors"
+                    className="inline-flex items-center justify-center h-9 px-3 rounded-sm border border-white/[0.08] hover:bg-white/5 transition-colors"
                   >
-                    <ExternalLink className="w-4 h-4 text-[#9CA3AF]" />
+                    <ExternalLink className="w-3.5 h-3.5 text-[#6B7280]" />
                   </a>
                 </div>
               </div>
 
-              {/* HTML Embed */}
               <div>
-                <label className="text-sm text-[#6B7280] mb-2 block">HTML Embed</label>
+                <label className="form-label">HTML Embed</label>
                 <div className="flex items-center gap-2">
-                  <code className="flex-1 bg-[#050709] border border-white/10 rounded-sm px-4 py-2.5 text-sm text-[#9CA3AF] font-mono overflow-x-auto">
-                    {embedSnippet}
-                  </code>
+                  <code className="code-snippet flex-1 text-[11px]">{embedSnippet}</code>
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => handleCopy(embedSnippet, "embed")}
                     data-testid="copy-embed-snippet"
-                    className="border-white/10 text-white hover:bg-white/5 h-10 px-3"
+                    className="border-white/[0.08] bg-transparent text-white hover:bg-white/5 h-9 px-3"
                   >
                     {copiedField === "embed" ? (
-                      <Check className="w-4 h-4 text-[#22C55E]" />
+                      <Check className="w-3.5 h-3.5 text-[#22C55E]" />
                     ) : (
-                      <Copy className="w-4 h-4" />
+                      <Copy className="w-3.5 h-3.5" />
                     )}
                   </Button>
                 </div>
@@ -249,65 +261,55 @@ export default function AgentDetailPage() {
           {/* Outcomes table */}
           <section>
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-white">Outcomes</h2>
-              <Button
-                variant="ghost"
-                size="sm"
+              <h2 className="text-[15px] font-semibold text-white">Outcome History</h2>
+              <button
                 onClick={loadData}
                 data-testid="refresh-outcomes"
-                className="text-[#9CA3AF] hover:text-white hover:bg-white/5"
+                className="flex items-center gap-1.5 text-[12px] text-[#6B7280] hover:text-white transition-colors"
               >
-                <RefreshCw className="w-4 h-4 mr-2" />
+                <RefreshCw className="w-3.5 h-3.5" />
                 Refresh
-              </Button>
+              </button>
             </div>
 
             {outcomes.length === 0 ? (
-              <div className="bg-[#0C1116] border border-white/10 rounded-sm p-12 text-center">
-                <p className="text-[#6B7280]">No outcomes recorded yet</p>
-                <p className="text-sm text-[#4B5563] mt-2">
-                  Submit outcomes via the API to build this agent's track record
+              <div className="card-surface empty-state">
+                <p className="text-[#6B7280] text-[13px]">No outcomes recorded</p>
+                <p className="text-[#4B5563] text-[12px] mt-1">
+                  Submit outcomes via POST /v1/agents/{agent.agent_id}/outcomes
                 </p>
               </div>
             ) : (
-              <div className="bg-[#0C1116] border border-white/10 rounded-sm overflow-hidden">
-                <table className="w-full" data-testid="outcomes-table">
+              <div className="card-surface overflow-hidden">
+                <table className="data-table" data-testid="outcomes-table">
                   <thead>
-                    <tr className="border-b border-white/10">
-                      <th className="text-left px-6 py-4 text-xs font-medium text-[#9CA3AF] uppercase tracking-wider">
-                        Timestamp
-                      </th>
-                      <th className="text-left px-6 py-4 text-xs font-medium text-[#9CA3AF] uppercase tracking-wider">
-                        Task Type
-                      </th>
-                      <th className="text-left px-6 py-4 text-xs font-medium text-[#9CA3AF] uppercase tracking-wider">
-                        Result
-                      </th>
-                      <th className="text-left px-6 py-4 text-xs font-medium text-[#9CA3AF] uppercase tracking-wider">
-                        Submitter
-                      </th>
+                    <tr>
+                      <th>Timestamp</th>
+                      <th>Task Type</th>
+                      <th>Result</th>
+                      <th>Submitter</th>
                     </tr>
                   </thead>
                   <tbody>
                     {outcomes.map((outcome) => (
-                      <tr
-                        key={outcome.id}
-                        className="border-b border-white/5 hover:bg-white/[0.02] transition-colors"
-                        data-testid={`outcome-row-${outcome.id}`}
-                      >
-                        <td className="px-6 py-4 text-sm text-[#9CA3AF]">
-                          {formatDateTime(outcome.created_at)}
+                      <tr key={outcome.id} data-testid={`outcome-row-${outcome.id}`}>
+                        <td>
+                          <span className="text-[#9CA3AF] font-mono text-[12px]">
+                            {formatDateTime(outcome.created_at)}
+                          </span>
                         </td>
-                        <td className="px-6 py-4 text-sm text-white">
-                          {outcome.task_type}
+                        <td>
+                          <span className="text-white text-[13px]">{outcome.task_type}</span>
                         </td>
-                        <td className="px-6 py-4">
-                          <span className={`text-sm font-medium capitalize ${getResultColorClass(outcome.result)}`}>
+                        <td>
+                          <span className={`text-[13px] font-medium capitalize ${getResultColorClass(outcome.result)}`}>
                             {outcome.result}
                           </span>
                         </td>
-                        <td className="px-6 py-4 text-sm text-[#9CA3AF] capitalize">
-                          {outcome.submitter_type}
+                        <td>
+                          <span className="text-[#9CA3AF] text-[13px] capitalize">
+                            {outcome.submitter_type}
+                          </span>
                         </td>
                       </tr>
                     ))}

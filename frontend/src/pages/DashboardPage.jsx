@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { agentsAPI, apiKeyAPI } from "../lib/api";
-import { formatDateTime, copyToClipboard, getTierColorClass } from "../lib/utils";
+import { copyToClipboard, getTierColorClass } from "../lib/utils";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
@@ -36,16 +36,26 @@ import {
   LogOut,
   AlertTriangle,
   Loader2,
-  ChevronRight
+  ChevronRight,
+  Zap
 } from "lucide-react";
 import { toast } from "sonner";
 
 const LOGO_URL = "https://customer-assets.emergentagent.com/job_ac636d4a-6ca2-497e-8615-5b0c10a94a77/artifacts/vcawrcg8_repledger-logo-dark.svg";
 
 // Tier badge component
-function TierBadge({ tier }) {
+function TierBadge({ tier, size = "default" }) {
+  const sizeClasses = {
+    small: "px-2 py-0.5 text-[9px]",
+    default: "px-2.5 py-1 text-[10px]",
+    large: "px-3 py-1.5 text-[11px]",
+  };
+
   return (
-    <span className={`tier-badge ${getTierColorClass(tier)}`} data-testid={`tier-badge-${tier.toLowerCase()}`}>
+    <span 
+      className={`tier-badge ${getTierColorClass(tier)} ${sizeClasses[size]}`}
+      data-testid={`tier-badge-${tier.toLowerCase()}`}
+    >
       {tier}
     </span>
   );
@@ -92,7 +102,7 @@ export default function DashboardPage() {
     if (apiKey) {
       await copyToClipboard(apiKey.api_key);
       setCopied(true);
-      toast.success("API key copied to clipboard");
+      toast.success("API key copied");
       setTimeout(() => setCopied(false), 2000);
     }
   };
@@ -120,12 +130,11 @@ export default function DashboardPage() {
         description: formData.description || null,
         owner_handle: formData.owner_handle || null,
       });
-      // Reload agents to get computed fields
       const agentsData = await agentsAPI.list();
       setAgents(agentsData);
       setDialogOpen(false);
       setFormData({ name: "", description: "", owner_handle: "" });
-      toast.success("Agent created successfully");
+      toast.success("Agent registered");
     } catch (error) {
       const message = error.response?.data?.detail || "Failed to create agent";
       toast.error(message);
@@ -150,140 +159,145 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen bg-[#050709]">
       {/* Header */}
-      <header className="h-16 border-b border-white/10 bg-[#0C1116]/80 backdrop-blur-xl">
-        <div className="max-w-6xl mx-auto px-6 flex items-center justify-between h-full">
-          <img src={LOGO_URL} alt="RepLedger" className="h-7" />
+      <header className="h-14 border-b border-white/[0.08] bg-[#050709]">
+        <div className="container-app flex items-center justify-between h-full">
+          <div className="flex items-center gap-3">
+            <img src={LOGO_URL} alt="RepLedger" className="h-6" />
+            <span className="text-[11px] font-medium text-[#01696F] uppercase tracking-wider">Dashboard</span>
+          </div>
           
-          <div className="flex items-center gap-4">
-            <span className="text-sm text-[#9CA3AF]">{user?.email}</span>
+          <div className="flex items-center gap-5">
+            <span className="text-[13px] text-[#6B7280]">{user?.email}</span>
             <button
               onClick={handleLogout}
               data-testid="logout-btn"
-              className="flex items-center gap-2 text-sm text-[#9CA3AF] hover:text-white transition-colors duration-150"
+              className="flex items-center gap-1.5 text-[13px] text-[#6B7280] hover:text-white transition-colors"
             >
-              <LogOut className="w-4 h-4" />
+              <LogOut className="w-3.5 h-3.5" />
               Logout
             </button>
           </div>
         </div>
       </header>
 
-      <main className="max-w-6xl mx-auto px-6 py-8">
+      <main className="container-app py-8">
         <div className="space-y-8">
-          {/* Page title */}
+          {/* Page header */}
           <div>
-            <h1 className="text-2xl font-semibold tracking-tight text-white">
-              Dashboard
+            <h1 className="text-[22px] font-semibold text-white tracking-tight">
+              Agent Reputation Ledger
             </h1>
-            <p className="text-[#9CA3AF] mt-1">
-              Manage your API key and agents
+            <p className="text-[13px] text-[#6B7280] mt-1">
+              Manage API access and monitor agent track records
             </p>
           </div>
 
           {/* API Key Section */}
-          <section className="bg-[#0C1116] border border-white/10 rounded-sm p-6">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 rounded-sm bg-[#01696F]/20 flex items-center justify-center">
-                <Key className="w-5 h-5 text-[#01696F]" />
+          <section className="api-key-block">
+            <div className="flex items-center justify-between mb-5">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-sm bg-[#01696F]/15 flex items-center justify-center">
+                  <Key className="w-4 h-4 text-[#01696F]" />
+                </div>
+                <div>
+                  <h2 className="text-[14px] font-semibold text-white">API Key</h2>
+                  <p className="text-[12px] text-[#6B7280]">
+                    Use this key for all v1 API requests
+                  </p>
+                </div>
               </div>
-              <div>
-                <h2 className="text-white font-medium">Your API Key</h2>
-                <p className="text-sm text-[#6B7280]">
-                  Use this key to authenticate API requests
-                </p>
-              </div>
+              
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <button
+                    data-testid="regenerate-key-btn"
+                    className="flex items-center gap-1.5 text-[12px] text-[#9CA3AF] hover:text-white transition-colors"
+                  >
+                    {regenerating ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      <RefreshCw className="w-3.5 h-3.5" />
+                    )}
+                    Regenerate
+                  </button>
+                </AlertDialogTrigger>
+                <AlertDialogContent className="bg-[#0C1116] border-white/[0.08]">
+                  <AlertDialogHeader>
+                    <AlertDialogTitle className="text-white flex items-center gap-2">
+                      <AlertTriangle className="w-4 h-4 text-[#F97316]" />
+                      Regenerate API Key?
+                    </AlertDialogTitle>
+                    <AlertDialogDescription className="text-[#9CA3AF] text-[13px]">
+                      Your current key will be revoked immediately. Update all integrations with the new key.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel className="bg-transparent border-white/[0.08] text-white hover:bg-white/5 text-[13px]">
+                      Cancel
+                    </AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={handleRegenerate}
+                      className="bg-[#01696F] text-white hover:bg-[#028C94] text-[13px]"
+                      data-testid="confirm-regenerate-btn"
+                    >
+                      Regenerate
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </div>
 
-            <div className="flex items-center gap-3">
-              <code
-                className="flex-1 bg-[#050709] border border-white/10 rounded-sm px-4 py-3 text-sm text-[#9CA3AF] font-mono truncate"
-                data-testid="api-key-display"
-              >
+            <div className="flex items-center gap-2">
+              <code className="api-key-value flex-1" data-testid="api-key-display">
                 {apiKey?.api_key}
               </code>
               
               <Button
                 variant="outline"
-                size="icon"
+                size="sm"
                 onClick={handleCopyKey}
                 data-testid="copy-api-key-btn"
-                className="border-white/10 text-white hover:bg-white/5 h-12 w-12 shrink-0"
+                className="border-white/[0.08] bg-transparent text-white hover:bg-white/5 h-10 px-3"
               >
                 {copied ? (
-                  <Check className="w-5 h-5 text-[#22C55E]" />
+                  <Check className="w-4 h-4 text-[#22C55E]" />
                 ) : (
-                  <Copy className="w-5 h-5" />
+                  <Copy className="w-4 h-4" />
                 )}
               </Button>
-
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button
-                    variant="outline"
-                    data-testid="regenerate-key-btn"
-                    className="border-white/10 text-white hover:bg-white/5 h-12 shrink-0"
-                  >
-                    {regenerating ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : (
-                      <RefreshCw className="w-4 h-4" />
-                    )}
-                    <span className="ml-2">Regenerate</span>
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent className="bg-[#0C1116] border-white/10">
-                  <AlertDialogHeader>
-                    <AlertDialogTitle className="text-white flex items-center gap-2">
-                      <AlertTriangle className="w-5 h-5 text-[#F97316]" />
-                      Regenerate API Key?
-                    </AlertDialogTitle>
-                    <AlertDialogDescription className="text-[#9CA3AF]">
-                      This will immediately invalidate your current API key.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel className="bg-transparent border-white/10 text-white hover:bg-white/5">
-                      Cancel
-                    </AlertDialogCancel>
-                    <AlertDialogAction
-                      onClick={handleRegenerate}
-                      className="bg-[#01696F] text-white hover:bg-[#028C94]"
-                      data-testid="confirm-regenerate-btn"
-                    >
-                      Yes, regenerate
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
             </div>
           </section>
 
           {/* Agents Section */}
           <section>
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-white">Agents</h2>
+              <div className="flex items-center gap-2">
+                <Zap className="w-4 h-4 text-[#01696F]" />
+                <h2 className="text-[15px] font-semibold text-white">Registered Agents</h2>
+                <span className="text-[12px] text-[#6B7280] ml-1">({agents.length})</span>
+              </div>
               
               <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
                 <DialogTrigger asChild>
                   <Button
                     data-testid="new-agent-btn"
-                    className="bg-[#01696F] hover:bg-[#028C94] text-white"
+                    className="bg-[#01696F] hover:bg-[#028C94] text-white h-9 px-4 text-[13px]"
                   >
-                    <Plus className="w-4 h-4 mr-2" />
-                    New Agent
+                    <Plus className="w-3.5 h-3.5 mr-1.5" />
+                    Register Agent
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="bg-[#0C1116] border-white/10 text-white">
+                <DialogContent className="bg-[#0C1116] border-white/[0.08] text-white max-w-md">
                   <DialogHeader>
-                    <DialogTitle className="text-white">Register New Agent</DialogTitle>
-                    <DialogDescription className="text-[#9CA3AF]">
-                      Create a new agent identity in RepLedger.
+                    <DialogTitle className="text-white text-[16px]">Register New Agent</DialogTitle>
+                    <DialogDescription className="text-[#9CA3AF] text-[13px]">
+                      Create an identity for your agent in the ledger.
                     </DialogDescription>
                   </DialogHeader>
-                  <form onSubmit={handleCreateAgent} className="space-y-4 mt-4">
+                  <form onSubmit={handleCreateAgent} className="space-y-5 mt-4">
                     <div className="space-y-2">
-                      <Label htmlFor="name" className="text-[#9CA3AF]">
-                        Agent Name <span className="text-red-500">*</span>
+                      <Label htmlFor="name" className="form-label">
+                        Agent Name <span className="text-red-400">*</span>
                       </Label>
                       <Input
                         id="name"
@@ -294,12 +308,12 @@ export default function DashboardPage() {
                         placeholder="e.g., research-agent-v2"
                         required
                         data-testid="agent-name-input"
-                        className="bg-[#050709] border-white/10 text-white placeholder:text-[#6B7280]"
+                        className="form-input"
                       />
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="description" className="text-[#9CA3AF]">
+                      <Label htmlFor="description" className="form-label">
                         Description
                       </Label>
                       <Textarea
@@ -308,14 +322,14 @@ export default function DashboardPage() {
                         onChange={(e) =>
                           setFormData({ ...formData, description: e.target.value })
                         }
-                        placeholder="What does this agent do?"
+                        placeholder="Brief description of the agent's purpose"
                         data-testid="agent-description-input"
-                        className="bg-[#050709] border-white/10 text-white placeholder:text-[#6B7280] min-h-[80px]"
+                        className="form-input min-h-[80px] resize-none"
                       />
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="owner_handle" className="text-[#9CA3AF]">
+                      <Label htmlFor="owner_handle" className="form-label">
                         Owner Handle
                       </Label>
                       <Input
@@ -326,16 +340,16 @@ export default function DashboardPage() {
                         }
                         placeholder="e.g., @acme-labs"
                         data-testid="agent-owner-input"
-                        className="bg-[#050709] border-white/10 text-white placeholder:text-[#6B7280]"
+                        className="form-input"
                       />
                     </div>
 
-                    <div className="flex justify-end gap-3 pt-4">
+                    <div className="flex justify-end gap-3 pt-2">
                       <Button
                         type="button"
                         variant="ghost"
                         onClick={() => setDialogOpen(false)}
-                        className="text-[#9CA3AF] hover:text-white hover:bg-white/5"
+                        className="text-[#9CA3AF] hover:text-white hover:bg-white/5 text-[13px]"
                       >
                         Cancel
                       </Button>
@@ -343,15 +357,15 @@ export default function DashboardPage() {
                         type="submit"
                         disabled={creating || !formData.name}
                         data-testid="submit-agent-btn"
-                        className="bg-[#01696F] hover:bg-[#028C94] text-white"
+                        className="bg-[#01696F] hover:bg-[#028C94] text-white text-[13px]"
                       >
                         {creating ? (
                           <>
-                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                            Creating...
+                            <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+                            Registering...
                           </>
                         ) : (
-                          "Create Agent"
+                          "Register Agent"
                         )}
                       </Button>
                     </div>
@@ -361,74 +375,70 @@ export default function DashboardPage() {
             </div>
 
             {agents.length === 0 ? (
-              <div className="bg-[#0C1116] border border-white/10 rounded-sm p-12 text-center">
-                <Bot className="w-12 h-12 text-[#4B5563] mx-auto mb-4" />
-                <h3 className="text-white font-medium mb-2">No agents yet</h3>
-                <p className="text-[#9CA3AF] text-sm mb-6">
-                  Register your first agent to get started
+              <div className="card-surface empty-state">
+                <Bot className="empty-state-icon" />
+                <h3 className="empty-state-title">No agents registered</h3>
+                <p className="empty-state-description">
+                  Register your first agent to start building its track record
                 </p>
                 <Button
                   onClick={() => setDialogOpen(true)}
                   data-testid="create-first-agent-btn"
-                  className="bg-[#01696F] hover:bg-[#028C94] text-white"
+                  className="bg-[#01696F] hover:bg-[#028C94] text-white h-9 px-4 text-[13px]"
                 >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Create your first agent
+                  <Plus className="w-3.5 h-3.5 mr-1.5" />
+                  Register First Agent
                 </Button>
               </div>
             ) : (
-              <div className="bg-[#0C1116] border border-white/10 rounded-sm overflow-hidden">
-                <table className="w-full" data-testid="agents-table">
+              <div className="card-surface overflow-hidden">
+                <table className="data-table" data-testid="agents-table">
                   <thead>
-                    <tr className="border-b border-white/10">
-                      <th className="text-left px-6 py-4 text-xs font-medium text-[#9CA3AF] uppercase tracking-wider">
-                        Agent
-                      </th>
-                      <th className="text-left px-6 py-4 text-xs font-medium text-[#9CA3AF] uppercase tracking-wider">
-                        Tier
-                      </th>
-                      <th className="text-left px-6 py-4 text-xs font-medium text-[#9CA3AF] uppercase tracking-wider">
-                        Score
-                      </th>
-                      <th className="text-left px-6 py-4 text-xs font-medium text-[#9CA3AF] uppercase tracking-wider">
-                        Outcomes
-                      </th>
-                      <th className="px-6 py-4"></th>
+                    <tr>
+                      <th>Agent</th>
+                      <th>Tier</th>
+                      <th>Score</th>
+                      <th>Outcomes</th>
+                      <th>Success Rate</th>
+                      <th></th>
                     </tr>
                   </thead>
                   <tbody>
                     {agents.map((agent) => (
-                      <tr
-                        key={agent.agent_id}
-                        className="border-b border-white/5 hover:bg-white/[0.02] transition-colors"
-                        data-testid={`agent-row-${agent.agent_id}`}
-                      >
-                        <td className="px-6 py-4">
+                      <tr key={agent.agent_id} data-testid={`agent-row-${agent.agent_id}`}>
+                        <td>
                           <div>
-                            <div className="text-white font-medium">{agent.name}</div>
-                            <code className="text-xs text-[#6B7280] font-mono">
+                            <div className="text-white font-medium text-[13px]">{agent.name}</div>
+                            <code className="text-[11px] text-[#6B7280] font-mono">
                               {agent.agent_id}
                             </code>
                           </div>
                         </td>
-                        <td className="px-6 py-4">
+                        <td>
                           <TierBadge tier={agent.tier} />
                         </td>
-                        <td className="px-6 py-4">
-                          <span className="font-mono text-white font-semibold">
+                        <td>
+                          <span className="score-display-md">
                             {agent.score}
                           </span>
                         </td>
-                        <td className="px-6 py-4 text-[#9CA3AF]">
-                          {agent.outcome_count}
+                        <td>
+                          <span className="text-[#9CA3AF] font-mono text-[13px]">
+                            {agent.outcome_count}
+                          </span>
                         </td>
-                        <td className="px-6 py-4">
+                        <td>
+                          <span className="text-[#9CA3AF] font-mono text-[13px]">
+                            {agent.success_rate}%
+                          </span>
+                        </td>
+                        <td>
                           <Link
                             to={`/agents/${agent.agent_id}`}
-                            className="text-[#01696F] hover:text-[#028C94] transition-colors"
+                            className="inline-flex items-center justify-center w-8 h-8 rounded-sm text-[#6B7280] hover:text-white hover:bg-white/5 transition-colors"
                             data-testid={`view-agent-${agent.agent_id}`}
                           >
-                            <ChevronRight className="w-5 h-5" />
+                            <ChevronRight className="w-4 h-4" />
                           </Link>
                         </td>
                       </tr>

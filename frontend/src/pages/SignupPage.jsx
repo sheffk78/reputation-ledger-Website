@@ -4,7 +4,7 @@ import { useAuth } from "../context/AuthContext";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 const LOGO_URL = "https://customer-assets.emergentagent.com/job_ac636d4a-6ca2-497e-8615-5b0c10a94a77/artifacts/vcawrcg8_repledger-logo-dark.svg";
@@ -34,7 +34,6 @@ export default function SignupPage() {
 
     try {
       await signup(email, password);
-      toast.success("Account created successfully");
       navigate("/dashboard");
     } catch (error) {
       const message = error.response?.data?.detail || "Signup failed";
@@ -46,36 +45,27 @@ export default function SignupPage() {
 
   return (
     <div className="min-h-screen bg-[#050709] flex flex-col">
-      {/* Header */}
-      <header className="p-6">
-        <Link to="/" className="inline-flex items-center gap-2 text-[#9CA3AF] hover:text-white transition-colors">
-          <ArrowLeft className="w-4 h-4" />
-          Back to home
-        </Link>
-      </header>
-
-      {/* Main content */}
       <div className="flex-1 flex items-center justify-center px-4">
-        <div className="w-full max-w-md">
+        <div className="w-full max-w-sm">
           {/* Logo */}
-          <div className="text-center mb-8">
+          <div className="text-center mb-10">
             <img 
               src={LOGO_URL} 
               alt="RepLedger" 
-              className="h-8 mx-auto mb-6"
+              className="h-7 mx-auto mb-8"
             />
-            <h1 className="text-2xl font-semibold tracking-tight text-white">
+            <h1 className="text-[18px] font-semibold text-white tracking-tight">
               Create your account
             </h1>
-            <p className="text-[#9CA3AF] mt-2">
+            <p className="text-[13px] text-[#6B7280] mt-2">
               Start building your agents' track record
             </p>
           </div>
 
           {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-5">
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-[#9CA3AF]">Email</Label>
+              <Label htmlFor="email" className="form-label">Email</Label>
               <Input
                 id="email"
                 type="email"
@@ -84,12 +74,12 @@ export default function SignupPage() {
                 placeholder="you@example.com"
                 required
                 data-testid="signup-email-input"
-                className="bg-[#0C1116] border-white/10 text-white placeholder:text-[#6B7280] focus:border-[#01696F] focus:ring-[#01696F]"
+                className="form-input"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password" className="text-[#9CA3AF]">Password</Label>
+              <Label htmlFor="password" className="form-label">Password</Label>
               <Input
                 id="password"
                 type="password"
@@ -98,12 +88,12 @@ export default function SignupPage() {
                 placeholder="At least 6 characters"
                 required
                 data-testid="signup-password-input"
-                className="bg-[#0C1116] border-white/10 text-white placeholder:text-[#6B7280] focus:border-[#01696F] focus:ring-[#01696F]"
+                className="form-input"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="confirmPassword" className="text-[#9CA3AF]">Confirm Password</Label>
+              <Label htmlFor="confirmPassword" className="form-label">Confirm Password</Label>
               <Input
                 id="confirmPassword"
                 type="password"
@@ -112,7 +102,7 @@ export default function SignupPage() {
                 placeholder="Repeat your password"
                 required
                 data-testid="signup-confirm-password-input"
-                className="bg-[#0C1116] border-white/10 text-white placeholder:text-[#6B7280] focus:border-[#01696F] focus:ring-[#01696F]"
+                className="form-input"
               />
             </div>
 
@@ -120,7 +110,7 @@ export default function SignupPage() {
               type="submit"
               disabled={loading}
               data-testid="signup-submit-btn"
-              className="w-full bg-[#01696F] hover:bg-[#028C94] text-white h-12 rounded-sm"
+              className="w-full bg-[#01696F] hover:bg-[#028C94] text-white h-11 text-[13px] font-medium"
             >
               {loading ? (
                 <>
@@ -134,11 +124,11 @@ export default function SignupPage() {
           </form>
 
           {/* Login link */}
-          <p className="text-center mt-6 text-[#9CA3AF]">
+          <p className="text-center mt-8 text-[13px] text-[#6B7280]">
             Already have an account?{" "}
             <Link 
               to="/login" 
-              className="text-[#01696F] hover:text-[#028C94] font-medium transition-colors"
+              className="text-[#01696F] hover:text-[#028C94] font-medium"
               data-testid="login-link"
             >
               Sign in

@@ -1,46 +1,83 @@
-/* RepLedger App Styles */
+/* RepLedger App Styles - AgenticTrust Family */
 
-/* Layout utilities */
-.container-main {
-  max-width: 1400px;
+/* ============================================
+   LAYOUT
+   ============================================ */
+
+.container-app {
+  max-width: 1200px;
   margin: 0 auto;
   padding: 0 24px;
 }
 
-/* Code block styling */
-.code-block {
-  background: #0C1116;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 4px;
-  padding: 16px;
-  overflow-x: auto;
+/* ============================================
+   CARDS & SURFACES
+   ============================================ */
+
+.card-surface {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: 2px;
+}
+
+.card-elevated {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-default);
+  border-radius: 2px;
+}
+
+/* ============================================
+   SCORE DISPLAY
+   ============================================ */
+
+.score-display {
   font-family: var(--font-mono);
-  font-size: 14px;
-  line-height: 1.6;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
 }
 
-.code-block code {
-  color: #F9FAFB;
+.score-display-xl {
+  font-size: 56px;
+  line-height: 1;
 }
 
-.code-keyword {
-  color: #01696F;
+.score-display-lg {
+  font-size: 32px;
+  line-height: 1;
 }
 
-.code-string {
-  color: #22C55E;
+.score-display-md {
+  font-size: 20px;
+  line-height: 1;
 }
 
-.code-comment {
-  color: #6B7280;
+/* ============================================
+   API KEY DISPLAY
+   ============================================ */
+
+.api-key-block {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: 2px;
+  padding: 20px 24px;
 }
 
-/* Marketing hero gradient */
-.hero-gradient {
-  background: radial-gradient(ellipse at top, rgba(1, 105, 111, 0.15) 0%, transparent 50%);
+.api-key-value {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--text-secondary);
+  background: var(--bg-primary);
+  border: 1px solid var(--border-default);
+  border-radius: 2px;
+  padding: 12px 16px;
+  word-break: break-all;
 }
 
-/* Data table styles */
+/* ============================================
+   DATA TABLE
+   ============================================ */
+
 .data-table {
   width: 100%;
   border-collapse: collapse;
@@ -48,173 +85,185 @@
 
 .data-table th {
   text-align: left;
-  padding: 12px 16px;
+  padding: 12px 20px;
+  font-family: var(--font-body);
   font-weight: 500;
-  color: #9CA3AF;
-  font-size: 12px;
+  font-size: 11px;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border-default);
+  background: var(--bg-elevated);
 }
 
 .data-table td {
-  padding: 12px 16px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-  font-size: 14px;
+  padding: 16px 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  font-size: 13px;
 }
 
-.data-table tr:hover {
+.data-table tbody tr {
+  transition: background-color 0.1s ease;
+}
+
+.data-table tbody tr:hover {
   background: rgba(255, 255, 255, 0.02);
 }
 
-/* Card hover effects */
-.card-hover {
-  transition: transform 0.2s ease, border-color 0.2s ease;
+/* ============================================
+   STAT CARD
+   ============================================ */
+
+.stat-card {
+  padding: 20px;
 }
 
-.card-hover:hover {
-  transform: translateY(-2px);
-  border-color: rgba(255, 255, 255, 0.2);
-}
-
-/* Stat display */
-.stat-value {
+.stat-card-value {
   font-family: var(--font-mono);
-  font-size: 48px;
+  font-size: 28px;
   font-weight: 700;
+  color: var(--text-primary);
   line-height: 1;
-  color: #F9FAFB;
 }
 
-.stat-label {
-  font-size: 14px;
-  color: #9CA3AF;
-  margin-top: 4px;
+.stat-card-label {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
-/* Copy button animation */
-.copy-btn {
+/* ============================================
+   BUTTONS
+   ============================================ */
+
+.btn-primary {
+  background: var(--accent-primary);
+  color: white;
+  font-weight: 500;
+  padding: 10px 16px;
+  border-radius: 2px;
+  font-size: 13px;
   transition: background-color 0.15s ease;
 }
 
-.copy-btn:active {
-  background-color: rgba(1, 105, 111, 0.3);
+.btn-primary:hover {
+  background: var(--accent-hover);
 }
 
-/* Sidebar navigation */
-.sidebar-nav {
-  width: 240px;
-  min-height: calc(100vh - 64px);
-  background: #0C1116;
-  border-right: 1px solid rgba(255, 255, 255, 0.1);
-  padding: 24px 0;
-}
-
-.sidebar-link {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 24px;
-  color: #9CA3AF;
-  font-size: 14px;
+.btn-ghost {
+  background: transparent;
+  color: var(--text-secondary);
   font-weight: 500;
+  padding: 10px 16px;
+  border-radius: 2px;
+  font-size: 13px;
   transition: color 0.15s ease, background-color 0.15s ease;
 }
 
-.sidebar-link:hover {
-  color: #F9FAFB;
-  background: rgba(255, 255, 255, 0.03);
+.btn-ghost:hover {
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.05);
 }
 
-.sidebar-link.active {
-  color: #01696F;
-  background: rgba(1, 105, 111, 0.1);
-  border-right: 2px solid #01696F;
-}
+/* ============================================
+   FORM INPUTS
+   ============================================ */
 
-/* Form input styling */
 .form-input {
-  background: #0C1116;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 4px;
-  padding: 12px 16px;
-  color: #F9FAFB;
-  font-size: 14px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-default);
+  border-radius: 2px;
+  padding: 10px 14px;
+  color: var(--text-primary);
+  font-size: 13px;
   width: 100%;
   transition: border-color 0.15s ease;
 }
 
 .form-input:focus {
-  border-color: #01696F;
+  border-color: var(--accent-primary);
   outline: none;
 }
 
 .form-input::placeholder {
-  color: #6B7280;
+  color: var(--text-muted);
 }
 
-/* API key display */
-.api-key-display {
-  font-family: var(--font-mono);
-  font-size: 14px;
-  background: #0C1116;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 4px;
-  padding: 12px 16px;
-  color: #F9FAFB;
-  word-break: break-all;
+.form-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+  display: block;
 }
 
-/* Empty state */
-.empty-state {
-  text-align: center;
-  padding: 48px 24px;
-  color: #6B7280;
-}
+/* ============================================
+   BADGE SECTION
+   ============================================ */
 
-.empty-state-icon {
-  width: 64px;
-  height: 64px;
-  margin: 0 auto 16px;
-  opacity: 0.5;
-}
-
-/* Loading spinner */
-.spinner {
-  width: 24px;
-  height: 24px;
-  border: 2px solid rgba(255, 255, 255, 0.1);
-  border-top-color: #01696F;
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-/* Badge URL box */
-.badge-url-box {
-  background: #0C1116;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 4px;
-  padding: 16px;
-}
-
-.badge-preview {
+.badge-preview-area {
+  background: repeating-linear-gradient(
+    45deg,
+    var(--bg-surface),
+    var(--bg-surface) 10px,
+    var(--bg-elevated) 10px,
+    var(--bg-elevated) 20px
+  );
+  border-radius: 2px;
+  padding: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 24px;
-  background: repeating-linear-gradient(
-    45deg,
-    #0C1116,
-    #0C1116 10px,
-    #111827 10px,
-    #111827 20px
-  );
-  border-radius: 4px;
-  margin-bottom: 16px;
+}
+
+.code-snippet {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-default);
+  border-radius: 2px;
+  padding: 10px 14px;
+  color: var(--text-secondary);
+  overflow-x: auto;
+}
+
+/* ============================================
+   RESULT COLORS
+   ============================================ */
+
+.result-success { color: var(--status-success); }
+.result-failure { color: var(--status-danger); }
+.result-partial { color: var(--status-warning); }
+.result-timeout { color: var(--text-muted); }
+
+/* ============================================
+   EMPTY STATE
+   ============================================ */
+
+.empty-state {
+  text-align: center;
+  padding: 48px 24px;
+}
+
+.empty-state-icon {
+  width: 48px;
+  height: 48px;
+  margin: 0 auto 16px;
+  color: var(--text-muted);
+  opacity: 0.5;
+}
+
+.empty-state-title {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+}
+
+.empty-state-description {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-bottom: 20px;
 }
