@@ -22,12 +22,19 @@ def get_from_email() -> str:
     """Get the from email address"""
     return os.environ.get('POSTMARK_FROM_EMAIL', 'no-reply@contact.agentictrust.app')
 
+def get_public_url() -> str:
+    """Get the public URL for links in emails"""
+    return os.environ.get('PUBLIC_URL', 'https://reputationledger.dev')
+
 
 async def send_welcome_email(to_email: str) -> bool:
     """Send welcome email to new user"""
     client = get_postmark_client()
     if not client:
         return False
+    
+    public_url = get_public_url()
+    dashboard_url = f"{public_url}/dashboard"
     
     try:
         client.emails.send(
@@ -65,7 +72,7 @@ async def send_welcome_email(to_email: str) -> bool:
             <li>Access your reputation data via our API</li>
         </ul>
         <p>Your API key is ready in your dashboard. Get started by registering your first agent!</p>
-        <a href="https://repledger.agentictrust.app/dashboard" class="cta">Go to Dashboard</a>
+        <a href="{dashboard_url}" class="cta">Go to Dashboard</a>
         <div class="footer">
             <p>Part of the AgenticTrust family</p>
             <p>If you didn't create this account, please ignore this email.</p>
@@ -87,7 +94,7 @@ With RepLedger, you can:
 
 Your API key is ready in your dashboard. Get started by registering your first agent!
 
-Go to Dashboard: https://repledger.agentictrust.app/dashboard
+Go to Dashboard: {dashboard_url}
 
 ---
 Part of the AgenticTrust family
@@ -180,6 +187,9 @@ async def send_outcome_notification_email(
     if not client:
         return False
     
+    public_url = get_public_url()
+    agent_url = f"{public_url}/agents/{agent_id}"
+    
     # Color based on result
     result_colors = {
         "success": "#10B981",
@@ -253,7 +263,7 @@ async def send_outcome_notification_email(
             </div>
         </div>
         
-        <a href="https://repledger.agentictrust.app/agents/{agent_id}" class="cta">View Agent Details</a>
+        <a href="{agent_url}" class="cta">View Agent Details</a>
         
         <div class="footer">
             <p>Part of the AgenticTrust family</p>
@@ -275,7 +285,7 @@ Task Type: {task_type}
 Updated Score: {new_score}
 Current Tier: {new_tier}
 
-View Agent Details: https://repledger.agentictrust.app/agents/{agent_id}
+View Agent Details: {agent_url}
 
 ---
 Part of the AgenticTrust family

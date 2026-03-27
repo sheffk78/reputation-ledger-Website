@@ -7,6 +7,7 @@ Handles:
 - Billing portal sessions for managing subscriptions
 - Current plan info
 """
+import os
 import stripe
 import logging
 from datetime import datetime, timezone
@@ -91,8 +92,8 @@ async def create_checkout_session(
             status_code=400
         )
 
-    # Default URLs
-    base_url = "https://reputationledger.dev"
+    # Default URLs from environment
+    base_url = os.environ.get("PUBLIC_URL", "https://reputationledger.dev")
     success_url = data.success_url or f"{base_url}/dashboard?billing=success"
     cancel_url = data.cancel_url or f"{base_url}/pricing?billing=cancelled"
 
@@ -171,9 +172,10 @@ async def create_portal_session(user: dict = Depends(get_current_user)):
         )
 
     try:
+        return_url = os.environ.get("PUBLIC_URL", "https://reputationledger.dev") + "/dashboard"
         session = stripe.billing_portal.Session.create(
             customer=stripe_customer_id,
-            return_url="https://reputationledger.dev/dashboard",
+            return_url=return_url,
         )
         return BillingPortalResponse(portal_url=session.url)
     except stripe.error.StripeError as e:
