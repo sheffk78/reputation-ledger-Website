@@ -246,6 +246,18 @@ To promote a user to admin, you can either:
 db.users.updateOne({email: "admin@example.com"}, {$set: {is_admin: true}})
 ```
 
+#### In-App Feedback & Analytics (Phase 2.2 - March 2025)
+- ✅ Feedback Widget: "Feedback" button in dashboard header opens modal
+- ✅ Feedback Modal: textarea, optional email override, "Send feedback" button
+- ✅ POST /api/feedback endpoint saves feedback to `feedback` collection
+- ✅ Admin Feedback Viewer at /admin/feedback with table and detail modal
+- ✅ Minimal Event Tracking via POST /api/client-events
+- ✅ Events tracked: dashboard.loaded, agent.created, quickstart.opened, badge.copied, feedback.opened, feedback.submitted
+
+**Database Collections:**
+- `feedback`: id, user_id, user_email, email_override, message, created_at
+- `client_events`: id, user_id, event_name, context (JSON), created_at
+
 ### Scoring Logic
 - Score = (successful / total) * 100
 - Tiers:
@@ -278,6 +290,9 @@ db.users.updateOne({email: "admin@example.com"}, {$set: {is_admin: true}})
 - ✅ Agent deletion (user can delete own agents with confirmation)
 - ✅ Admin Actions - User management (toggle admin, delete user with cascade)
 - ✅ Admin Actions - Agent management (edit name/description, delete)
+- ✅ In-App Feedback Widget (modal for users to submit feedback)
+- ✅ Admin Feedback Viewer (/admin/feedback page)
+- ✅ Minimal Event Tracking (client_events for analytics)
 
 ### P2 (Medium Priority)
 - ⬜ Social Sharing Meta Tags (OpenGraph/Twitter cards for public agent profiles)
@@ -382,6 +397,9 @@ db.users.updateOne({email: "admin@example.com"}, {$set: {is_admin: true}})
 | /api/admin/agents/{id} | DELETE | Admin | Delete any agent |
 | /api/admin/api-keys | GET | Admin | List all API keys |
 | /api/admin/audit-logs | GET | Admin | List audit logs (paginated) |
+| /api/admin/feedback | GET | Admin | List all user feedback (paginated) |
+| /api/feedback | POST | JWT | Submit user feedback |
+| /api/client-events | POST | JWT | Log client-side analytics event |
 
 ## Third-Party Integrations
 - **Postmark**: Transactional emails (welcome, password reset, outcome notifications)
