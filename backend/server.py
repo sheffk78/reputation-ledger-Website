@@ -22,6 +22,7 @@ from routes.agents import router as agents_router
 from routes.webhooks import router as webhooks_router
 from routes.admin import router as admin_router
 from routes.settings import router as settings_router
+from routes.feedback import router as feedback_router
 
 # Configure logging
 logging.basicConfig(
@@ -254,6 +255,9 @@ api_router.include_router(api_key_router)
 
 # Settings routes (/api/settings/*)
 api_router.include_router(settings_router)
+
+# Feedback routes (/api/feedback, /api/client-events)
+api_router.include_router(feedback_router)
 
 # Admin routes (/api/admin/*)
 api_router.include_router(admin_router)

@@ -287,6 +287,12 @@ export const adminAPI = {
     return response.data;
   },
 
+  getFeedback: async (page = 1, limit = 20) => {
+    const params = new URLSearchParams({ page, limit });
+    const response = await apiClient.get(`/admin/feedback?${params.toString()}`);
+    return response.data;
+  },
+
   verifyAccess: async () => {
     const response = await apiClient.get("/admin/me");
     return response.data;

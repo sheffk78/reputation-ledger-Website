@@ -3,6 +3,8 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { agentsAPI, apiKeyAPI, webhooksAPI, usageStatsAPI } from "../lib/api";
 import { copyToClipboard, getTierColorClass, parseApiError, validateRequired, validateUrl } from "../lib/utils";
+import { trackEvent, EventNames } from "../lib/analytics";
+import FeedbackModal from "../components/FeedbackModal";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
@@ -51,6 +53,7 @@ import {
   AlertCircle,
   FlaskConical,
   Settings,
+  MessageSquare,
 } from "lucide-react";
 import { toast } from "sonner";
 import { changelog } from "../data/changelog";
@@ -106,7 +109,19 @@ function ApiQuickstartPanel({ apiKey }) {
     await copyToClipboard(code);
     setCopiedSnippet(snippetId);
     toast.success("Copied to clipboard");
+    // Track badge copy event
+    if (snippetId === "badge") {
+      trackEvent(EventNames.BADGE_COPIED);
+    }
     setTimeout(() => setCopiedSnippet(null), 2000);
+  };
+
+  const handleToggleExpand = () => {
+    const newExpanded = !isExpanded;
+    setIsExpanded(newExpanded);
+    if (newExpanded) {
+      trackEvent(EventNames.QUICKSTART_OPENED);
+    }
   };
   
   const snippets = {
@@ -129,7 +144,7 @@ function ApiQuickstartPanel({ apiKey }) {
   return (
     <section className="card-surface" data-testid="api-quickstart-panel">
       <button
-        onClick={() => setIsExpanded(!isExpanded)}
+        onClick={handleToggleExpand}
         className="w-full flex items-center justify-between p-5"
         data-testid="quickstart-toggle"
       >
@@ -332,9 +347,12 @@ export default function DashboardPage() {
   });
   const [webhookFormErrors, setWebhookFormErrors] = useState({});
   const [usageStats, setUsageStats] = useState(null);
+  const [feedbackModalOpen, setFeedbackModalOpen] = useState(false);
 
   useEffect(() => {
     loadData();
+    // Track dashboard loaded event
+    trackEvent(EventNames.DASHBOARD_LOADED);
   }, []);
 
   const loadData = async () => {
@@ -402,11 +420,13 @@ export default function DashboardPage() {
     setCreating(true);
 
     try {
-      await agentsAPI.create({
+      const newAgent = await agentsAPI.create({
         name: formData.name,
         description: formData.description || null,
         owner_handle: formData.owner_handle || null,
       });
+      // Track agent created event
+      trackEvent(EventNames.AGENT_CREATED, { agent_id: newAgent.agent_id });
       const agentsData = await agentsAPI.list();
       setAgents(agentsData);
       setDialogOpen(false);
@@ -526,6 +546,17 @@ export default function DashboardPage() {
           
           <div className="flex items-center gap-5">
             <span className="text-[13px] text-[#6B7280]">{user?.email}</span>
+            <button
+              onClick={() => {
+                setFeedbackModalOpen(true);
+                trackEvent(EventNames.FEEDBACK_OPENED);
+              }}
+              data-testid="feedback-btn"
+              className="flex items-center gap-1.5 text-[13px] text-[#6B7280] hover:text-white transition-colors"
+            >
+              <MessageSquare className="w-3.5 h-3.5" />
+              Feedback
+            </button>
             <Link
               to="/settings"
               data-testid="settings-link"
@@ -1140,6 +1171,12 @@ export default function DashboardPage() {
           </section>
         </div>
       </main>
+
+      {/* Feedback Modal */}
+      <FeedbackModal 
+        isOpen={feedbackModalOpen} 
+        onClose={() => setFeedbackModalOpen(false)} 
+      />
     </div>
   );
 }

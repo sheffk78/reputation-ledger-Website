@@ -780,3 +780,70 @@ async def list_audit_logs(
         limit=limit,
         total=total
     )
+
+
+
+# ============== FEEDBACK MODELS ==============
+
+class AdminFeedbackItemResponse(BaseModel):
+    """Single feedback entry for admin view"""
+    id: str
+    user_id: Optional[str] = None
+    user_email: str
+    email_override: Optional[str] = None
+    message: str
+    created_at: str
+
+
+class AdminFeedbackListResponse(BaseModel):
+    """Paginated feedback list for admin"""
+    feedback: List[AdminFeedbackItemResponse]
+    page: int
+    limit: int
+    total: int
+
+
+# ============== FEEDBACK ROUTES ==============
+
+@router.get("/feedback", response_model=AdminFeedbackListResponse)
+async def list_feedback(
+    page: int = 1,
+    limit: int = 50,
+    admin: dict = Depends(get_admin_user)
+):
+    """
+    List all user feedback with pagination (admin only).
+    
+    Query params:
+    - page: Page number (1-indexed)
+    - limit: Items per page (default 50, max 100)
+    """
+    # Enforce limits
+    limit = min(limit, 100)
+    skip = (page - 1) * limit
+    
+    total = await db.feedback.count_documents({})
+    
+    feedback_items = await db.feedback.find(
+        {},
+        {"_id": 0}
+    ).sort("created_at", -1).skip(skip).limit(limit).to_list(limit)
+    
+    result = [
+        AdminFeedbackItemResponse(
+            id=item["id"],
+            user_id=item.get("user_id"),
+            user_email=item.get("user_email", "unknown"),
+            email_override=item.get("email_override"),
+            message=item["message"],
+            created_at=item["created_at"]
+        )
+        for item in feedback_items
+    ]
+    
+    return AdminFeedbackListResponse(
+        feedback=result,
+        page=page,
+        limit=limit,
+        total=total
+    )

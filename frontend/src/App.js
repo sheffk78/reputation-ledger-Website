@@ -18,6 +18,7 @@ import SettingsPage from "./pages/SettingsPage";
 import AdminPage from "./pages/AdminPage";
 import AdminUserDetailPage from "./pages/AdminUserDetailPage";
 import AdminAgentDetailPage from "./pages/AdminAgentDetailPage";
+import AdminFeedbackPage from "./pages/AdminFeedbackPage";
 
 // Protected route wrapper
 function ProtectedRoute({ children }) {
@@ -139,6 +140,16 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <AdminAgentDetailPage />
+          </ProtectedRoute>
+        }
+      />
+      
+      {/* Admin feedback route */}
+      <Route
+        path="/admin/feedback"
+        element={
+          <ProtectedRoute>
+            <AdminFeedbackPage />
           </ProtectedRoute>
         }
       />

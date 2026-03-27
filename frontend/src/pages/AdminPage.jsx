@@ -18,7 +18,8 @@ import {
   TrendingUp,
   Key,
   CheckCircle2,
-  XCircle
+  XCircle,
+  MessageSquare
 } from "lucide-react";
 
 // Navigation items
@@ -27,6 +28,7 @@ const NAV_ITEMS = [
   { id: "users", label: "Users", icon: Users },
   { id: "agents", label: "Agents", icon: Bot },
   { id: "api-keys", label: "API Keys", icon: Key },
+  { id: "feedback", label: "Feedback", icon: MessageSquare, isLink: true, href: "/admin/feedback" },
   { id: "logs", label: "Logs", icon: FileText },
 ];
 
@@ -224,6 +226,24 @@ export default function AdminPage() {
             {NAV_ITEMS.map((item) => {
               const Icon = item.icon;
               const isActive = activeSection === item.id;
+              
+              // Handle link items (like Feedback)
+              if (item.isLink) {
+                return (
+                  <li key={item.id}>
+                    <Link
+                      to={item.href}
+                      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-400 hover:text-white hover:bg-white/[0.03] transition-colors"
+                      data-testid={`nav-${item.id}`}
+                    >
+                      <Icon className="w-4 h-4" />
+                      {item.label}
+                      <ChevronRight className="w-4 h-4 ml-auto" />
+                    </Link>
+                  </li>
+                );
+              }
+              
               return (
                 <li key={item.id}>
                   <button
