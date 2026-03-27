@@ -336,6 +336,15 @@ db.users.updateOne({email: "admin@example.com"}, {$set: {is_admin: true}})
 - ✅ **Remove watermark** - Removed "Made with Emergent" badge from index.html
 - ✅ **Page title** - "RepLedger | Agent Reputation"
 
+### Phase 2.6 - Admin Client Management UI (March 2026)
+- ✅ **Clients section** - New tab in Admin sidebar for client provisioning
+- ✅ **Client list table** - Shows all users with email, agents, outcomes, admin status, created date
+- ✅ **New Client dialog** - Form to provision user + agents + webhooks in one step
+- ✅ **POST /admin/full-setup** - Backend endpoint for complete client provisioning
+- ✅ **Setup result dialog** - Shows API key, user ID, created agents (with copy functionality)
+- ✅ **Admin API documentation section** - Documents authentication and admin endpoints
+- ✅ **Dynamic agent/webhook form** - Add/remove agents and webhooks in provisioning form
+
 ### P2 (Medium Priority)
 - ⬜ Social Sharing Meta Tags (OpenGraph/Twitter cards for public agent profiles)
 - ⬜ AAV (Agent Authority Vault) integration
