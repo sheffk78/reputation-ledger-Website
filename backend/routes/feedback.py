@@ -10,7 +10,9 @@ from models.feedback import (
     FeedbackCreate, 
     FeedbackResponse,
     ClientEventCreate,
-    ClientEventResponse
+    ClientEventResponse,
+    FeatureRequestCreate,
+    FeatureRequestResponse
 )
 
 router = APIRouter(tags=["feedback"])
@@ -70,5 +72,31 @@ async def log_client_event(
         user_id=user["id"] if user else None,
         event_name=data.event_name,
         context=data.context,
+        created_at=now
+    )
+
+
+
+@router.post("/feature-requests", response_model=FeatureRequestResponse, status_code=201)
+async def submit_feature_request(data: FeatureRequestCreate):
+    """Submit a feature request (public, no auth required)"""
+    request_id = str(uuid.uuid4())
+    now = datetime.now(timezone.utc).isoformat()
+    
+    doc = {
+        "id": request_id,
+        "title": data.title,
+        "description": data.description,
+        "email": data.email,
+        "created_at": now
+    }
+    
+    await db.feature_requests.insert_one(doc)
+    
+    return FeatureRequestResponse(
+        id=request_id,
+        title=data.title,
+        description=data.description,
+        email=data.email,
         created_at=now
     )

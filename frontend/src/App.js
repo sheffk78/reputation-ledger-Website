@@ -19,6 +19,10 @@ import AdminPage from "./pages/AdminPage";
 import AdminUserDetailPage from "./pages/AdminUserDetailPage";
 import AdminAgentDetailPage from "./pages/AdminAgentDetailPage";
 import AdminFeedbackPage from "./pages/AdminFeedbackPage";
+import PricingPage from "./pages/PricingPage";
+import PlaygroundPage from "./pages/PlaygroundPage";
+import ChangelogPage from "./pages/ChangelogPage";
+import DocsPage from "./pages/DocsPage";
 
 // Protected route wrapper
 function ProtectedRoute({ children }) {
@@ -64,6 +68,9 @@ function AppRoutes() {
       {/* Public marketing pages */}
       <Route path="/" element={<HomePage />} />
       <Route path="/developers" element={<DevelopersPage />} />
+      <Route path="/pricing" element={<PricingPage />} />
+      <Route path="/changelog" element={<ChangelogPage />} />
+      <Route path="/docs" element={<DocsPage />} />
       
       {/* Public agent profile */}
       <Route path="/a/:agentId" element={<PublicAgentPage />} />
@@ -150,6 +157,16 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <AdminFeedbackPage />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Playground route (protected) */}
+      <Route
+        path="/playground"
+        element={
+          <ProtectedRoute>
+            <PlaygroundPage />
           </ProtectedRoute>
         }
       />

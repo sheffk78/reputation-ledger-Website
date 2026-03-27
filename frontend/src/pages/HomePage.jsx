@@ -28,6 +28,12 @@ export default function HomePage() {
             <a href="#who-its-for" className="text-[13px] text-[#9CA3AF] hover:text-white transition-colors">
               Who it's for
             </a>
+            <Link to="/pricing" className="text-[13px] text-[#9CA3AF] hover:text-white transition-colors">
+              Pricing
+            </Link>
+            <Link to="/docs" className="text-[13px] text-[#9CA3AF] hover:text-white transition-colors">
+              API Reference
+            </Link>
             <Link to="/developers" className="text-[13px] text-[#9CA3AF] hover:text-white transition-colors">
               Developers
             </Link>
@@ -320,6 +326,12 @@ export default function HomePage() {
           <div className="flex items-center gap-6">
             <Link to="/developers" className="text-[12px] text-[#6B7280] hover:text-white transition-colors">
               Developers
+            </Link>
+            <Link to="/docs" className="text-[12px] text-[#6B7280] hover:text-white transition-colors">
+              Docs
+            </Link>
+            <Link to="/changelog" className="text-[12px] text-[#6B7280] hover:text-white transition-colors">
+              Changelog
             </Link>
             <Link to="/login" className="text-[12px] text-[#6B7280] hover:text-white transition-colors">
               Sign in

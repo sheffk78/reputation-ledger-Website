@@ -1,5 +1,5 @@
 """Feedback and Client Events Models"""
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, EmailStr
 from typing import Optional, List, Dict, Any
 from datetime import datetime
 
@@ -40,4 +40,20 @@ class ClientEventResponse(BaseModel):
     user_id: Optional[str] = None
     event_name: str
     context: Optional[Dict[str, Any]] = None
+    created_at: str
+
+
+class FeatureRequestCreate(BaseModel):
+    """Request to submit a feature request"""
+    title: str = Field(..., min_length=1, max_length=200)
+    description: str = Field(..., min_length=1, max_length=2000)
+    email: Optional[EmailStr] = None
+
+
+class FeatureRequestResponse(BaseModel):
+    """Single feature request entry"""
+    id: str
+    title: str
+    description: str
+    email: Optional[str] = None
     created_at: str

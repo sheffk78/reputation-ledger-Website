@@ -56,6 +56,12 @@ export default function DevelopersPage() {
             <Link to="/#who-its-for" className="text-[13px] text-[#9CA3AF] hover:text-white transition-colors">
               Who it's for
             </Link>
+            <Link to="/pricing" className="text-[13px] text-[#9CA3AF] hover:text-white transition-colors">
+              Pricing
+            </Link>
+            <Link to="/docs" className="text-[13px] text-[#9CA3AF] hover:text-white transition-colors">
+              API Reference
+            </Link>
             <span className="text-[13px] text-white font-medium">
               Developers
             </span>
@@ -353,15 +359,26 @@ export default function DevelopersPage() {
               <p className="text-[14px] text-[#9CA3AF] mb-6">
                 Create your free account and get your API key in seconds.
               </p>
-              <Link to="/signup">
-                <Button 
-                  className="bg-[#01696F] hover:bg-[#028C94] text-white h-10 px-5 text-[14px]"
-                  data-testid="docs-cta-btn"
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+                <Link to="/signup">
+                  <Button 
+                    className="bg-[#01696F] hover:bg-[#028C94] text-white h-10 px-5 text-[14px]"
+                    data-testid="docs-cta-btn"
+                  >
+                    Get API Key
+                    <ArrowRight className="w-4 h-4 ml-2" />
+                  </Button>
+                </Link>
+                <Link 
+                  to="/docs"
+                  className="text-[14px] text-[#01696F] hover:text-[#028C94] font-medium transition-colors"
                 >
-                  Get API Key
-                  <ArrowRight className="w-4 h-4 ml-2" />
-                </Button>
-              </Link>
+                  View full documentation →
+                </Link>
+              </div>
+              <p className="mt-4 text-[12px] text-[#6B7280]">
+                Have an account? <Link to="/playground" className="text-[#01696F] hover:underline">Try the API Playground</Link>
+              </p>
             </section>
           </div>
         </div>

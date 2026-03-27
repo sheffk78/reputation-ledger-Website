@@ -294,7 +294,16 @@ db.users.updateOne({email: "admin@example.com"}, {$set: {is_admin: true}})
 - ✅ Admin Feedback Viewer (/admin/feedback page)
 - ✅ Minimal Event Tracking (client_events for analytics)
 
+### Phase 2.3 - Marketing & Developer Experience (March 2026)
+- ✅ **PricingPage** (`/pricing`) - 4-tier pricing grid (Free/$29/$79/Custom), FAQ accordion
+- ✅ **ChangelogPage** (`/changelog`) - Timeline with tags, 3-column roadmap, feature request form
+- ✅ **DocsPage** (`/docs`) - Full API documentation with quickstart
+- ✅ **PlaygroundPage** (`/playground`) - Placeholder for interactive API testing (protected route)
+- ✅ **Feature Requests Endpoint** - POST /api/feature-requests (public, no auth)
+- ✅ Navigation updates across HomePage, DevelopersPage, DashboardPage
+
 ### P2 (Medium Priority)
+- ⬜ Full Playground Implementation (interactive API testing with real API key)
 - ⬜ Social Sharing Meta Tags (OpenGraph/Twitter cards for public agent profiles)
 - ⬜ AAV (Agent Authority Vault) integration
 - ⬜ Safe-Spend integration

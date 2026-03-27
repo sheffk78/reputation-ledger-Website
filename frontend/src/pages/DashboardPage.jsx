@@ -546,6 +546,14 @@ export default function DashboardPage() {
           
           <div className="flex items-center gap-5">
             <span className="text-[13px] text-[#6B7280]">{user?.email}</span>
+            <Link
+              to="/playground"
+              data-testid="playground-link"
+              className="flex items-center gap-1.5 text-[13px] text-[#6B7280] hover:text-white transition-colors"
+            >
+              <FlaskConical className="w-3.5 h-3.5" />
+              Playground
+            </Link>
             <button
               onClick={() => {
                 setFeedbackModalOpen(true);
