@@ -258,3 +258,74 @@ async def get_agent_ssr(agent_id: str, request: Request):
     )
     
     return HTMLResponse(content=html, status_code=200)
+
+
+# ============================================================
+# CRAWLER-AWARE ROUTES
+# These routes are registered at root level and detect crawlers
+# ============================================================
+
+from middleware.crawler_ssr import is_crawler
+
+# Create a separate router for crawler-aware routes at root level
+crawler_router = APIRouter(tags=["Crawler-SSR"])
+
+
+@crawler_router.get("/blog/{slug}", response_class=HTMLResponse)
+async def blog_crawler_route(slug: str, request: Request):
+    """
+    Serve blog posts - returns SSR HTML for crawlers, 
+    passes through to React app for regular users.
+    """
+    user_agent = request.headers.get('user-agent', '')
+    
+    if is_crawler(user_agent):
+        # Serve SSR content for crawlers
+        return await get_blog_post_ssr(slug, request)
+    
+    # For regular users, return minimal HTML that loads React
+    # The React app will handle the actual rendering
+    return HTMLResponse(
+        content=f'''<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="refresh" content="0;url=/blog/{slug}" />
+    <script>window.location.href = "/blog/{slug}";</script>
+</head>
+<body>
+    <p>Loading...</p>
+</body>
+</html>''',
+        status_code=200
+    )
+
+
+@crawler_router.get("/agent/{agent_id}", response_class=HTMLResponse)
+async def agent_crawler_route(agent_id: str, request: Request):
+    """
+    Serve agent profiles - returns SSR HTML for crawlers,
+    passes through to React app for regular users.
+    """
+    user_agent = request.headers.get('user-agent', '')
+    
+    if is_crawler(user_agent):
+        # Serve SSR content for crawlers
+        return await get_agent_ssr(agent_id, request)
+    
+    # For regular users, redirect to the React route
+    return HTMLResponse(
+        content=f'''<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="refresh" content="0;url=/agent/{agent_id}" />
+    <script>window.location.href = "/agent/{agent_id}";</script>
+</head>
+<body>
+    <p>Loading...</p>
+</body>
+</html>''',
+        status_code=200
+    )
+

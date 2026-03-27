@@ -27,7 +27,7 @@ from routes.blog import admin_router as blog_admin_router, public_router as blog
 from routes.sandbox import router as sandbox_router
 from routes.billing import router as billing_router
 from routes.stripe_webhook import router as stripe_webhook_router
-from routes.ssr import router as ssr_router
+from routes.ssr import router as ssr_router, crawler_router as ssr_crawler_router
 
 # Configure logging
 logging.basicConfig(
@@ -285,6 +285,10 @@ api_router.include_router(stripe_webhook_router)
 # SSR routes for SEO meta tags (/ssr/blog/*, /ssr/agent/*)
 # Note: These are accessed via /api/ssr/* and provide pre-rendered HTML for crawlers
 api_router.include_router(ssr_router, prefix="/ssr")
+
+# Crawler-aware routes at root /api level
+# These detect crawler user-agents and serve SSR content automatically
+api_router.include_router(ssr_crawler_router)
 
 # V1 API routes
 v1_router.include_router(agents_router)  # /api/v1/agents/*

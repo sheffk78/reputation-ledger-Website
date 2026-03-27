@@ -581,11 +581,34 @@ Server-side rendering endpoints added for SEO meta tag injection:
 - `GET /api/ssr/blog/{slug}` - Returns HTML with pre-populated OG/Twitter/JSON-LD meta tags for blog posts
 - `GET /api/ssr/agent/{agent_id}` - Returns HTML with meta tags for public agent profiles
 
-These endpoints return fully-formed HTML with:
-- Open Graph tags (og:title, og:description, og:image, og:url, og:type)
-- Twitter Card tags (twitter:card, twitter:title, twitter:description, twitter:image)
-- Article-specific meta tags (article:published_time, article:author, article:tag)
-- JSON-LD structured data (Article schema with author, publisher, dates)
+### Automatic Crawler Detection (Implemented)
+
+The backend now **automatically detects crawler user agents** and serves SSR content:
+
+**Crawler-Aware Routes**:
+- `GET /api/blog/{slug}` - Serves SSR for crawlers, redirects regular users to React
+- `GET /api/agent/{agent_id}` - Serves SSR for crawlers, redirects regular users to React
+
+**Supported Crawlers**:
+- Facebook (facebookexternalhit, Facebot)
+- Twitter (Twitterbot)
+- LinkedIn (LinkedInBot)
+- Slack (Slackbot)
+- Discord (Discordbot)
+- Telegram (TelegramBot)
+- WhatsApp
+- Google (Googlebot)
+- Bing (bingbot)
+- Pinterest
+- And more...
+
+**Meta Tags Included**:
+- Open Graph (og:title, og:description, og:image, og:url, og:type)
+- Twitter Card (summary_large_image)
+- Article meta (published_time, modified_time, author, tags)
+- JSON-LD structured data (Article/SoftwareApplication schema)
 - Canonical URLs
 
-**Usage**: Configure reverse proxy (nginx/Cloudflare) to route crawler user-agents to `/api/ssr/*` endpoints for proper social media previews.
+**Files**:
+- `/app/backend/routes/ssr.py` - SSR routes and crawler-aware routes
+- `/app/backend/middleware/crawler_ssr.py` - Crawler detection utilities + nginx/Cloudflare config examples
