@@ -375,6 +375,17 @@ db.users.updateOne({email: "admin@example.com"}, {$set: {is_admin: true}})
 - ✅ **Cleanup** - Meta tags removed when navigating away from page
 - ✅ **Consistent logo** - Header uses LOGO_URL across all pages
 
+### Phase 2.10 - Social Card Image Generation (March 2026)
+- ✅ **Social card endpoint** - `GET /api/v1/agents/{agent_id}/social-card.svg` returns 1200x630 SVG
+- ✅ **Visual design** - Gradient background, grid pattern, tier glow effect, card shadows
+- ✅ **Agent info** - Displays name, description, owner handle
+- ✅ **Stats cards** - Score, success rate, outcomes count in styled cards
+- ✅ **Tier badge** - Large tier badge with correct tier colors
+- ✅ **Branding** - RepLedger logo mark and reputationledger.dev URL in footer
+- ✅ **OG integration** - PublicAgentPage uses social-card.svg for og:image
+- ✅ **Twitter large image** - twitter:card set to summary_large_image
+- ✅ **Cache headers** - 5-minute cache for performance
+
 ### P2 (Medium Priority)
 - ⬜ Social Sharing Meta Tags (OpenGraph/Twitter cards for public agent profiles)
 - ⬜ AAV (Agent Authority Vault) integration
