@@ -1,0 +1,118 @@
+{
+  "suite": "Test C: Blog System + Public Playground",
+  "execution_date": "2026-03-27",
+  "summary": {
+    "total_tests": 54,
+    "passed": 47,
+    "partial": 3,
+    "notes": 4
+  },
+  "sections": {
+    "C1_Blog_Admin_API": {
+      "tests": [1, 2, 3, 4, 5, 6, 7],
+      "status": "ALL PASSED",
+      "notes": "Blog post creation, slug auto-generation, reading_time, canonical_url all working"
+    },
+    "C2_Blog_Publish_Flow": {
+      "tests": [8, 9, 10, 11, 12],
+      "status": "ALL PASSED",
+      "notes": "Publish sets status and published_at, public API returns only published posts"
+    },
+    "C3_Blog_Update_Delete": {
+      "tests": [13, 14, 15, 16, 17],
+      "status": "ALL PASSED",
+      "notes": "PATCH updates title/tags/images/content with metrics recalc, DELETE works"
+    },
+    "C4_RSS_Feed": {
+      "tests": [18, 19, 20],
+      "status": "ALL PASSED",
+      "notes": "Valid RSS XML with RepLedger Blog title, items with title/link/description"
+    },
+    "C5_Blog_Frontend_Index": {
+      "tests": [21, 22, 23, 24, 25],
+      "status": "ALL PASSED",
+      "notes": "Blog index shows heading, post cards with excerpt/author/reading time/tags"
+    },
+    "C6_Blog_Frontend_Post": {
+      "tests": [26, 27, 28, 29, 30, 31, 32, 33],
+      "status": "PARTIAL",
+      "notes": "Post renders correctly. Meta tags are injected client-side (not in initial HTML). Back to blog link works."
+    },
+    "C7_Navigation_Updates": {
+      "tests": [34, 35, 36, 37],
+      "status": "PARTIAL",
+      "notes": "Blog link in header nav on Blog page. May need to verify on other pages via browser."
+    },
+    "C8_Public_Playground_Sandbox": {
+      "tests": [38, 39, 40, 41, 42, 43, 44, 45, 46, 47],
+      "status": "ALL PASSED",
+      "notes": "Sandbox credentials endpoint works. Playground shows sandbox mode, masked key, sign-up CTA. API requests work."
+    },
+    "C9_Playground_Authenticated": {
+      "tests": [48, 49, 50, 51, 52],
+      "status": "ALL PASSED",
+      "notes": "No sandbox badge, user's own key, live data warning, no sign-up CTA"
+    },
+    "C10_Playground_Route_Change": {
+      "tests": [53, 54],
+      "status": "ALL PASSED",
+      "notes": "/playground accessible without login, /dashboard still requires auth"
+    }
+  },
+  "test_details": [
+    {"id": 1, "name": "POST /api/admin/blog/posts", "result": "PASS"},
+    {"id": 2, "name": "reading_time = 1", "result": "PASS"},
+    {"id": 3, "name": "canonical_url correct", "result": "PASS"},
+    {"id": 4, "name": "Duplicate title slug dedupe", "result": "PASS"},
+    {"id": 5, "name": "GET /api/admin/blog/posts", "result": "PASS"},
+    {"id": 6, "name": "GET posts?status=draft", "result": "PASS"},
+    {"id": 7, "name": "GET /api/admin/blog/posts/{id}", "result": "PASS"},
+    {"id": 8, "name": "POST publish", "result": "PASS"},
+    {"id": 9, "name": "GET /api/blog/posts (public)", "result": "PASS"},
+    {"id": 10, "name": "GET /api/blog/posts/{slug}", "result": "PASS"},
+    {"id": 11, "name": "GET nonexistent slug 404", "result": "PASS"},
+    {"id": 12, "name": "GET draft slug 404", "result": "PASS"},
+    {"id": 13, "name": "PATCH title and tags", "result": "PASS"},
+    {"id": 14, "name": "PATCH image URLs", "result": "PASS"},
+    {"id": 15, "name": "PATCH content recalc", "result": "PASS"},
+    {"id": 16, "name": "DELETE post", "result": "PASS"},
+    {"id": 17, "name": "Verify 1 post remains", "result": "PASS"},
+    {"id": 18, "name": "GET /api/blog/rss valid XML", "result": "PASS"},
+    {"id": 19, "name": "RSS has items", "result": "PASS"},
+    {"id": 20, "name": "RSS only published", "result": "PASS"},
+    {"id": 21, "name": "/blog heading", "result": "PASS"},
+    {"id": 22, "name": "Post card display", "result": "PASS"},
+    {"id": 23, "name": "Card click navigates", "result": "PASS"},
+    {"id": 24, "name": "Nav header links", "result": "PASS"},
+    {"id": 25, "name": "No drafts on index", "result": "PASS"},
+    {"id": 26, "name": "Post page renders", "result": "PASS"},
+    {"id": 27, "name": "Markdown rendering", "result": "PASS"},
+    {"id": 28, "name": "Title tag", "result": "PASS"},
+    {"id": 29, "name": "OG tags", "result": "NOTE", "note": "Client-side injection"},
+    {"id": 30, "name": "Twitter tags", "result": "NOTE", "note": "Client-side injection"},
+    {"id": 31, "name": "JSON-LD", "result": "NOTE", "note": "Client-side injection"},
+    {"id": 32, "name": "Back to blog link", "result": "PASS"},
+    {"id": 33, "name": "/blog/nonexistent", "result": "PASS"},
+    {"id": 34, "name": "Blog link on /", "result": "PARTIAL"},
+    {"id": 35, "name": "Blog link on /pricing", "result": "PARTIAL"},
+    {"id": 36, "name": "Blog link on /developers", "result": "PARTIAL"},
+    {"id": 37, "name": "Blog link on /docs", "result": "PARTIAL"},
+    {"id": 38, "name": "GET /api/sandbox/credentials", "result": "PASS"},
+    {"id": 39, "name": "Sandbox badge visible", "result": "PASS"},
+    {"id": 40, "name": "Masked sandbox key", "result": "PASS"},
+    {"id": 41, "name": "Sign-up CTA", "result": "PASS"},
+    {"id": 42, "name": "Endpoint selector", "result": "PASS"},
+    {"id": 43, "name": "Agent dropdown", "result": "PASS"},
+    {"id": 44, "name": "GET /v1/agents works", "result": "PASS"},
+    {"id": 45, "name": "GET score works", "result": "PASS"},
+    {"id": 46, "name": "POST outcome works", "result": "PASS"},
+    {"id": 47, "name": "GET badge.svg works", "result": "PASS"},
+    {"id": 48, "name": "No sandbox badge (auth)", "result": "PASS"},
+    {"id": 49, "name": "User's API key shown", "result": "PASS"},
+    {"id": 50, "name": "No sign-up CTA (auth)", "result": "PASS"},
+    {"id": 51, "name": "User's agents shown", "result": "PASS"},
+    {"id": 52, "name": "Requests use user token", "result": "PASS"},
+    {"id": 53, "name": "/playground no redirect", "result": "PASS"},
+    {"id": 54, "name": "/dashboard still protected", "result": "PASS"}
+  ]
+}
