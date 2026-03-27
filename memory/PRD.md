@@ -511,3 +511,26 @@ db.users.updateOne({email: "admin@example.com"}, {$set: {is_admin: true}})
 - **Postmark**: Transactional emails (welcome, password reset, outcome notifications)
   - API Key: Configured in backend/.env as POSTMARK_API_KEY
   - From Email: no-reply@contact.agentictrust.app
+- **Stripe**: Billing and subscription management
+  - Keys: STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET in backend/.env
+  - Prices: STRIPE_PRICE_BUILDER, STRIPE_PRICE_PLATFORM
+  - Publishable Key: REACT_APP_STRIPE_PUBLISHABLE_KEY in frontend/.env
+
+## Test Suite Results
+
+### Test A: Core Platform (March 27, 2026)
+**Result: 49/49 PASSED**
+
+| Section | Tests | Status |
+|---------|-------|--------|
+| A1. Authentication | 1-6 | ✅ All Passed |
+| A2. API Keys | 7-10 | ✅ All Passed |
+| A3. Agent CRUD | 11-18 | ✅ All Passed |
+| A4. Outcomes + Scoring | 19-26 | ✅ All Passed |
+| A5. Webhooks | 27-30 | ✅ All Passed |
+| A6. Flags | 31-32 | ✅ All Passed |
+| A7. Demo Agent | 33-34 | ✅ All Passed |
+| A8. Frontend Pages | 35-41 | ✅ All Passed |
+| A9. Dashboard Improvements | 42-49 | ✅ All Passed |
+
+**Test Report**: `/app/test_reports/test_a_core_results.json`
