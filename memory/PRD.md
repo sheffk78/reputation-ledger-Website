@@ -297,11 +297,20 @@ db.users.updateOne({email: "admin@example.com"}, {$set: {is_admin: true}})
 ### Phase 2.3 - Marketing & Developer Experience (March 2026)
 - ✅ **PricingPage** (`/pricing`) - 4-tier pricing grid (Free/$29/$79/Custom), FAQ accordion
 - ✅ **ChangelogPage** (`/changelog`) - Timeline with tags, 3-column roadmap, feature request form
-- ✅ **DocsPage** (`/docs`) - Full API documentation with quickstart
+- ✅ **DocsPage** (`/docs`) - Full API documentation with:
+  - Fixed left sidebar (w-64) with 7 sections
+  - Colored method dots (green POST, blue GET, red DELETE, purple PATCH)
+  - IntersectionObserver for active section tracking on scroll
+  - 14+ endpoint sections with request/response examples
+  - Copyable code blocks with hover-reveal buttons
+  - Trust Tiers table (5 tiers with colors)
+  - Error Codes table (6 codes with descriptions)
+  - Link to "Request a feature" on changelog
 - ✅ **PlaygroundPage** (`/playground`) - Full interactive API testing with:
-  - Split-panel layout (request builder / response viewer)
-  - 7 endpoints: List Agents, Get Agent, Get Score, List Outcomes, Create Agent, Submit Outcome, Get Badge
-  - User's real API key (masked with reveal toggle)
+  - Split-panel layout (40/60 - request builder / response viewer)
+  - 9 endpoints: Register Agent, List Agents, Submit Outcome, Get Score, Get Badge, Submit Flag, List Outcomes, Create Webhook, List Webhooks
+  - Warning banner: "All requests use your live API key and affect real data."
+  - User's API key (masked with copy + reveal toggle)
   - Agent dropdown selector for agent-specific endpoints
   - Live cURL preview with copy button
   - JSON response viewer with status code and response time
