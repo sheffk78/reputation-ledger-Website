@@ -21,6 +21,9 @@ class Settings:
     
     # CORS
     CORS_ORIGINS: str = os.environ.get('CORS_ORIGINS', '*')
+    
+    # Admin API Key (for programmatic admin access by Kit)
+    ADMIN_API_KEY: str = os.environ.get('ADMIN_API_KEY', '')
 
 
 settings = Settings()

@@ -4,6 +4,13 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Hide Emergent watermark/badge */
+#emergent-badge,
+.emergent-badge,
+[data-emergent-badge] {
+  display: none !important;
+}
+
 :root {
   /* Typography */
   --font-heading: "Space Grotesk", system-ui, -apple-system, sans-serif;

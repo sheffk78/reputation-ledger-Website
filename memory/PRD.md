@@ -327,6 +327,15 @@ db.users.updateOne({email: "admin@example.com"}, {$set: {is_admin: true}})
 - ✅ **Skeleton loading** - SkeletonBlock component with animate-pulse instead of spinner
 - ✅ **Register Agent Plus icon** - Plus icon in button
 
+### Phase 2.5 - Admin API Key + Branding (March 2026)
+- ✅ **Admin API Key auth** - ADMIN_API_KEY env var for programmatic admin access
+- ✅ **POST /admin/users** - Create user with auto-generated API key (for Kit)
+- ✅ **GET /admin/lookup/user** - Look up user by email
+- ✅ **GET /admin/lookup/agent** - Look up agent by ID or name
+- ✅ **Favicon** - SVG favicon with RepLedger logo (teal gradient, white stack icon)
+- ✅ **Remove watermark** - Removed "Made with Emergent" badge from index.html
+- ✅ **Page title** - "RepLedger | Agent Reputation"
+
 ### P2 (Medium Priority)
 - ⬜ Social Sharing Meta Tags (OpenGraph/Twitter cards for public agent profiles)
 - ⬜ AAV (Agent Authority Vault) integration

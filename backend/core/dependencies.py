@@ -100,13 +100,16 @@ async def get_user_from_api_key(credentials: HTTPAuthorizationCredentials = Depe
 
 async def get_admin_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
     """
-    Get user from JWT token and verify admin access.
-    Used for all /admin routes and admin API endpoints.
+    Get admin user from JWT token OR admin API key.
     
-    Admin access is determined by the `is_admin` boolean field on the user document.
-    To promote a user to admin, set `is_admin: true` in the database:
+    Supports two auth methods:
+    1. JWT token from browser login (user must have is_admin: true)
+    2. Static admin API key from ADMIN_API_KEY env var (for programmatic access by Kit)
     
-        db.users.updateOne({email: "admin@example.com"}, {$set: {is_admin: true}})
+    When using admin API key, returns a synthetic admin user dict with:
+    - id: "admin_api_key"
+    - email: "kit@agentictrust.com"
+    - is_admin: True
     """
     if not credentials:
         raise APIError(
@@ -116,6 +119,16 @@ async def get_admin_user(credentials: HTTPAuthorizationCredentials = Depends(sec
         )
     
     token = credentials.credentials
+    
+    # First, check if it's the admin API key
+    if settings.ADMIN_API_KEY and token == settings.ADMIN_API_KEY:
+        return {
+            "id": "admin_api_key",
+            "email": "kit@agentictrust.com",
+            "is_admin": True
+        }
+    
+    # Otherwise, try JWT token
     payload = decode_token(token)
     user = await db.users.find_one({"id": payload["sub"]}, {"_id": 0})
     

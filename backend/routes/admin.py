@@ -4,12 +4,18 @@ Admin API Routes
 All routes in this module require admin access.
 Admin users are identified by the `is_admin: true` field on their user document.
 
+Supports two authentication methods:
+1. JWT token from browser login (user must have is_admin: true)
+2. Static admin API key from ADMIN_API_KEY env var (for programmatic access by Kit)
+
 To promote a user to admin via MongoDB shell:
     db.users.updateOne({email: "admin@example.com"}, {$set: {is_admin: true}})
 """
+import uuid
+import secrets
 from datetime import datetime, timezone, timedelta
-from fastapi import APIRouter, Depends
-from pydantic import BaseModel
+from fastapi import APIRouter, Depends, Query
+from pydantic import BaseModel, EmailStr, Field
 from typing import List, Optional
 
 from core.database import db
@@ -17,6 +23,7 @@ from core.dependencies import get_admin_user
 from core.exceptions import APIError, ErrorCodes
 from services.score_service import calculate_score_and_tier
 from models.audit import AuditLogEntry, AuditLogListResponse
+from utils.password import hash_password
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
@@ -145,6 +152,48 @@ class AdminApiKeyListResponse(BaseModel):
     """Paginated list of API keys"""
     api_keys: List[AdminApiKeyResponse]
     total: int
+
+
+# ============== CREATE USER MODELS ==============
+
+class AdminCreateUserRequest(BaseModel):
+    """Request to create a new user via admin API"""
+    email: EmailStr
+    password: str = Field(..., min_length=8)
+    is_admin: bool = False
+
+
+class AdminCreateUserResponse(BaseModel):
+    """Response from creating a user"""
+    id: str
+    email: str
+    is_admin: bool
+    created_at: str
+    api_key: str  # Auto-generated API key
+
+
+# ============== LOOKUP MODELS ==============
+
+class AdminUserLookupResponse(BaseModel):
+    """Minimal user info for lookups"""
+    id: str
+    email: str
+    is_admin: bool
+    agent_count: int
+    created_at: str
+
+
+class AdminAgentLookupResponse(BaseModel):
+    """Minimal agent info for lookups"""
+    agent_id: str
+    name: str
+    owner_id: str
+    owner_email: str
+    score: float
+    tier: str
+    outcome_count: int
+    is_public: bool
+    created_at: str
 
 
 # ============== ADMIN ROUTES ==============
@@ -846,4 +895,166 @@ async def list_feedback(
         page=page,
         limit=limit,
         total=total
+    )
+
+
+
+# ============== ADMIN API KEY ROUTES ==============
+
+@router.post("/users", response_model=AdminCreateUserResponse, status_code=201)
+async def admin_create_user(
+    data: AdminCreateUserRequest,
+    admin: dict = Depends(get_admin_user)
+):
+    """
+    Create a new user with an auto-generated API key.
+    
+    Used by Kit for programmatic user provisioning.
+    Accepts admin API key or JWT from admin user.
+    """
+    # Check if email already exists
+    existing = await db.users.find_one({"email": data.email}, {"_id": 0, "id": 1})
+    if existing:
+        raise APIError(
+            code=ErrorCodes.EMAIL_EXISTS,
+            message=f"A user with email '{data.email}' already exists.",
+            status_code=409,
+            details={"email": data.email, "existing_user_id": existing["id"]}
+        )
+    
+    now = datetime.now(timezone.utc).isoformat()
+    user_id = str(uuid.uuid4())
+    
+    # Hash password
+    password_hash = hash_password(data.password)
+    
+    # Create user document
+    user_doc = {
+        "id": user_id,
+        "email": data.email,
+        "password_hash": password_hash,
+        "is_admin": data.is_admin,
+        "created_at": now,
+        "notification_preferences": {
+            "email_outcome_alerts": True,
+            "email_weekly_summary": True,
+            "email_score_changes": True
+        }
+    }
+    
+    await db.users.insert_one(user_doc)
+    
+    # Generate API key
+    api_key = f"arl_{secrets.token_hex(24)}"
+    api_key_doc = {
+        "id": str(uuid.uuid4()),
+        "user_id": user_id,
+        "key": api_key,
+        "created_at": now,
+        "revoked_at": None,
+        "last_used_at": None
+    }
+    
+    await db.api_keys.insert_one(api_key_doc)
+    
+    return AdminCreateUserResponse(
+        id=user_id,
+        email=data.email,
+        is_admin=data.is_admin,
+        created_at=now,
+        api_key=api_key
+    )
+
+
+@router.get("/lookup/user", response_model=AdminUserLookupResponse)
+async def admin_lookup_user_by_email(
+    email: str = Query(..., description="Email address to look up"),
+    admin: dict = Depends(get_admin_user)
+):
+    """
+    Look up a user by email address.
+    
+    Returns minimal user info including ID, useful for Kit workflows.
+    """
+    user = await db.users.find_one({"email": email}, {"_id": 0, "password_hash": 0})
+    
+    if not user:
+        raise APIError(
+            code=ErrorCodes.USER_NOT_FOUND,
+            message=f"No user found with email '{email}'.",
+            status_code=404,
+            details={"email": email}
+        )
+    
+    # Get agent count
+    agent_count = await db.agents.count_documents({"user_id": user["id"]})
+    
+    return AdminUserLookupResponse(
+        id=user["id"],
+        email=user["email"],
+        is_admin=user.get("is_admin", False),
+        agent_count=agent_count,
+        created_at=user["created_at"]
+    )
+
+
+@router.get("/lookup/agent", response_model=AdminAgentLookupResponse)
+async def admin_lookup_agent(
+    agent_id: Optional[str] = Query(None, description="Agent ID to look up"),
+    name: Optional[str] = Query(None, description="Agent name to look up"),
+    admin: dict = Depends(get_admin_user)
+):
+    """
+    Look up an agent by ID or name.
+    
+    At least one parameter (agent_id or name) is required.
+    If both provided, agent_id takes precedence.
+    """
+    if not agent_id and not name:
+        raise APIError(
+            code=ErrorCodes.VALIDATION_ERROR,
+            message="At least one of 'agent_id' or 'name' is required.",
+            status_code=400
+        )
+    
+    # Build query
+    query = {}
+    if agent_id:
+        query["agent_id"] = agent_id
+    else:
+        query["name"] = name
+    
+    agent = await db.agents.find_one(query, {"_id": 0})
+    
+    if not agent:
+        detail = {"agent_id": agent_id} if agent_id else {"name": name}
+        raise APIError(
+            code=ErrorCodes.AGENT_NOT_FOUND,
+            message="Agent not found.",
+            status_code=404,
+            details=detail
+        )
+    
+    # Get owner info
+    owner = await db.users.find_one({"id": agent["user_id"]}, {"_id": 0, "email": 1})
+    owner_email = owner["email"] if owner else "unknown"
+    
+    # Get outcomes for score
+    outcomes = await db.outcomes.find(
+        {"agent_id": agent["agent_id"]}, 
+        {"_id": 0}
+    ).to_list(10000)
+    
+    score, tier, success_rate, _ = calculate_score_and_tier(outcomes)
+    
+    return AdminAgentLookupResponse(
+        agent_id=agent["agent_id"],
+        name=agent["name"],
+        owner_id=agent["user_id"],
+        owner_email=owner_email,
+        score=score,
+        tier=tier,
+        outcome_count=len(outcomes),
+        is_public=agent.get("is_public", False),
+        created_at=agent["created_at"]
     )
