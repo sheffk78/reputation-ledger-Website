@@ -25,6 +25,8 @@ from routes.settings import router as settings_router
 from routes.feedback import router as feedback_router
 from routes.blog import admin_router as blog_admin_router, public_router as blog_public_router
 from routes.sandbox import router as sandbox_router
+from routes.billing import router as billing_router
+from routes.stripe_webhook import router as stripe_webhook_router
 
 # Configure logging
 logging.basicConfig(
@@ -272,6 +274,12 @@ api_router.include_router(blog_public_router)
 
 # Sandbox routes (/api/sandbox/*)
 api_router.include_router(sandbox_router)
+
+# Billing routes (/api/billing/*)
+api_router.include_router(billing_router)
+
+# Stripe webhook routes (/api/stripe/*)
+api_router.include_router(stripe_webhook_router)
 
 # V1 API routes
 v1_router.include_router(agents_router)  # /api/v1/agents/*

@@ -1,6 +1,9 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
-import { CheckCircle2, ChevronDown, ChevronUp } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { CheckCircle2, ChevronDown, ChevronUp, Loader2 } from "lucide-react";
+import { useAuth } from "../context/AuthContext";
+import { billingAPI } from "../lib/api";
+import { toast } from "sonner";
 
 const LOGO_URL = "https://customer-assets.emergentagent.com/job_ac636d4a-6ca2-497e-8615-5b0c10a94a77/artifacts/vcawrcg8_repledger-logo-dark.svg";
 
@@ -121,8 +124,17 @@ function FAQItem({ question, answer, isOpen, onToggle }) {
   );
 }
 
-function PricingCard({ tier }) {
+function PricingCard({ tier, user, onCheckout, checkoutLoading }) {
   const isExternal = tier.ctaLink.startsWith("mailto:");
+  const isPaid = tier.name === "Builder" || tier.name === "Platform";
+  const isEnterprise = tier.name === "Enterprise";
+  
+  const handleClick = async (e) => {
+    if (isPaid && user) {
+      e.preventDefault();
+      onCheckout(tier.name.toLowerCase());
+    }
+  };
   
   return (
     <div
@@ -175,6 +187,26 @@ function PricingCard({ tier }) {
         >
           {tier.cta}
         </a>
+      ) : isPaid && user ? (
+        <button
+          onClick={handleClick}
+          disabled={checkoutLoading === tier.name.toLowerCase()}
+          className={`w-full py-2.5 rounded-lg text-center font-medium transition-colors flex items-center justify-center gap-2 ${
+            tier.highlighted
+              ? "bg-[#01696F] hover:bg-[#015858] text-white"
+              : "bg-white/[0.05] hover:bg-white/[0.08] text-white border border-white/[0.08]"
+          } disabled:opacity-50 disabled:cursor-not-allowed`}
+          data-testid={`pricing-cta-${tier.name.toLowerCase()}`}
+        >
+          {checkoutLoading === tier.name.toLowerCase() ? (
+            <>
+              <Loader2 className="w-4 h-4 animate-spin" />
+              Loading...
+            </>
+          ) : (
+            tier.cta
+          )}
+        </button>
       ) : (
         <Link
           to={tier.ctaLink}
@@ -193,7 +225,28 @@ function PricingCard({ tier }) {
 }
 
 export default function PricingPage() {
+  const { user } = useAuth();
+  const navigate = useNavigate();
   const [openFaq, setOpenFaq] = useState(null);
+  const [checkoutLoading, setCheckoutLoading] = useState(null);
+
+  const handleCheckout = async (plan) => {
+    if (!user) {
+      // Redirect to signup with plan param
+      navigate(`/signup?plan=${plan}`);
+      return;
+    }
+    
+    setCheckoutLoading(plan);
+    try {
+      const { checkout_url } = await billingAPI.createCheckoutSession(plan);
+      window.location.href = checkout_url;
+    } catch (err) {
+      console.error("Checkout error:", err);
+      toast.error("Failed to start checkout. Please try again.");
+      setCheckoutLoading(null);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-[#050709] flex flex-col">
@@ -255,7 +308,13 @@ export default function PricingPage() {
           <div className="max-w-6xl mx-auto">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {PRICING_TIERS.map((tier) => (
-                <PricingCard key={tier.name} tier={tier} />
+                <PricingCard 
+                  key={tier.name} 
+                  tier={tier} 
+                  user={user}
+                  onCheckout={handleCheckout}
+                  checkoutLoading={checkoutLoading}
+                />
               ))}
             </div>
           </div>

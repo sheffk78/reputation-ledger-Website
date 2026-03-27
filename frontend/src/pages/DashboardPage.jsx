@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { agentsAPI, apiKeyAPI, webhooksAPI, usageStatsAPI } from "../lib/api";
 import { copyToClipboard, getTierColorClass, parseApiError, validateRequired, validateUrl } from "../lib/utils";
 import { trackEvent, EventNames } from "../lib/analytics";
 import FeedbackModal from "../components/FeedbackModal";
+import PlanCard from "../components/PlanCard";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
@@ -332,6 +333,7 @@ function TierBadge({ tier, size = "default" }) {
 export default function DashboardPage() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   
   const [apiKey, setApiKey] = useState(null);
   const [agents, setAgents] = useState([]);
@@ -365,6 +367,18 @@ export default function DashboardPage() {
     loadData();
     // Track dashboard loaded event
     trackEvent(EventNames.DASHBOARD_LOADED);
+    
+    // Check for billing success/cancel params
+    const billingStatus = searchParams.get("billing");
+    if (billingStatus === "success") {
+      toast.success("Subscription activated! Your new plan is now active.");
+      searchParams.delete("billing");
+      setSearchParams(searchParams, { replace: true });
+    } else if (billingStatus === "cancelled") {
+      toast.info("Checkout cancelled. No changes made.");
+      searchParams.delete("billing");
+      setSearchParams(searchParams, { replace: true });
+    }
   }, []);
 
   const loadData = async () => {
@@ -811,6 +825,9 @@ export default function DashboardPage() {
 
           {/* API Quickstart Panel */}
           <ApiQuickstartPanel apiKey={apiKey?.api_key} />
+
+          {/* Plan Card */}
+          <PlanCard />
 
           {/* Agents Section */}
           <section>

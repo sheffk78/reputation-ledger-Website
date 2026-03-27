@@ -7,6 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks, Response
 from core.database import db
 from core.dependencies import get_user_from_api_key
 from core.exceptions import APIError, ErrorCodes
+from core.plans import get_plan_limits
 from models.agents import AgentCreate, AgentCreateResponse, AgentListResponse, DemoAgentResponse, AgentPublicToggle, AgentPublicProfile
 from models.outcomes import OutcomeCreate, OutcomeResponse, PaginatedOutcomesResponse, ScoreResponse, OutcomeBreakdown
 from models.flags import FlagCreate, FlagResponse, FlagListResponse
@@ -29,6 +30,25 @@ async def create_agent(
     background_tasks: BackgroundTasks = None
 ):
     """Register a new agent"""
+    # Check plan limits
+    plan = user.get("plan", "free")
+    limits = get_plan_limits(plan)
+    
+    if limits["max_agents"] is not None:
+        current_agent_count = await db.agents.count_documents({"user_id": user["id"]})
+        if current_agent_count >= limits["max_agents"]:
+            raise APIError(
+                code=ErrorCodes.PLAN_LIMIT_REACHED,
+                message=f"Agent limit reached. Your {limits['label']} plan allows {limits['max_agents']} agent(s). Upgrade to add more.",
+                status_code=403,
+                details={
+                    "limit_type": "max_agents",
+                    "current": current_agent_count,
+                    "limit": limits["max_agents"],
+                    "plan": plan
+                }
+            )
+    
     agent_id = f"agt_{secrets.token_hex(12)}"
     now = datetime.now(timezone.utc).isoformat()
     
@@ -372,6 +392,39 @@ async def create_outcome(
             status_code=404,
             details={"agent_id": agent_id}
         )
+    
+    # Check plan limits for outcomes this month
+    plan = user.get("plan", "free")
+    limits = get_plan_limits(plan)
+    
+    if limits["max_outcomes_per_month"] is not None:
+        # Count outcomes this month for all user's agents
+        now = datetime.now(timezone.utc)
+        first_of_month = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0).isoformat()
+        
+        agent_ids_cursor = await db.agents.find(
+            {"user_id": user["id"]},
+            {"agent_id": 1, "_id": 0}
+        ).to_list(10000)
+        agent_ids = [a["agent_id"] for a in agent_ids_cursor]
+        
+        outcomes_this_month = await db.outcomes.count_documents({
+            "agent_id": {"$in": agent_ids},
+            "created_at": {"$gte": first_of_month}
+        })
+        
+        if outcomes_this_month >= limits["max_outcomes_per_month"]:
+            raise APIError(
+                code=ErrorCodes.PLAN_LIMIT_REACHED,
+                message=f"Monthly outcome limit reached. Your {limits['label']} plan allows {limits['max_outcomes_per_month']:,} outcomes/month. Upgrade for more.",
+                status_code=403,
+                details={
+                    "limit_type": "max_outcomes_per_month",
+                    "current": outcomes_this_month,
+                    "limit": limits["max_outcomes_per_month"],
+                    "plan": plan
+                }
+            )
     
     outcome_id = str(uuid.uuid4())
     now = datetime.now(timezone.utc).isoformat()

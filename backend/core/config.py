@@ -28,6 +28,12 @@ class Settings:
     # Sandbox (public playground)
     SANDBOX_API_KEY: str = os.environ.get('SANDBOX_API_KEY', '')
     SANDBOX_USER_ID: str = os.environ.get('SANDBOX_USER_ID', '')
+    
+    # Stripe
+    STRIPE_SECRET_KEY: str = os.environ.get('STRIPE_SECRET_KEY', '')
+    STRIPE_WEBHOOK_SECRET: str = os.environ.get('STRIPE_WEBHOOK_SECRET', '')
+    STRIPE_PRICE_BUILDER: str = os.environ.get('STRIPE_PRICE_BUILDER', 'price_1TFZtj2lZzmsSFmdLenhOv65')
+    STRIPE_PRICE_PLATFORM: str = os.environ.get('STRIPE_PRICE_PLATFORM', 'price_1TFZtn2lZzmsSFmdLDxFLwLI')
 
 
 settings = Settings()

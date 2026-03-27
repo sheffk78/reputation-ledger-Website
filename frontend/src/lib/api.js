@@ -328,4 +328,26 @@ export const sandboxAPI = {
   },
 };
 
+// Billing API
+export const billingAPI = {
+  getPlan: async () => {
+    const response = await apiClient.get("/billing/plan");
+    return response.data;
+  },
+
+  createCheckoutSession: async (plan) => {
+    const response = await apiClient.post("/billing/create-checkout-session", {
+      plan,
+      success_url: `${window.location.origin}/dashboard?billing=success`,
+      cancel_url: `${window.location.origin}/pricing?billing=cancelled`,
+    });
+    return response.data;
+  },
+
+  createPortalSession: async () => {
+    const response = await apiClient.post("/billing/create-portal-session");
+    return response.data;
+  },
+};
+
 export default apiClient;
