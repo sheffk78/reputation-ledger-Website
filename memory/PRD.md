@@ -318,6 +318,15 @@ db.users.updateOne({email: "admin@example.com"}, {$set: {is_admin: true}})
 - ✅ **Feature Requests Endpoint** - POST /api/feature-requests (public, no auth)
 - ✅ Navigation updates across HomePage, DevelopersPage, DashboardPage
 
+### Phase 2.4 - Dashboard UX Improvements (March 2026)
+- ✅ **Docs link in header** - BookOpen icon + "Docs" text linking to /docs
+- ✅ **API Key show/hide toggle** - Eye/EyeOff icons, masked by default with dots
+- ✅ **Clickable agent rows** - Full row clickable, navigates to agent detail
+- ✅ **API Quickstart collapse persistence** - localStorage 'repledger_quickstart_expanded'
+- ✅ **Logo links to homepage** - RepLedger logo is Link to /
+- ✅ **Skeleton loading** - SkeletonBlock component with animate-pulse instead of spinner
+- ✅ **Register Agent Plus icon** - Plus icon in button
+
 ### P2 (Medium Priority)
 - ⬜ Social Sharing Meta Tags (OpenGraph/Twitter cards for public agent profiles)
 - ⬜ AAV (Agent Authority Vault) integration
