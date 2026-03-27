@@ -386,6 +386,18 @@ db.users.updateOne({email: "admin@example.com"}, {$set: {is_admin: true}})
 - ✅ **Twitter large image** - twitter:card set to summary_large_image
 - ✅ **Cache headers** - 5-minute cache for performance
 
+### Phase 3.1 - Stripe Billing Integration (March 2026)
+- ✅ **Plans defined** - Free (1 agent, 100 outcomes/mo), Builder ($29, 10 agents, 5K outcomes), Platform ($99, unlimited, 100K outcomes)
+- ✅ **Checkout sessions** - `POST /api/billing/create-checkout-session` creates Stripe Checkout
+- ✅ **Billing portal** - `POST /api/billing/create-portal-session` for subscription management
+- ✅ **Plan info endpoint** - `GET /api/billing/plan` returns usage stats and limits
+- ✅ **Webhook handler** - `POST /api/stripe/webhook` processes subscription lifecycle events
+- ✅ **Plan limits enforced** - Agent creation and outcome submission check plan limits
+- ✅ **PLAN_LIMIT_REACHED error** - Clear error with details when limits exceeded
+- ✅ **PlanCard component** - Dashboard shows plan usage with progress bars
+- ✅ **PricingPage checkout** - Logged-in users can checkout directly from pricing page
+- ✅ **Billing success handling** - Toast notification when returning from successful checkout
+
 ### P2 (Medium Priority)
 - ⬜ Social Sharing Meta Tags (OpenGraph/Twitter cards for public agent profiles)
 - ⬜ AAV (Agent Authority Vault) integration

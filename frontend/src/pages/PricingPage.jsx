@@ -44,7 +44,7 @@ const PRICING_TIERS = [
   },
   {
     name: "Platform",
-    price: "$79",
+    price: "$99",
     period: "/month",
     agents: "Unlimited agents",
     outcomes: "100,000 outcomes/mo",
