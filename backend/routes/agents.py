@@ -10,7 +10,7 @@ from core.exceptions import APIError, ErrorCodes
 from models.agents import AgentCreate, AgentCreateResponse, AgentListResponse, DemoAgentResponse, AgentPublicToggle, AgentPublicProfile
 from models.outcomes import OutcomeCreate, OutcomeResponse, PaginatedOutcomesResponse, ScoreResponse, OutcomeBreakdown
 from models.flags import FlagCreate, FlagResponse, FlagListResponse
-from services.score_service import calculate_score_and_tier, generate_badge_svg
+from services.score_service import calculate_score_and_tier, generate_badge_svg, generate_social_card_svg
 from services.webhook_service import trigger_webhooks
 from services.email_service import send_outcome_notification_email
 from services.audit_service import (
@@ -560,6 +560,43 @@ async def get_agent_badge(agent_id: str):
     
     score, tier, _, _ = calculate_score_and_tier(outcomes)
     svg = generate_badge_svg(tier, score)
+    
+    return Response(
+        content=svg,
+        media_type="image/svg+xml",
+        headers={
+            "Cache-Control": "public, max-age=300",
+            "Content-Type": "image/svg+xml; charset=utf-8"
+        }
+    )
+
+
+@router.get("/{agent_id}/social-card.svg")
+async def get_agent_social_card(agent_id: str):
+    """
+    Get 1200x630 SVG social card for sharing agent profiles.
+    This is a PUBLIC endpoint optimized for Open Graph and Twitter cards.
+    """
+    agent = await db.agents.find_one({"agent_id": agent_id}, {"_id": 0})
+    if not agent:
+        raise HTTPException(status_code=404, detail="Agent not found")
+    
+    outcomes = await db.outcomes.find(
+        {"agent_id": agent_id}, 
+        {"_id": 0}
+    ).to_list(10000)
+    
+    score, tier, success_rate, _ = calculate_score_and_tier(outcomes)
+    
+    svg = generate_social_card_svg(
+        agent_name=agent.get("name", "Unknown Agent"),
+        tier=tier,
+        score=score,
+        success_rate=success_rate,
+        outcome_count=len(outcomes),
+        description=agent.get("description"),
+        owner_handle=agent.get("owner_handle")
+    )
     
     return Response(
         content=svg,

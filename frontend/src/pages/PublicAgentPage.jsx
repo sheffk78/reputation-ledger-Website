@@ -29,7 +29,7 @@ export default function PublicAgentPage() {
   useEffect(() => {
     if (!agent) return;
 
-    const badgeUrl = `${API_URL}/api/v1/agents/${agent.agent_id}/badge.svg`;
+    const socialCardUrl = `${API_URL}/api/v1/agents/${agent.agent_id}/social-card.svg`;
     const profileUrl = `${BASE_URL}/a/${agent.agent_id}`;
     const title = `${agent.name} - ${agent.tier} Tier Agent | RepLedger`;
     const description = agent.description 
@@ -59,14 +59,16 @@ export default function PublicAgentPage() {
     setMetaTag("og:title", title, true);
     setMetaTag("og:description", description, true);
     setMetaTag("og:url", profileUrl, true);
-    setMetaTag("og:image", badgeUrl, true);
+    setMetaTag("og:image", socialCardUrl, true);
+    setMetaTag("og:image:width", "1200", true);
+    setMetaTag("og:image:height", "630", true);
     setMetaTag("og:site_name", "RepLedger", true);
     
     // Twitter
-    setMetaTag("twitter:card", "summary");
+    setMetaTag("twitter:card", "summary_large_image");
     setMetaTag("twitter:title", title);
     setMetaTag("twitter:description", description);
-    setMetaTag("twitter:image", badgeUrl);
+    setMetaTag("twitter:image", socialCardUrl);
 
     // Canonical URL
     let canonical = document.querySelector('link[rel="canonical"]');
@@ -119,6 +121,8 @@ export default function PublicAgentPage() {
         'meta[property="og:description"]',
         'meta[property="og:url"]',
         'meta[property="og:image"]',
+        'meta[property="og:image:width"]',
+        'meta[property="og:image:height"]',
         'meta[property="og:site_name"]',
         'meta[name="twitter:card"]',
         'meta[name="twitter:title"]',
