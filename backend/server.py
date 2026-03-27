@@ -30,6 +30,7 @@ from routes.stripe_webhook import router as stripe_webhook_router
 from routes.ssr import router as ssr_router, crawler_router as ssr_crawler_router
 from routes.internal import router as internal_router
 from routes.organizations import router as organizations_router
+from routes.mock_aav import router as mock_aav_router
 
 # Configure logging
 logging.basicConfig(
@@ -297,6 +298,9 @@ v1_router.include_router(agents_router)  # /api/v1/agents/*
 v1_router.include_router(webhooks_router)  # /api/v1/webhooks/*
 v1_router.include_router(internal_router)  # /api/v1/internal/* (cross-tool events)
 v1_router.include_router(organizations_router)  # /api/v1/org/*, /api/v1/organizations/*
+
+# Mock AAV routes for testing (can be disabled in production)
+api_router.include_router(mock_aav_router)  # /api/mock/aav/*
 
 # Include main routers in app
 app.include_router(api_router)

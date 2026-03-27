@@ -12,7 +12,7 @@ import secrets
 import httpx
 from datetime import datetime, timezone, timedelta
 from typing import Optional, Dict, Any, List
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from pydantic import BaseModel
 
 from core.database import db
@@ -23,6 +23,7 @@ router = APIRouter(tags=["organizations"])
 
 # Environment variables
 AAV_API_URL = os.environ.get("AAV_API_URL", "")
+AAV_MOCK_MODE = os.environ.get("AAV_MOCK_MODE", "").lower() == "true"
 
 
 # ============================================================
@@ -88,12 +89,18 @@ class AgentCardData(BaseModel):
 @router.post("/org/link", response_model=OrgLinkResponse)
 async def link_organization(
     data: OrgLinkRequest,
+    request: Request,
     user: dict = Depends(get_current_user)
 ):
     """
     Link user account and all agents to an organization via AAV link token.
     
     The link_token is obtained from AAV and validates the organization membership.
+    
+    Modes:
+    - Production: Validates token with real AAV service (AAV_API_URL set)
+    - Mock Mode: Uses internal mock AAV endpoint (AAV_MOCK_MODE=true)
+    - Dev Mode: Extracts org_id from token format lnk_org_XXX
     """
     link_token = data.link_token
     
@@ -104,9 +111,9 @@ async def link_organization(
             detail="Invalid link token format. Expected lnk_... format."
         )
     
-    # If AAV_API_URL is configured, validate token with AAV
     organization_id = None
     
+    # Production mode: Use real AAV service
     if AAV_API_URL:
         try:
             async with httpx.AsyncClient(timeout=10.0) as client:
@@ -127,8 +134,31 @@ async def link_organization(
                 status_code=503,
                 detail="Unable to validate link token with AAV"
             )
+    
+    # Mock mode: Use internal mock AAV endpoint
+    elif AAV_MOCK_MODE:
+        # Get the base URL from the request
+        base_url = str(request.base_url).rstrip('/')
+        try:
+            async with httpx.AsyncClient(timeout=10.0) as client:
+                response = await client.post(
+                    f"{base_url}/api/mock/aav/org/validate-link",
+                    json={"link_token": link_token}
+                )
+                if response.status_code == 200:
+                    result = response.json()
+                    organization_id = result.get("organization_id")
+                else:
+                    error = response.json().get("detail", "Invalid token")
+                    raise HTTPException(status_code=400, detail=error)
+        except httpx.RequestError as e:
+            raise HTTPException(
+                status_code=503,
+                detail=f"Unable to validate link token: {str(e)}"
+            )
+    
+    # Development mode: Extract org_id from token format
     else:
-        # Development mode: Extract org_id from token
         # Format: lnk_org_XXXXXXXXXXXX_random
         parts = link_token.split("_")
         if len(parts) >= 3 and parts[1] == "org":
