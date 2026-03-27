@@ -1,0 +1,105 @@
+{
+  "suite": "Test B: Admin Portal, Admin API Key, Stripe Billing, Limits Consistency",
+  "execution_date": "2026-03-27",
+  "summary": {
+    "total_tests": 41,
+    "passed": 40,
+    "partial": 1,
+    "failed": 0
+  },
+  "sections": {
+    "B1_Admin_API_Key_Auth": {
+      "tests": [1, 2, 3, 4, 5],
+      "status": "ALL PASSED",
+      "notes": "Admin API key authentication works for all admin endpoints"
+    },
+    "B2_Programmatic_Client_Creation": {
+      "tests": [6, 7, 8, 9, 10],
+      "status": "ALL PASSED",
+      "notes": "POST /admin/users creates user with API key, lookup works, agents created successfully"
+    },
+    "B3_Full_Setup_Endpoint": {
+      "tests": [11, 12, 13, 14, 15],
+      "status": "ALL PASSED",
+      "notes": "Full-setup creates user, agents, webhooks in one call. Login and API access work"
+    },
+    "B4_Admin_UI_Clients_AdminAPI": {
+      "tests": [16, 17, 18, 19, 20],
+      "status": "ALL PASSED",
+      "notes": "Clients section with table, New Client dialog with form fields, Admin API section all present"
+    },
+    "B5_Stripe_Billing_Checkout": {
+      "tests": [21, 22, 23, 24, 25, 26],
+      "status": "ALL PASSED",
+      "notes": "Billing plan endpoint works, checkout session creates Stripe URL, portal session works"
+    },
+    "B6_Plan_Enforcement": {
+      "tests": [27, 28, 29, 30, 31],
+      "status": "ALL PASSED",
+      "notes": "Agent limit enforced with PLAN_LIMIT_REACHED error. Error contains limit/current/plan details"
+    },
+    "B7_Stripe_Webhook_Handler": {
+      "tests": [32, 33, 34],
+      "status": "ALL PASSED",
+      "notes": "Webhook endpoint returns 400 for missing/invalid signature. Routes registered"
+    },
+    "B8_Usage_Stats_Plan_Info": {
+      "tests": [35],
+      "status": "PARTIAL",
+      "notes": "Plan info available in /api/billing/plan endpoint (not /api/usage-stats). Full plan details returned"
+    },
+    "B9_Billing_Status_Dashboard": {
+      "tests": [36, 37, 38],
+      "status": "PASSED (visual)",
+      "notes": "Dashboard shows usage stats. Plan card component available"
+    },
+    "B10_Limits_Consistency": {
+      "tests": [39, 40, 41],
+      "status": "ALL PASSED",
+      "notes": "Pricing shows 60/300/1000 req/min. Docs has Rate Limits and Monthly Quotas tables with PLAN_LIMIT_REACHED mention"
+    }
+  },
+  "test_details": [
+    {"id": 1, "name": "GET /api/admin/me with ADMIN_API_KEY", "result": "PASS"},
+    {"id": 2, "name": "GET /api/admin/me with invalid key", "result": "PASS"},
+    {"id": 3, "name": "GET /api/admin/stats with admin key", "result": "PASS"},
+    {"id": 4, "name": "GET /api/admin/users with admin key", "result": "PASS"},
+    {"id": 5, "name": "GET /api/admin/agents with admin key", "result": "PASS"},
+    {"id": 6, "name": "POST /api/admin/users (create)", "result": "PASS"},
+    {"id": 7, "name": "POST /api/admin/users (duplicate)", "result": "PASS"},
+    {"id": 8, "name": "GET /api/admin/lookup/user", "result": "PASS"},
+    {"id": 9, "name": "Create agent for user", "result": "PASS"},
+    {"id": 10, "name": "Verify agent in user list", "result": "PASS"},
+    {"id": 11, "name": "POST /api/admin/full-setup", "result": "PASS"},
+    {"id": 12, "name": "POST /api/admin/full-setup duplicate", "result": "PASS"},
+    {"id": 13, "name": "Login as full-setup user", "result": "PASS"},
+    {"id": 14, "name": "GET agents with setup API key", "result": "PASS"},
+    {"id": 15, "name": "GET webhooks with setup API key", "result": "PASS"},
+    {"id": 16, "name": "Admin page has Clients/Admin API", "result": "PASS"},
+    {"id": 17, "name": "Clients section shows table", "result": "PASS"},
+    {"id": 18, "name": "New Client dialog opens", "result": "PASS"},
+    {"id": 19, "name": "Client provisioning works", "result": "PASS"},
+    {"id": 20, "name": "Admin API section docs", "result": "PASS"},
+    {"id": 21, "name": "GET /api/billing/plan (free)", "result": "PASS"},
+    {"id": 22, "name": "POST checkout-session (builder)", "result": "PASS"},
+    {"id": 23, "name": "POST checkout-session (invalid)", "result": "PASS"},
+    {"id": 24, "name": "POST portal-session (free user)", "result": "PASS"},
+    {"id": 25, "name": "Pricing checkout buttons (logged in)", "result": "PASS"},
+    {"id": 26, "name": "Pricing signup links (logged out)", "result": "PASS"},
+    {"id": 27, "name": "Create 1st agent (free)", "result": "PASS"},
+    {"id": 28, "name": "Create 2nd agent blocked", "result": "PASS"},
+    {"id": 29, "name": "Error has limit details", "result": "PASS"},
+    {"id": 30, "name": "Outcome limit enforced", "result": "PASS"},
+    {"id": 31, "name": "Dashboard plan card usage", "result": "PASS"},
+    {"id": 32, "name": "Webhook no signature = 400", "result": "PASS"},
+    {"id": 33, "name": "Webhook invalid signature = 400", "result": "PASS"},
+    {"id": 34, "name": "Billing routes registered", "result": "PASS"},
+    {"id": 35, "name": "Usage stats + plan info", "result": "PARTIAL", "note": "Plan info in /billing/plan endpoint"},
+    {"id": 36, "name": "Dashboard shows Free plan", "result": "PASS"},
+    {"id": 37, "name": "Billing success toast", "result": "PASS"},
+    {"id": 38, "name": "Payment past due banner", "result": "PASS"},
+    {"id": 39, "name": "Pricing rate limits shown", "result": "PASS"},
+    {"id": 40, "name": "Docs rate limits tables", "result": "PASS"},
+    {"id": 41, "name": "Docs mentions PLAN_LIMIT_REACHED", "result": "PASS"}
+  ]
+}

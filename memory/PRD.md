@@ -534,3 +534,21 @@ db.users.updateOne({email: "admin@example.com"}, {$set: {is_admin: true}})
 | A9. Dashboard Improvements | 42-49 | ✅ All Passed |
 
 **Test Report**: `/app/test_reports/test_a_core_results.json`
+
+### Test B: Admin Portal, API Key, Stripe Billing, Limits (March 27, 2026)
+**Result: 40/41 PASSED, 1 PARTIAL**
+
+| Section | Tests | Status |
+|---------|-------|--------|
+| B1. Admin API Key Auth | 1-5 | ✅ All Passed |
+| B2. Programmatic Client Creation | 6-10 | ✅ All Passed |
+| B3. Full Setup Endpoint | 11-15 | ✅ All Passed |
+| B4. Admin UI (Clients/Admin API) | 16-20 | ✅ All Passed |
+| B5. Stripe Billing Checkout | 21-26 | ✅ All Passed |
+| B6. Plan Enforcement | 27-31 | ✅ All Passed |
+| B7. Stripe Webhook Handler | 32-34 | ✅ All Passed |
+| B8. Usage Stats Plan Info | 35 | ⚠️ Partial (plan info in /billing/plan) |
+| B9. Billing Status Dashboard | 36-38 | ✅ All Passed |
+| B10. Limits Consistency | 39-41 | ✅ All Passed |
+
+**Test Report**: `/app/test_reports/test_b_admin_billing_results.json`
