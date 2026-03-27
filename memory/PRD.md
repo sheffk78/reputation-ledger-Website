@@ -355,6 +355,15 @@ db.users.updateOne({email: "admin@example.com"}, {$set: {is_admin: true}})
 - ✅ **Navigation** - Blog link added to HomePage, PricingPage, DevelopersPage, DocsPage, ChangelogPage
 - ✅ **Prose styling** - `.prose-repledger` CSS for rendered markdown content
 
+### Phase 2.8 - Public API Playground (March 2026)
+- ✅ **Sandbox mode** - Playground accessible without login at `/playground`
+- ✅ **Sandbox credentials endpoint** - `GET /api/sandbox/credentials` returns shared API key and demo agent
+- ✅ **Demo agent** - "Sandbox Support Bot" with sample outcomes for testing
+- ✅ **Dual-mode UI** - Header adapts: logo for sandbox, "Back to Dashboard" for authenticated
+- ✅ **Sandbox banner** - Shows "Sandbox mode — shared demo data" with sign-up CTA
+- ✅ **Outcome auto-cleanup** - Sandbox outcomes limited to 50 per agent
+- ✅ **Setup script** - `backend/scripts/setup_sandbox.py` creates sandbox user/agent
+
 ### P2 (Medium Priority)
 - ⬜ Social Sharing Meta Tags (OpenGraph/Twitter cards for public agent profiles)
 - ⬜ AAV (Agent Authority Vault) integration
