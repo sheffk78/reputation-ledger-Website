@@ -367,7 +367,12 @@ export default function DocsPage() {
           {/* Rate Limits */}
           <section id="rate-limits" className="scroll-mt-20 py-12 border-b border-white/[0.06]">
             <h2 className="text-2xl font-bold text-white mb-4 font-['Space_Grotesk']">Rate Limits</h2>
-            <table className="w-full text-sm">
+            <p className="text-gray-400 mb-6">
+              API requests are subject to two constraints: <strong className="text-white">per-minute rate limits</strong> (below) and <strong className="text-white">monthly usage quotas</strong>. Rate limits are applied per API key. Exceeding the rate limit returns <code className="text-[#01696F]">429 Too Many Requests</code>. Exceeding a monthly quota returns <code className="text-[#01696F]">403</code> with error code <code className="text-[#01696F]">PLAN_LIMIT_REACHED</code>.
+            </p>
+            
+            <h3 className="text-lg font-semibold text-white mb-3 font-['Space_Grotesk']">Requests per Minute</h3>
+            <table className="w-full text-sm mb-8">
               <thead>
                 <tr className="text-left text-gray-500 border-b border-white/[0.06]">
                   <th className="pb-3 font-medium">Plan</th>
@@ -390,6 +395,42 @@ export default function DocsPage() {
                 <tr>
                   <td className="py-3">Enterprise</td>
                   <td className="py-3">Custom</td>
+                </tr>
+              </tbody>
+            </table>
+
+            <h3 className="text-lg font-semibold text-white mb-3 font-['Space_Grotesk']">Monthly Usage Quotas</h3>
+            <p className="text-gray-400 mb-4 text-sm">
+              Monthly usage quotas limit the total number of agents and outcomes per billing cycle.
+            </p>
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-left text-gray-500 border-b border-white/[0.06]">
+                  <th className="pb-3 font-medium">Plan</th>
+                  <th className="pb-3 font-medium">Agents</th>
+                  <th className="pb-3 font-medium">Outcomes / month</th>
+                </tr>
+              </thead>
+              <tbody className="text-gray-300">
+                <tr className="border-b border-white/[0.04]">
+                  <td className="py-3">Free</td>
+                  <td className="py-3">1</td>
+                  <td className="py-3">100</td>
+                </tr>
+                <tr className="border-b border-white/[0.04]">
+                  <td className="py-3">Builder</td>
+                  <td className="py-3">10</td>
+                  <td className="py-3">5,000</td>
+                </tr>
+                <tr className="border-b border-white/[0.04]">
+                  <td className="py-3">Platform</td>
+                  <td className="py-3">Unlimited</td>
+                  <td className="py-3">100,000</td>
+                </tr>
+                <tr>
+                  <td className="py-3">Enterprise</td>
+                  <td className="py-3">Unlimited</td>
+                  <td className="py-3">Unlimited</td>
                 </tr>
               </tbody>
             </table>

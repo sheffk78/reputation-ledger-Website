@@ -18,6 +18,7 @@ const PRICING_TIERS = [
       "Basic trust score",
       "Public badge embed",
       "Public agent profile",
+      "60 API requests/min",
       "Community support"
     ],
     cta: "Get Started",
@@ -34,6 +35,7 @@ const PRICING_TIERS = [
       "Everything in Free",
       "Webhook notifications",
       "API key management",
+      "300 API requests/min",
       "MCP server access",
       "Priority email support"
     ],
@@ -51,6 +53,7 @@ const PRICING_TIERS = [
     features: [
       "Everything in Builder",
       "Platform API access",
+      "1,000 API requests/min",
       "White-label badges",
       "Anti-manipulation protection",
       "10 team members"
@@ -67,6 +70,7 @@ const PRICING_TIERS = [
     outcomes: "Unlimited outcomes",
     features: [
       "Everything in Platform",
+      "Custom API rate limits",
       "ZK attestation",
       "Compliance export",
       "SLA guarantee",
