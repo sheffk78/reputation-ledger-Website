@@ -364,6 +364,17 @@ db.users.updateOne({email: "admin@example.com"}, {$set: {is_admin: true}})
 - ✅ **Outcome auto-cleanup** - Sandbox outcomes limited to 50 per agent
 - ✅ **Setup script** - `backend/scripts/setup_sandbox.py` creates sandbox user/agent
 
+### Phase 2.9 - Social Sharing Meta Tags (March 2026)
+- ✅ **Dynamic title** - Page title set to "{agent.name} - {tier} Tier Agent | RepLedger"
+- ✅ **Meta description** - Agent description with score, outcomes, success rate
+- ✅ **Open Graph tags** - og:title, og:description, og:image (badge), og:url, og:type, og:site_name
+- ✅ **Twitter cards** - twitter:card (summary), twitter:title, twitter:description, twitter:image
+- ✅ **Canonical URL** - Set to production URL (reputationledger.dev/a/{agent_id})
+- ✅ **JSON-LD structured data** - SoftwareApplication schema with aggregateRating
+- ✅ **Share section** - Twitter/LinkedIn share buttons + Copy Link
+- ✅ **Cleanup** - Meta tags removed when navigating away from page
+- ✅ **Consistent logo** - Header uses LOGO_URL across all pages
+
 ### P2 (Medium Priority)
 - ⬜ Social Sharing Meta Tags (OpenGraph/Twitter cards for public agent profiles)
 - ⬜ AAV (Agent Authority Vault) integration
