@@ -286,6 +286,9 @@ export default function ChangelogPage() {
             <Link to="/pricing" className="text-sm text-gray-400 hover:text-white transition-colors">
               Pricing
             </Link>
+            <Link to="/blog" className="text-sm text-gray-400 hover:text-white transition-colors">
+              Blog
+            </Link>
             <Link to="/docs" className="text-sm text-gray-400 hover:text-white transition-colors">
               API Reference
             </Link>

@@ -23,6 +23,8 @@ import PricingPage from "./pages/PricingPage";
 import PlaygroundPage from "./pages/PlaygroundPage";
 import ChangelogPage from "./pages/ChangelogPage";
 import DocsPage from "./pages/DocsPage";
+import BlogPage from "./pages/BlogPage";
+import BlogPostPage from "./pages/BlogPostPage";
 
 // Protected route wrapper
 function ProtectedRoute({ children }) {
@@ -71,6 +73,8 @@ function AppRoutes() {
       <Route path="/pricing" element={<PricingPage />} />
       <Route path="/changelog" element={<ChangelogPage />} />
       <Route path="/docs" element={<DocsPage />} />
+      <Route path="/blog" element={<BlogPage />} />
+      <Route path="/blog/:slug" element={<BlogPostPage />} />
       
       {/* Public agent profile */}
       <Route path="/a/:agentId" element={<PublicAgentPage />} />

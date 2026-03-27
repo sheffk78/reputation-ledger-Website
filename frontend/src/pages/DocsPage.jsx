@@ -255,6 +255,9 @@ export default function DocsPage() {
             <Link to="/pricing" className="text-sm text-gray-400 hover:text-white transition-colors">
               Pricing
             </Link>
+            <Link to="/blog" className="text-sm text-gray-400 hover:text-white transition-colors">
+              Blog
+            </Link>
             <Link to="/developers" className="text-sm text-gray-400 hover:text-white transition-colors">
               Developers
             </Link>

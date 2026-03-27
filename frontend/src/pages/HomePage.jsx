@@ -31,6 +31,9 @@ export default function HomePage() {
             <Link to="/pricing" className="text-[13px] text-[#9CA3AF] hover:text-white transition-colors">
               Pricing
             </Link>
+            <Link to="/blog" className="text-[13px] text-[#9CA3AF] hover:text-white transition-colors">
+              Blog
+            </Link>
             <Link to="/docs" className="text-[13px] text-[#9CA3AF] hover:text-white transition-colors">
               API Reference
             </Link>
