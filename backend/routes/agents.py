@@ -466,12 +466,31 @@ async def create_outcome(
     
     await db.outcomes.insert_one(outcome_doc)
     
-    # Calculate new score for notifications and webhooks
+    # Calculate OLD score (before this outcome)
+    old_outcomes = await db.outcomes.find(
+        {"agent_id": agent_id, "id": {"$ne": outcome_id}}, 
+        {"_id": 0}
+    ).to_list(10000)
+    old_score, old_tier, _, _ = calculate_score_and_tier(old_outcomes)
+    
+    # Calculate new score (including this outcome)
     outcomes = await db.outcomes.find(
         {"agent_id": agent_id}, 
         {"_id": 0}
     ).to_list(10000)
     new_score, new_tier, _, _ = calculate_score_and_tier(outcomes)
+    
+    # Emit score change events if significant change occurred
+    from services.score_service import check_and_emit_score_events
+    background_tasks.add_task(
+        check_and_emit_score_events,
+        agent_id,
+        old_score,
+        old_tier,
+        new_score,
+        new_tier,
+        agent.get("organization_id")
+    )
     
     # Send outcome notification email if user has notifications enabled
     if user.get("email_notifications", True):
@@ -761,6 +780,17 @@ async def create_flag(
     
     await db.flags.insert_one(flag_doc)
     
+    # Emit cross-tool flagged event
+    from services.score_service import emit_agent_flagged_event
+    if background_tasks:
+        background_tasks.add_task(
+            emit_agent_flagged_event,
+            agent_id,
+            flag_id,
+            data.reason,
+            agent.get("organization_id")
+        )
+    
     # Audit logging
     if background_tasks:
         background_tasks.add_task(
@@ -815,4 +845,121 @@ async def list_flags(agent_id: str, user: dict = Depends(get_user_from_api_key))
     return FlagListResponse(
         flags=[FlagResponse(**f) for f in flags],
         total=len(flags)
+    )
+
+
+
+# ============================================================
+# CROSS-REFERENCE LOOKUP ENDPOINTS
+# ============================================================
+
+@router.get("/by-certificate/{certificate_id}", response_model=AgentListResponse)
+async def get_agent_by_certificate(
+    certificate_id: str,
+    user: dict = Depends(get_user_from_api_key)
+):
+    """
+    Look up an agent by its AAV certificate ID.
+    
+    Auth: API Key or JWT
+    Returns: Agent object with computed score (or 404)
+    """
+    agent = await db.agents.find_one(
+        {"aav_certificate_id": certificate_id, "user_id": user["id"]},
+        {"_id": 0}
+    )
+    
+    # If not found for user, check if it's public
+    if not agent:
+        agent = await db.agents.find_one(
+            {"aav_certificate_id": certificate_id, "is_public": True},
+            {"_id": 0}
+        )
+    
+    if not agent:
+        raise APIError(
+            code=ErrorCodes.AGENT_NOT_FOUND,
+            message=f"No agent found with certificate '{certificate_id}'.",
+            status_code=404,
+            details={"certificate_id": certificate_id}
+        )
+    
+    # Get outcomes for score calculation
+    outcomes = await db.outcomes.find(
+        {"agent_id": agent["agent_id"]},
+        {"_id": 0}
+    ).to_list(10000)
+    
+    score, tier, success_rate, _ = calculate_score_and_tier(outcomes)
+    
+    return AgentListResponse(
+        agent_id=agent["agent_id"],
+        name=agent["name"],
+        description=agent.get("description"),
+        owner_handle=agent.get("owner_handle"),
+        organization_id=agent.get("organization_id"),
+        aav_certificate_id=agent.get("aav_certificate_id"),
+        safe_spend_escrow_id=agent.get("safe_spend_escrow_id"),
+        created_at=agent["created_at"],
+        score=score,
+        tier=tier,
+        outcome_count=len(outcomes),
+        success_rate=success_rate,
+        is_public=agent.get("is_public", False)
+    )
+
+
+@router.get("/by-escrow/{escrow_id}", response_model=AgentListResponse)
+async def get_agent_by_escrow(
+    escrow_id: str,
+    user: dict = Depends(get_user_from_api_key)
+):
+    """
+    Look up an agent by its Safe-Spend escrow ID.
+    
+    Auth: API Key or JWT
+    Returns: Agent object with computed score (or 404)
+    """
+    agent = await db.agents.find_one(
+        {"safe_spend_escrow_id": escrow_id, "user_id": user["id"]},
+        {"_id": 0}
+    )
+    
+    # If not found for user, check if it's public
+    if not agent:
+        agent = await db.agents.find_one(
+            {"safe_spend_escrow_id": escrow_id, "is_public": True},
+            {"_id": 0}
+        )
+    
+    if not agent:
+        raise APIError(
+            code=ErrorCodes.AGENT_NOT_FOUND,
+            message=f"No agent found with escrow '{escrow_id}'.",
+            status_code=404,
+            details={"escrow_id": escrow_id}
+        )
+    
+    # Get outcomes for score calculation
+    outcomes = await db.outcomes.find(
+        {"agent_id": agent["agent_id"]},
+        {"_id": 0}
+    ).to_list(10000)
+    
+    score, tier, success_rate, _ = calculate_score_and_tier(outcomes)
+    
+    return AgentListResponse(
+        agent_id=agent["agent_id"],
+        name=agent["name"],
+        description=agent.get("description"),
+        owner_handle=agent.get("owner_handle"),
+        organization_id=agent.get("organization_id"),
+        aav_certificate_id=agent.get("aav_certificate_id"),
+        safe_spend_escrow_id=agent.get("safe_spend_escrow_id"),
+        created_at=agent["created_at"],
+        score=score,
+        tier=tier,
+        outcome_count=len(outcomes),
+        success_rate=success_rate,
+        is_public=agent.get("is_public", False)
     )

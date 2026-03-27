@@ -67,7 +67,14 @@ async def signup(data: UserCreate, background_tasks: BackgroundTasks):
     
     return TokenResponse(
         access_token=token,
-        user=UserResponse(id=user_id, email=data.email.lower(), created_at=now, is_admin=False)
+        user=UserResponse(
+            id=user_id, 
+            email=data.email.lower(), 
+            created_at=now, 
+            is_admin=False,
+            organization_id=None,
+            plan="free"
+        )
     )
 
 
@@ -93,7 +100,9 @@ async def login(data: UserLogin, background_tasks: BackgroundTasks):
             id=user["id"], 
             email=user["email"], 
             created_at=user["created_at"],
-            is_admin=user.get("is_admin", False)
+            is_admin=user.get("is_admin", False),
+            organization_id=user.get("organization_id"),
+            plan=user.get("plan", "free")
         )
     )
 
@@ -105,7 +114,9 @@ async def get_me(user: dict = Depends(get_current_user)):
         id=user["id"], 
         email=user["email"], 
         created_at=user["created_at"],
-        is_admin=user.get("is_admin", False)
+        is_admin=user.get("is_admin", False),
+        organization_id=user.get("organization_id"),
+        plan=user.get("plan", "free")
     )
 
 

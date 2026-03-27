@@ -391,3 +391,58 @@ async def get_agent_card_data(agent_id: str):
             "badge_url": f"{base_url}/api/v1/agents/{agent_id}/badge.svg"
         }
     )
+
+
+
+# ============================================================
+# CONFIG ENDPOINT FOR FRONTEND
+# ============================================================
+
+SAFE_SPEND_API_URL = os.environ.get("SAFE_SPEND_API_URL", "")
+
+
+class ToolConfig(BaseModel):
+    """Configuration for a sister tool"""
+    enabled: bool
+    api_url: Optional[str] = None
+    name: str
+
+
+class ConfigResponse(BaseModel):
+    """System configuration for frontend"""
+    tool: str = "arl"
+    version: str = "1.0.0"
+    sister_tools: Dict[str, ToolConfig]
+    features: Dict[str, bool]
+
+
+@router.get("/config", response_model=ConfigResponse)
+async def get_config():
+    """
+    Get system configuration for frontend.
+    
+    Returns which sister tools are enabled and available features.
+    Frontend uses this to conditionally render cross-tool UI elements.
+    """
+    return ConfigResponse(
+        tool="arl",
+        version="1.0.0",
+        sister_tools={
+            "aav": ToolConfig(
+                enabled=bool(AAV_API_URL),
+                api_url=AAV_API_URL if AAV_API_URL else None,
+                name="Agent Authority Vault"
+            ),
+            "safe_spend": ToolConfig(
+                enabled=bool(SAFE_SPEND_API_URL),
+                api_url=SAFE_SPEND_API_URL if SAFE_SPEND_API_URL else None,
+                name="Safe-Spend"
+            )
+        },
+        features={
+            "org_linking": True,
+            "batch_scores": True,
+            "cross_tool_events": True,
+            "outcome_sources": True
+        }
+    )

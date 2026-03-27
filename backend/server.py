@@ -316,6 +316,20 @@ app.add_middleware(
 
 # ============== LIFECYCLE EVENTS ==============
 
+@app.on_event("startup")
+async def startup_db_indexes():
+    """Create database indexes on startup."""
+    try:
+        # Create index on organization_id for cross-tool queries
+        await db.agents.create_index("organization_id", sparse=True)
+        await db.agents.create_index("aav_certificate_id", sparse=True)
+        await db.agents.create_index("safe_spend_escrow_id", sparse=True)
+        await db.users.create_index("organization_id", sparse=True)
+        print("Database indexes created successfully")
+    except Exception as e:
+        print(f"Warning: Could not create indexes: {e}")
+
+
 @app.on_event("shutdown")
 async def shutdown_db_client():
     client.close()

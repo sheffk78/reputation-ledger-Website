@@ -625,8 +625,10 @@ The Agent model now supports cross-tool identity mapping:
 - `safe_spend_escrow_id`: Links to Safe-Spend escrow account
 
 ### Cross-Reference Lookup Endpoints
-- `GET /api/v1/internal/agents/by-certificate/{certificate_id}` - Find agent by AAV cert
-- `GET /api/v1/internal/agents/by-escrow/{escrow_id}` - Find agent by escrow ID
+- `GET /api/v1/agents/by-certificate/{certificate_id}` - Find agent by AAV cert (with auth)
+- `GET /api/v1/agents/by-escrow/{escrow_id}` - Find agent by escrow ID (with auth)
+- `GET /api/v1/internal/agents/by-certificate/{certificate_id}` - Internal lookup (no auth)
+- `GET /api/v1/internal/agents/by-escrow/{escrow_id}` - Internal lookup (no auth)
 
 ### Internal Event Ingestion (AAV + Safe-Spend)
 - `POST /api/v1/internal/events` - Receive events from sister tools
@@ -644,11 +646,21 @@ The Agent model now supports cross-tool identity mapping:
 ### Control Plane Readiness
 - `GET /api/v1/org/{org_id}/summary` - Tool summary for agentictrust.app control plane
 - `GET /api/v1/agents/{agent_id}/card-data` - Standardized agent card format
+- `GET /api/v1/config` - System configuration (enabled tools, features)
 
 ### Score Change Events
 - `arl.score.changed` - Emitted when score changes by >= 5 points
 - `arl.tier.changed` - Emitted when tier boundary crossed
 - `arl.agent.flagged` - Emitted when agent is flagged
+
+**Note**: Score change events are automatically emitted when outcomes are created.
+
+### Database Indexes
+Indexes are automatically created on startup:
+- `agents.organization_id` (sparse)
+- `agents.aav_certificate_id` (sparse)
+- `agents.safe_spend_escrow_id` (sparse)
+- `users.organization_id` (sparse)
 
 ### Frontend Updates
 - **Agent Detail Page**: Cross-Tool Status section (shows AAV cert / Safe-Spend escrow if linked)
