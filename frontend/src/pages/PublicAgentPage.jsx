@@ -3,6 +3,8 @@ import { useParams, Link } from "react-router-dom";
 import { agentsAPI } from "../lib/api";
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
+const BASE_URL = "https://reputationledger.dev";
+const LOGO_URL = "https://customer-assets.emergentagent.com/job_ac636d4a-6ca2-497e-8615-5b0c10a94a77/artifacts/vcawrcg8_repledger-logo-dark.svg";
 
 // Tier badge colors
 const tierColors = {
@@ -22,6 +24,115 @@ export default function PublicAgentPage() {
   useEffect(() => {
     loadAgent();
   }, [agentId]);
+
+  // Set SEO meta tags when agent loads
+  useEffect(() => {
+    if (!agent) return;
+
+    const badgeUrl = `${API_URL}/api/v1/agents/${agent.agent_id}/badge.svg`;
+    const profileUrl = `${BASE_URL}/a/${agent.agent_id}`;
+    const title = `${agent.name} - ${agent.tier} Tier Agent | RepLedger`;
+    const description = agent.description 
+      ? `${agent.description} | Score: ${agent.score} | ${agent.outcome_count} outcomes | ${agent.success_rate}% success rate`
+      : `${agent.name} is a ${agent.tier} tier AI agent with a reputation score of ${agent.score}. ${agent.outcome_count} verified outcomes with ${agent.success_rate}% success rate.`;
+
+    // Title
+    document.title = title;
+
+    // Helper to set/update meta tags
+    const setMetaTag = (name, content, isProperty = false) => {
+      const attr = isProperty ? "property" : "name";
+      let tag = document.querySelector(`meta[${attr}="${name}"]`);
+      if (!tag) {
+        tag = document.createElement("meta");
+        tag.setAttribute(attr, name);
+        document.head.appendChild(tag);
+      }
+      tag.setAttribute("content", content);
+    };
+
+    // Standard meta
+    setMetaTag("description", description);
+    
+    // Open Graph
+    setMetaTag("og:type", "profile", true);
+    setMetaTag("og:title", title, true);
+    setMetaTag("og:description", description, true);
+    setMetaTag("og:url", profileUrl, true);
+    setMetaTag("og:image", badgeUrl, true);
+    setMetaTag("og:site_name", "RepLedger", true);
+    
+    // Twitter
+    setMetaTag("twitter:card", "summary");
+    setMetaTag("twitter:title", title);
+    setMetaTag("twitter:description", description);
+    setMetaTag("twitter:image", badgeUrl);
+
+    // Canonical URL
+    let canonical = document.querySelector('link[rel="canonical"]');
+    if (!canonical) {
+      canonical = document.createElement("link");
+      canonical.rel = "canonical";
+      document.head.appendChild(canonical);
+    }
+    canonical.href = profileUrl;
+
+    // JSON-LD structured data
+    const jsonLd = {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": agent.name,
+      "description": agent.description || `AI agent with ${agent.tier} tier reputation`,
+      "applicationCategory": "AI Agent",
+      "aggregateRating": {
+        "@type": "AggregateRating",
+        "ratingValue": agent.score,
+        "bestRating": 100,
+        "worstRating": 0,
+        "ratingCount": agent.outcome_count
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "RepLedger",
+        "url": BASE_URL
+      },
+      "url": profileUrl,
+      "image": badgeUrl
+    };
+
+    let scriptTag = document.querySelector('script[type="application/ld+json"][data-agent-profile]');
+    if (!scriptTag) {
+      scriptTag = document.createElement("script");
+      scriptTag.type = "application/ld+json";
+      scriptTag.setAttribute("data-agent-profile", "true");
+      document.head.appendChild(scriptTag);
+    }
+    scriptTag.textContent = JSON.stringify(jsonLd);
+
+    // Cleanup
+    return () => {
+      document.title = "RepLedger | Agent Reputation";
+      // Remove agent-specific meta tags
+      const tagsToRemove = [
+        'meta[property="og:type"]',
+        'meta[property="og:title"]',
+        'meta[property="og:description"]',
+        'meta[property="og:url"]',
+        'meta[property="og:image"]',
+        'meta[property="og:site_name"]',
+        'meta[name="twitter:card"]',
+        'meta[name="twitter:title"]',
+        'meta[name="twitter:description"]',
+        'meta[name="twitter:image"]',
+        'link[rel="canonical"]',
+        'script[data-agent-profile]'
+      ];
+      tagsToRemove.forEach(selector => {
+        const el = document.querySelector(selector);
+        if (el) el.remove();
+      });
+    };
+  }, [agent]);
 
   const loadAgent = async () => {
     try {
@@ -55,13 +166,8 @@ export default function PublicAgentPage() {
         {/* Header */}
         <header className="border-b border-[#1F2933]/50">
           <div className="max-w-4xl mx-auto px-6 py-4">
-            <Link to="/" className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-md bg-[#01696F] flex items-center justify-center">
-                <svg className="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
-                </svg>
-              </div>
-              <span className="text-lg font-semibold text-white font-['Space_Grotesk']">RepLedger</span>
+            <Link to="/">
+              <img src={LOGO_URL} alt="RepLedger" className="h-6" />
             </Link>
           </div>
         </header>
@@ -108,13 +214,8 @@ export default function PublicAgentPage() {
       {/* Header */}
       <header className="border-b border-[#1F2933]/50">
         <div className="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-md bg-[#01696F] flex items-center justify-center">
-              <svg className="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
-              </svg>
-            </div>
-            <span className="text-lg font-semibold text-white font-['Space_Grotesk']">RepLedger</span>
+          <Link to="/">
+            <img src={LOGO_URL} alt="RepLedger" className="h-6" />
           </Link>
           <span className="text-xs text-gray-500 uppercase tracking-wider">Public Profile</span>
         </div>
@@ -243,6 +344,42 @@ export default function PublicAgentPage() {
               </div>
               <span className="text-sm font-medium text-[#6B7280] w-10 text-right">{agent.breakdown.timeout}</span>
             </div>
+          </div>
+        </div>
+
+        {/* Share Section */}
+        <div className="bg-[#0C1116] border border-[#1F2933] rounded-xl p-6 mb-10">
+          <h2 className="text-lg font-semibold text-white mb-3 font-['Space_Grotesk']">
+            Share This Profile
+          </h2>
+          <p className="text-sm text-gray-400 mb-4">
+            Share this agent's reputation profile on social media or embed the badge on your site.
+          </p>
+          <div className="flex flex-wrap gap-3">
+            <a
+              href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(`Check out ${agent.name} - a ${agent.tier} tier AI agent with ${agent.score} reputation score on @RepLedger`)}&url=${encodeURIComponent(`${BASE_URL}/a/${agent.agent_id}`)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-4 py-2 bg-[#1DA1F2]/10 hover:bg-[#1DA1F2]/20 text-[#1DA1F2] text-sm font-medium rounded-lg transition-colors"
+            >
+              Share on X
+            </a>
+            <a
+              href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(`${BASE_URL}/a/${agent.agent_id}`)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-4 py-2 bg-[#0A66C2]/10 hover:bg-[#0A66C2]/20 text-[#0A66C2] text-sm font-medium rounded-lg transition-colors"
+            >
+              Share on LinkedIn
+            </a>
+            <button
+              onClick={() => {
+                navigator.clipboard.writeText(`${window.location.origin}/a/${agent.agent_id}`);
+              }}
+              className="px-4 py-2 bg-white/5 hover:bg-white/10 text-gray-300 text-sm font-medium rounded-lg transition-colors"
+            >
+              Copy Link
+            </button>
           </div>
         </div>
 
