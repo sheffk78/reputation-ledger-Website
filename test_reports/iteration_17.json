@@ -1,0 +1,129 @@
+{
+  "summary": "Public Playground with Sandbox Mode - All features tested and working. Fixed a race condition bug where authenticated users were seeing sandbox API key instead of their own.",
+
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {
+        "screen": "PlaygroundPage",
+        "issues": ["React hydration warning: <span> cannot be a child of <option> - cosmetic issue from dev tools injection"]
+      }
+    ]
+  },
+
+  "passed_tests": {
+    "backend": [
+      "GET /api/sandbox/credentials - Returns 200",
+      "Sandbox credentials has api_key field",
+      "Sandbox credentials has masked_key field",
+      "Sandbox credentials has agents list",
+      "Sandbox agent has required fields (agent_id, name, score, tier, outcome_count, success_rate)",
+      "Sandbox Support Bot agent present",
+      "is_sandbox flag is true",
+      "Sandbox note present",
+      "Sandbox API key can get agent score",
+      "Sandbox API key can submit outcome",
+      "Sandbox API key can list outcomes",
+      "Sandbox API key can get badge SVG",
+      "Sandbox cannot create new agents (expected behavior)"
+    ],
+    "frontend": [
+      "Playground page loads without login at /playground",
+      "Sandbox badge visible in header",
+      "Logo visible in sandbox mode",
+      "Back to Dashboard hidden in sandbox mode",
+      "Sandbox mode banner visible",
+      "Sign up free CTA visible",
+      "Sandbox API key loaded (arl_36c4...)",
+      "Sandbox Support Bot in agent dropdown",
+      "Execute request works in sandbox mode (200 OK)",
+      "Authenticated mode: Sandbox badge hidden",
+      "Authenticated mode: Back to Dashboard visible",
+      "Authenticated mode: Logo hidden",
+      "Authenticated mode: Auth banner visible",
+      "Authenticated mode: Sandbox CTA hidden",
+      "Authenticated mode: User menu visible",
+      "Authenticated mode: User's own API key shown (arl_4d72...)"
+    ]
+  },
+
+  "test_report_links": [
+    "/app/backend/tests/test_sandbox.py",
+    "/app/test_reports/pytest/sandbox_results.xml"
+  ],
+
+  "action_items": [],
+
+  "critical_code_review_comments": [
+    "Fixed race condition in PlaygroundPage.jsx useEffect - added isCancelled flag to prevent stale state updates when user changes",
+    "Sandbox endpoint properly excludes MongoDB _id from responses",
+    "API key masking works correctly in both modes"
+  ],
+
+  "updated_files": [
+    "/app/frontend/src/pages/PlaygroundPage.jsx",
+    "/app/backend/tests/test_sandbox.py"
+  ],
+
+  "success_rate": {
+    "backend": "100% (13/13 tests passed)",
+    "frontend": "100% (15/15 features verified)"
+  },
+
+  "test_credentials": {
+    "admin_email": "support@agentictrust.app",
+    "admin_password": "RepLedger2026!",
+    "sandbox_api_key": "arl_36c4b982ef4012a01f55b5733562c82319bee99189bcfe9c",
+    "sandbox_agent_id": "agt_401d244674b1db413574b732"
+  },
+
+  "seed_data_creation": "Sandbox user and agent created via setup_sandbox.py script. SANDBOX_API_KEY and SANDBOX_USER_ID set in backend/.env",
+
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+
+  "context_for_next_testing_agent": "Public playground with sandbox mode fully tested. Sandbox endpoint at GET /api/sandbox/credentials returns shared API key and demo agent. PlaygroundPage.jsx has dual-mode logic that checks if user is logged in. Fixed race condition bug where authenticated users were seeing sandbox API key - added isCancelled flag to useEffect cleanup.",
+
+  "features_tested": {
+    "sandbox_mode": {
+      "url": "/playground (not logged in)",
+      "sandbox_badge": "Working - amber badge in header",
+      "logo": "Working - RepLedger logo visible",
+      "sandbox_banner": "Working - 'Sandbox mode — shared demo data'",
+      "signup_cta": "Working - 'Sign up free' button and banner",
+      "api_key": "Working - sandbox key arl_36c4... displayed",
+      "agent_dropdown": "Working - Sandbox Support Bot available",
+      "execute_request": "Working - can submit outcomes, get scores"
+    },
+    "authenticated_mode": {
+      "url": "/playground (logged in)",
+      "back_link": "Working - 'Back to Dashboard' link",
+      "auth_banner": "Working - 'All requests use your live API key'",
+      "user_menu": "Working - user email dropdown",
+      "api_key": "Working - user's own key displayed (not sandbox)",
+      "agent_dropdown": "Working - user's own agents"
+    },
+    "backend_sandbox_endpoint": {
+      "url": "GET /api/sandbox/credentials",
+      "response": {
+        "api_key": "Full sandbox API key",
+        "masked_key": "Masked version for display",
+        "agents": "List of sandbox agents with scores",
+        "is_sandbox": true,
+        "note": "Sandbox environment notice"
+      }
+    }
+  },
+
+  "bug_fixed": {
+    "description": "Race condition in PlaygroundPage.jsx where authenticated users saw sandbox API key",
+    "root_cause": "useEffect ran twice - first with user=null (sandbox), then with user object. Sandbox API call could complete after authenticated API call, overwriting the correct key.",
+    "fix": "Added isCancelled flag in useEffect cleanup to prevent stale state updates when user changes"
+  }
+}

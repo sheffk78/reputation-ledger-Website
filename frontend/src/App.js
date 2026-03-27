@@ -165,15 +165,8 @@ function AppRoutes() {
         }
       />
 
-      {/* Playground route (protected) */}
-      <Route
-        path="/playground"
-        element={
-          <ProtectedRoute>
-            <PlaygroundPage />
-          </ProtectedRoute>
-        }
-      />
+      {/* Playground route (public with sandbox mode) */}
+      <Route path="/playground" element={<PlaygroundPage />} />
 
       {/* Catch all */}
       <Route path="*" element={<Navigate to="/" replace />} />

@@ -24,6 +24,7 @@ from routes.admin import router as admin_router
 from routes.settings import router as settings_router
 from routes.feedback import router as feedback_router
 from routes.blog import admin_router as blog_admin_router, public_router as blog_public_router
+from routes.sandbox import router as sandbox_router
 
 # Configure logging
 logging.basicConfig(
@@ -268,6 +269,9 @@ api_router.include_router(blog_admin_router)
 
 # Blog public routes (/api/blog/*)
 api_router.include_router(blog_public_router)
+
+# Sandbox routes (/api/sandbox/*)
+api_router.include_router(sandbox_router)
 
 # V1 API routes
 v1_router.include_router(agents_router)  # /api/v1/agents/*

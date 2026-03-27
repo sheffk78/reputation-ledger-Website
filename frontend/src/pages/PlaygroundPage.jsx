@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { useState, useEffect, useCallback } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { agentsAPI, apiKeyAPI } from "../lib/api";
+import { agentsAPI, apiKeyAPI, sandboxAPI } from "../lib/api";
 import { 
   FlaskConical, 
   ArrowLeft, 
@@ -12,12 +12,15 @@ import {
   ChevronDown,
   Eye,
   EyeOff,
-  ExternalLink
+  ExternalLink,
+  LogOut,
+  User
 } from "lucide-react";
 import { toast } from "sonner";
 import { copyToClipboard } from "../lib/utils";
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
+const LOGO_URL = "https://customer-assets.emergentagent.com/job_ac636d4a-6ca2-497e-8615-5b0c10a94a77/artifacts/vcawrcg8_repledger-logo-dark.svg";
 
 // Available endpoints
 const ENDPOINTS = [
@@ -140,12 +143,16 @@ function MethodBadge({ method }) {
 }
 
 export default function PlaygroundPage() {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+  
   const [apiKey, setApiKey] = useState(null);
   const [showApiKey, setShowApiKey] = useState(false);
   const [agents, setAgents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [executing, setExecuting] = useState(false);
+  const [isSandbox, setIsSandbox] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
   
   const [selectedEndpoint, setSelectedEndpoint] = useState(ENDPOINTS[0]);
   const [selectedAgentId, setSelectedAgentId] = useState("");
@@ -154,9 +161,66 @@ export default function PlaygroundPage() {
   const [responseTime, setResponseTime] = useState(null);
   const [copied, setCopied] = useState(false);
 
+  // Determine mode and load credentials
   useEffect(() => {
-    loadData();
-  }, []);
+    let isCancelled = false;
+    
+    // Reset state when mode changes
+    setApiKey(null);
+    setAgents([]);
+    setSelectedAgentId("");
+    setLoading(true);
+    
+    if (user) {
+      // Authenticated mode — use their real API key
+      setIsSandbox(false);
+      Promise.all([
+        apiKeyAPI.get().then((data) => {
+          if (!isCancelled) setApiKey(data.api_key);
+        }).catch(() => {}),
+        (async () => {
+          if (!isCancelled) await loadAuthenticatedAgents();
+        })(),
+      ]).finally(() => {
+        if (!isCancelled) setLoading(false);
+      });
+    } else {
+      // Sandbox mode — fetch shared sandbox credentials
+      setIsSandbox(true);
+      sandboxAPI.getCredentials()
+        .then((data) => {
+          if (isCancelled) return;
+          setApiKey(data.api_key);
+          setAgents(data.agents || []);
+          if (data.agents?.length > 0) {
+            setSelectedAgentId(data.agents[0].agent_id);
+          }
+        })
+        .catch(() => {
+          if (!isCancelled) toast.error("Failed to load sandbox. Please try again.");
+        })
+        .finally(() => {
+          if (!isCancelled) setLoading(false);
+        });
+    }
+    
+    return () => {
+      isCancelled = true;
+    };
+  }, [user]);
+
+  const loadAuthenticatedAgents = async () => {
+    try {
+      const data = await agentsAPI.list();
+      const agentList = data.agents || data || [];
+      setAgents(agentList);
+      if (agentList.length > 0) {
+        setSelectedAgentId(agentList[0].agent_id);
+      }
+    } catch {
+      // ignore
+    }
+  };
 
   useEffect(() => {
     // Reset params when endpoint changes
@@ -169,25 +233,6 @@ export default function PlaygroundPage() {
     setParams(defaultParams);
     setResponse(null);
   }, [selectedEndpoint]);
-
-  const loadData = async () => {
-    try {
-      const [keyData, agentsData] = await Promise.all([
-        apiKeyAPI.get(),
-        agentsAPI.list()
-      ]);
-      setApiKey(keyData.api_key);
-      setAgents(agentsData);
-      if (agentsData.length > 0) {
-        setSelectedAgentId(agentsData[0].agent_id);
-      }
-    } catch (error) {
-      console.error("Failed to load data:", error);
-      toast.error("Failed to load API key or agents");
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const buildUrl = () => {
     let path = selectedEndpoint.path;
@@ -212,12 +257,14 @@ export default function PlaygroundPage() {
     return `${API_URL}${path}`;
   };
 
+  const maskedKey = apiKey ? `${apiKey.substring(0, 8)}${'•'.repeat(24)}${apiKey.substring(apiKey.length - 4)}` : "";
+
   const buildCurlCommand = () => {
     const url = buildUrl();
-    const maskedKey = apiKey ? `${apiKey.substring(0, 8)}...${apiKey.substring(apiKey.length - 4)}` : "YOUR_API_KEY";
+    const displayKey = apiKey ? `${apiKey.substring(0, 8)}...${apiKey.substring(apiKey.length - 4)}` : "YOUR_API_KEY";
     
     let curl = `curl -X ${selectedEndpoint.method} "${url}"`;
-    curl += ` \\\n  -H "Authorization: Bearer ${maskedKey}"`;
+    curl += ` \\\n  -H "Authorization: Bearer ${displayKey}"`;
     
     if (selectedEndpoint.method === "POST" || selectedEndpoint.method === "PUT" || selectedEndpoint.method === "PATCH") {
       curl += ` \\\n  -H "Content-Type: application/json"`;
@@ -249,10 +296,14 @@ export default function PlaygroundPage() {
 
     try {
       const url = buildUrl();
+      
+      // Use JWT token if logged in, sandbox API key otherwise
+      const token = user ? localStorage.getItem("token") : apiKey;
+      
       const options = {
         method: selectedEndpoint.method,
         headers: {
-          "Authorization": `Bearer ${apiKey}`
+          "Authorization": `Bearer ${token}`
         }
       };
 
@@ -292,10 +343,9 @@ export default function PlaygroundPage() {
         });
       }
 
-      // Refresh agents list if we created one
-      if (selectedEndpoint.id === "create-agent" && res.ok) {
-        const agentsData = await agentsAPI.list();
-        setAgents(agentsData);
+      // Refresh agents list if we created one (only for authenticated users)
+      if (selectedEndpoint.id === "create-agent" && res.ok && !isSandbox) {
+        await loadAuthenticatedAgents();
         toast.success("Agent created!");
       }
 
@@ -343,33 +393,113 @@ export default function PlaygroundPage() {
       {/* Header */}
       <header className="border-b border-white/[0.06] bg-[#050709]">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <Link to="/dashboard" className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors">
-            <ArrowLeft className="w-4 h-4" />
-            <span className="text-sm">Back to Dashboard</span>
-          </Link>
-          <div className="flex items-center gap-2">
+          {/* Left: Logo/Back */}
+          {user ? (
+            <Link to="/dashboard" className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors">
+              <ArrowLeft className="w-4 h-4" />
+              <span className="text-sm">Back to Dashboard</span>
+            </Link>
+          ) : (
+            <Link to="/">
+              <img src={LOGO_URL} alt="RepLedger" className="h-6" />
+            </Link>
+          )}
+          
+          {/* Center: Title with Sandbox Badge */}
+          <div className="flex items-center gap-3">
             <div className="w-8 h-8 bg-gradient-to-br from-[#01696F] to-[#014F52] rounded-lg flex items-center justify-center">
               <FlaskConical className="w-4 h-4 text-white" />
             </div>
             <span className="text-lg font-semibold text-white font-['Space_Grotesk']">
               API Playground
             </span>
+            {isSandbox && (
+              <span className="px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider bg-amber-500/20 text-amber-400 rounded">
+                Sandbox
+              </span>
+            )}
           </div>
-          <Link to="/docs" className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-white transition-colors">
-            <ExternalLink className="w-4 h-4" />
-            Docs
-          </Link>
+          
+          {/* Right: User menu or Sign in */}
+          <div className="flex items-center gap-4">
+            <Link to="/docs" className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-white transition-colors">
+              <ExternalLink className="w-4 h-4" />
+              Docs
+            </Link>
+            
+            {user ? (
+              <div className="relative">
+                <button
+                  onClick={() => setDropdownOpen(!dropdownOpen)}
+                  className="flex items-center gap-2 text-sm text-gray-400 hover:text-white transition-colors"
+                >
+                  <User className="w-4 h-4" />
+                  {user.email?.split("@")[0]}
+                  <ChevronDown className="w-3 h-3" />
+                </button>
+                {dropdownOpen && (
+                  <div className="absolute right-0 mt-2 w-48 bg-[#0C1116] border border-white/[0.08] rounded-lg shadow-xl z-50">
+                    <Link
+                      to="/dashboard"
+                      className="block px-4 py-2 text-sm text-gray-400 hover:text-white hover:bg-white/5"
+                      onClick={() => setDropdownOpen(false)}
+                    >
+                      Dashboard
+                    </Link>
+                    <button
+                      onClick={() => {
+                        logout();
+                        setDropdownOpen(false);
+                        navigate("/playground");
+                      }}
+                      className="w-full text-left px-4 py-2 text-sm text-gray-400 hover:text-white hover:bg-white/5 flex items-center gap-2"
+                    >
+                      <LogOut className="w-3.5 h-3.5" />
+                      Sign out
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <Link
+                to="/login"
+                className="px-4 py-1.5 text-sm bg-[#01696F] hover:bg-[#015858] text-white rounded-sm transition-colors"
+              >
+                Sign In
+              </Link>
+            )}
+          </div>
         </div>
       </header>
 
       {/* Main Content - Split Panel */}
       <main className="flex-1 flex flex-col">
-        {/* Warning Banner */}
-        <div className="bg-amber-500/10 border-b border-amber-500/20 px-6 py-2">
-          <p className="text-xs text-amber-400 text-center">
-            All requests use your live API key and affect real data.
+        {/* Mode Banner */}
+        <div className={`${isSandbox ? "bg-amber-500/10 border-amber-500/20" : "bg-blue-500/10 border-blue-500/20"} border-b px-6 py-2`}>
+          <p className={`text-xs ${isSandbox ? "text-amber-400" : "text-blue-400"} text-center`}>
+            {isSandbox
+              ? "Sandbox mode — shared demo data. Sign up for your own API key."
+              : "All requests use your live API key and affect real data."
+            }
           </p>
         </div>
+
+        {/* Sandbox CTA */}
+        {isSandbox && (
+          <div className="bg-[#0C1116]/80 border-b border-white/[0.06] px-6 py-3">
+            <div className="max-w-7xl mx-auto flex items-center justify-between">
+              <p className="text-sm text-gray-400">
+                You're using a shared sandbox. <span className="text-white">Sign up free</span> to get your own API key and register your agents.
+              </p>
+              <Link
+                to="/signup"
+                className="px-4 py-1.5 text-sm bg-[#01696F] hover:bg-[#015858] text-white rounded-sm transition-colors whitespace-nowrap"
+              >
+                Sign up free
+              </Link>
+            </div>
+          </div>
+        )}
         
         <div className="flex-1 flex">
         {/* Left Panel - Request Builder */}
@@ -398,7 +528,7 @@ export default function PlaygroundPage() {
               </div>
             </div>
             <code className="text-sm text-[#01696F] font-mono">
-              {showApiKey ? apiKey : `${apiKey?.substring(0, 8)}${'•'.repeat(24)}${apiKey?.substring(apiKey.length - 4)}`}
+              {showApiKey ? apiKey : maskedKey}
             </code>
           </div>
 

@@ -24,6 +24,10 @@ class Settings:
     
     # Admin API Key (for programmatic admin access by Kit)
     ADMIN_API_KEY: str = os.environ.get('ADMIN_API_KEY', '')
+    
+    # Sandbox (public playground)
+    SANDBOX_API_KEY: str = os.environ.get('SANDBOX_API_KEY', '')
+    SANDBOX_USER_ID: str = os.environ.get('SANDBOX_USER_ID', '')
 
 
 settings = Settings()

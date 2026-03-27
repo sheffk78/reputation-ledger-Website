@@ -320,4 +320,12 @@ export const adminAPI = {
   },
 };
 
+// Sandbox API (public, no auth)
+export const sandboxAPI = {
+  getCredentials: async () => {
+    const response = await axios.get(`${API}/sandbox/credentials`);
+    return response.data;
+  },
+};
+
 export default apiClient;
