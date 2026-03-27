@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { Clock, User, ArrowLeft, ArrowRight, Rss } from "lucide-react";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+const LOGO_URL = "https://customer-assets.emergentagent.com/job_ac636d4a-6ca2-497e-8615-5b0c10a94a77/artifacts/vcawrcg8_repledger-logo-dark.svg";
 
 export default function BlogPage() {
   const [posts, setPosts] = useState([]);
@@ -52,15 +53,8 @@ export default function BlogPage() {
       {/* Header */}
       <header className="border-b border-white/[0.06]">
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#01696F] to-[#014F54] flex items-center justify-center">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                <rect x="3" y="3" width="18" height="4" rx="1" fill="white" fillOpacity="0.9"/>
-                <rect x="3" y="10" width="18" height="4" rx="1" fill="white" fillOpacity="0.6"/>
-                <rect x="3" y="17" width="18" height="4" rx="1" fill="white" fillOpacity="0.3"/>
-              </svg>
-            </div>
-            <span className="text-lg font-semibold text-white font-['Space_Grotesk']">RepLedger</span>
+          <Link to="/">
+            <img src={LOGO_URL} alt="RepLedger" className="h-6" />
           </Link>
           
           <nav className="flex items-center gap-6">

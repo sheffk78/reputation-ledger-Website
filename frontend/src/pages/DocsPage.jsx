@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { copyToClipboard } from "../lib/utils";
 
 const API_BASE_URL = "https://api.repledger.io";
+const LOGO_URL = "https://customer-assets.emergentagent.com/job_ac636d4a-6ca2-497e-8615-5b0c10a94a77/artifacts/vcawrcg8_repledger-logo-dark.svg";
 
 // Sidebar navigation structure
 const NAV_SECTIONS = [
@@ -235,17 +236,8 @@ export default function DocsPage() {
       {/* Header */}
       <header className="sticky top-0 z-50 border-b border-white/[0.06] bg-[#050709]/95 backdrop-blur-sm">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-gradient-to-br from-[#01696F] to-[#014F52] rounded-lg flex items-center justify-center">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M2 17L12 22L22 17" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M2 12L12 17L22 12" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-            </div>
-            <span className="text-lg font-semibold text-white font-['Space_Grotesk']">
-              Rep<span className="text-[#01696F]">Ledger</span>
-            </span>
+          <Link to="/">
+            <img src={LOGO_URL} alt="RepLedger" className="h-6" />
           </Link>
 
           <nav className="hidden md:flex items-center gap-8">
