@@ -679,4 +679,26 @@ Indexes are automatically created on startup:
 ### Files Created
 - `/app/backend/routes/internal.py` - Internal events and cross-reference endpoints
 - `/app/backend/routes/organizations.py` - Org linking, batch scores, control plane endpoints
+- `/app/backend/routes/mock_aav.py` - Mock AAV endpoints for testing (link token creation/validation)
 - `/app/frontend/src/components/CrossToolComponents.jsx` - Cross-tool UI components
+
+### Mock AAV Environment (Added March 27, 2026)
+For testing organization linking without real AAV/Safe-Spend services:
+
+**Endpoints**:
+- `POST /api/mock/aav/org/create-link-token` - Create a test link token
+- `POST /api/mock/aav/org/validate-link` - Validate link tokens (mock AAV behavior)
+- `POST /api/mock/aav/api/v1/internal/events` - Receive cross-tool events (mock AAV)
+- `GET /api/mock/aav/api/v1/internal/events/received` - Inspect received events
+
+**Environment Variable**:
+- `AAV_MOCK_MODE=true` - Enable mock AAV mode for org linking
+
+**Tested & Verified**:
+- ✅ Mock link token creation
+- ✅ Mock link token validation  
+- ✅ Organization linking via `/api/v1/org/link`
+- ✅ User `organization_id` updates correctly
+- ✅ All user agents receive `organization_id`
+- ✅ Settings page shows "Connected" status
+- ✅ Dashboard shows "Ecosystem Integration" card

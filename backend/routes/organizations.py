@@ -137,19 +137,25 @@ async def link_organization(
     
     # Mock mode: Use internal mock AAV endpoint
     elif AAV_MOCK_MODE:
-        # Get the base URL from the request
-        base_url = str(request.base_url).rstrip('/')
+        # Use localhost since we're calling our own service
+        # The mock endpoint is registered on the same FastAPI app
+        internal_url = "http://127.0.0.1:8001"
         try:
             async with httpx.AsyncClient(timeout=10.0) as client:
                 response = await client.post(
-                    f"{base_url}/api/mock/aav/org/validate-link",
+                    f"{internal_url}/api/mock/aav/org/validate-link",
                     json={"link_token": link_token}
                 )
                 if response.status_code == 200:
                     result = response.json()
                     organization_id = result.get("organization_id")
                 else:
-                    error = response.json().get("detail", "Invalid token")
+                    # Safely parse error response
+                    try:
+                        error_data = response.json()
+                        error = error_data.get("detail", "Invalid token")
+                    except Exception:
+                        error = f"Invalid token (status {response.status_code})"
                     raise HTTPException(status_code=400, detail=error)
         except httpx.RequestError as e:
             raise HTTPException(
