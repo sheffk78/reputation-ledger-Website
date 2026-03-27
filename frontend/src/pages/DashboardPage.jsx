@@ -72,6 +72,13 @@ function FieldError({ message }) {
   );
 }
 
+// Skeleton loading block
+function SkeletonBlock({ className = "" }) {
+  return (
+    <div className={`animate-pulse bg-white/[0.06] rounded-sm ${className}`} />
+  );
+}
+
 // Code snippet with copy button
 function CodeSnippet({ code, onCopy, copiedId, snippetId }) {
   const isCopied = copiedId === snippetId;
@@ -98,7 +105,10 @@ function CodeSnippet({ code, onCopy, copiedId, snippetId }) {
 
 // API Quickstart Panel Component
 function ApiQuickstartPanel({ apiKey }) {
-  const [isExpanded, setIsExpanded] = useState(true);
+  const [isExpanded, setIsExpanded] = useState(() => {
+    const stored = localStorage.getItem("repledger_quickstart_expanded");
+    return stored !== null ? JSON.parse(stored) : true;
+  });
   const [showKey, setShowKey] = useState(false);
   const [copiedSnippet, setCopiedSnippet] = useState(null);
   
@@ -119,6 +129,7 @@ function ApiQuickstartPanel({ apiKey }) {
   const handleToggleExpand = () => {
     const newExpanded = !isExpanded;
     setIsExpanded(newExpanded);
+    localStorage.setItem("repledger_quickstart_expanded", JSON.stringify(newExpanded));
     if (newExpanded) {
       trackEvent(EventNames.QUICKSTART_OPENED);
     }
@@ -348,6 +359,7 @@ export default function DashboardPage() {
   const [webhookFormErrors, setWebhookFormErrors] = useState({});
   const [usageStats, setUsageStats] = useState(null);
   const [feedbackModalOpen, setFeedbackModalOpen] = useState(false);
+  const [showApiKey, setShowApiKey] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -526,10 +538,67 @@ export default function DashboardPage() {
     }
   };
 
+  // Skeleton loading UI
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#050709] flex items-center justify-center">
-        <div className="spinner" />
+      <div className="min-h-screen bg-[#050709]">
+        {/* Header skeleton */}
+        <header className="h-14 border-b border-white/[0.08] bg-[#050709]">
+          <div className="container-app flex items-center justify-between h-full">
+            <div className="flex items-center gap-3">
+              <SkeletonBlock className="w-6 h-6" />
+              <SkeletonBlock className="w-20 h-3" />
+            </div>
+            <div className="flex items-center gap-4">
+              <SkeletonBlock className="w-32 h-4" />
+              <SkeletonBlock className="w-16 h-4" />
+              <SkeletonBlock className="w-16 h-4" />
+            </div>
+          </div>
+        </header>
+
+        <main className="container-app py-8">
+          <div className="space-y-8">
+            {/* Title skeleton */}
+            <div>
+              <SkeletonBlock className="w-64 h-7 mb-2" />
+              <SkeletonBlock className="w-80 h-4" />
+            </div>
+
+            {/* Usage stats skeleton */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="card-surface p-4">
+                  <SkeletonBlock className="w-20 h-3 mb-3" />
+                  <SkeletonBlock className="w-12 h-8" />
+                </div>
+              ))}
+            </div>
+
+            {/* API Key skeleton */}
+            <div className="card-surface p-6">
+              <div className="flex items-center justify-between mb-5">
+                <SkeletonBlock className="w-24 h-5" />
+                <SkeletonBlock className="w-20 h-4" />
+              </div>
+              <SkeletonBlock className="w-full h-10" />
+            </div>
+
+            {/* Agents skeleton */}
+            <div className="card-surface p-6">
+              <SkeletonBlock className="w-32 h-5 mb-5" />
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="border border-white/[0.08] rounded-sm p-4">
+                    <SkeletonBlock className="w-3/4 h-5 mb-2" />
+                    <SkeletonBlock className="w-1/2 h-4 mb-4" />
+                    <SkeletonBlock className="w-16 h-6" />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </main>
       </div>
     );
   }
@@ -539,13 +608,21 @@ export default function DashboardPage() {
       {/* Header */}
       <header className="h-14 border-b border-white/[0.08] bg-[#050709]">
         <div className="container-app flex items-center justify-between h-full">
-          <div className="flex items-center gap-3">
+          <Link to="/" className="flex items-center gap-3">
             <img src={LOGO_URL} alt="RepLedger" className="h-6" />
             <span className="text-[11px] font-medium text-[#01696F] uppercase tracking-wider">Dashboard</span>
-          </div>
+          </Link>
           
           <div className="flex items-center gap-5">
             <span className="text-[13px] text-[#6B7280]">{user?.email}</span>
+            <Link
+              to="/docs"
+              data-testid="docs-link"
+              className="flex items-center gap-1.5 text-[13px] text-[#6B7280] hover:text-white transition-colors"
+            >
+              <BookOpen className="w-3.5 h-3.5" />
+              Docs
+            </Link>
             <Link
               to="/playground"
               data-testid="playground-link"
@@ -700,8 +777,21 @@ export default function DashboardPage() {
 
             <div className="flex items-center gap-2">
               <code className="api-key-value flex-1" data-testid="api-key-display">
-                {apiKey?.api_key}
+                {showApiKey
+                  ? apiKey?.api_key
+                  : `${apiKey?.api_key?.substring(0, 8)}${'•'.repeat(32)}${apiKey?.api_key?.substring(apiKey?.api_key?.length - 4)}`
+                }
               </code>
+              
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowApiKey(!showApiKey)}
+                data-testid="toggle-api-key-visibility"
+                className="border-white/[0.08] bg-transparent text-white hover:bg-white/5 h-10 px-3"
+              >
+                {showApiKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </Button>
               
               <Button
                 variant="outline"
@@ -901,7 +991,12 @@ export default function DashboardPage() {
                   </thead>
                   <tbody>
                     {agents.map((agent) => (
-                      <tr key={agent.agent_id} data-testid={`agent-row-${agent.agent_id}`}>
+                      <tr 
+                        key={agent.agent_id} 
+                        data-testid={`agent-row-${agent.agent_id}`}
+                        onClick={() => window.location.href = `/agents/${agent.agent_id}`}
+                        className="cursor-pointer hover:bg-white/[0.02]"
+                      >
                         <td>
                           <div>
                             <div className="text-white font-medium text-[13px]">{agent.name}</div>
@@ -931,6 +1026,7 @@ export default function DashboardPage() {
                         <td>
                           <Link
                             to={`/agents/${agent.agent_id}`}
+                            onClick={(e) => e.stopPropagation()}
                             className="inline-flex items-center justify-center w-8 h-8 rounded-sm text-[#6B7280] hover:text-white hover:bg-white/5 transition-colors"
                             data-testid={`view-agent-${agent.agent_id}`}
                           >
