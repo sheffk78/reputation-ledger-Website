@@ -345,6 +345,16 @@ db.users.updateOne({email: "admin@example.com"}, {$set: {is_admin: true}})
 - ✅ **Admin API documentation section** - Documents authentication and admin endpoints
 - ✅ **Dynamic agent/webhook form** - Add/remove agents and webhooks in provisioning form
 
+### Phase 2.7 - Blog System (March 2026)
+- ✅ **Blog data model** - `blog_posts` collection with title, content (markdown), slug, status, tags, SEO fields
+- ✅ **Admin blog endpoints** - CRUD for blog posts (create, list, get, update, delete, publish)
+- ✅ **Public blog index** - `/blog` page with post cards (title, excerpt, author, reading time, tags)
+- ✅ **Blog post page** - `/blog/:slug` with full markdown rendering using react-markdown + remark-gfm
+- ✅ **Full SEO** - Meta tags, Open Graph, Twitter cards, JSON-LD Article schema, canonical URLs
+- ✅ **RSS feed** - `/api/blog/rss` with valid RSS 2.0 + Atom namespace
+- ✅ **Navigation** - Blog link added to HomePage, PricingPage, DevelopersPage, DocsPage, ChangelogPage
+- ✅ **Prose styling** - `.prose-repledger` CSS for rendered markdown content
+
 ### P2 (Medium Priority)
 - ⬜ Social Sharing Meta Tags (OpenGraph/Twitter cards for public agent profiles)
 - ⬜ AAV (Agent Authority Vault) integration
@@ -374,10 +384,12 @@ db.users.updateOne({email: "admin@example.com"}, {$set: {is_admin: true}})
 │   ├── agents.py          # AgentCreate, AgentListResponse, etc.
 │   ├── outcomes.py        # OutcomeCreate, PaginatedOutcomesResponse, etc.
 │   ├── webhooks.py        # WebhookCreate, WebhookResponse, etc.
-│   └── flags.py           # FlagCreate, FlagResponse, etc.
+│   ├── flags.py           # FlagCreate, FlagResponse, etc.
+│   └── blog.py            # BlogPostCreate, BlogPostResponse, etc.
 ├── routes/
 │   ├── __init__.py
 │   ├── auth.py            # /api/auth/* routes
+│   ├── blog.py            # /api/blog/* and /api/admin/blog/* routes
 │   ├── agents.py          # /api/v1/agents/* routes (incl. outcomes, flags)
 │   └── webhooks.py        # /api/v1/webhooks/* routes
 ├── services/
