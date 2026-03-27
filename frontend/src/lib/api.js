@@ -297,6 +297,27 @@ export const adminAPI = {
     const response = await apiClient.get("/admin/me");
     return response.data;
   },
+
+  // Client provisioning endpoints
+  createUser: async (data) => {
+    const response = await apiClient.post("/admin/users", data);
+    return response.data;
+  },
+
+  lookupUserByEmail: async (email) => {
+    const response = await apiClient.get(`/admin/lookup/user?email=${encodeURIComponent(email)}`);
+    return response.data;
+  },
+
+  createAgentForUser: async (userId, data) => {
+    const response = await apiClient.post(`/admin/users/${userId}/agents`, data);
+    return response.data;
+  },
+
+  fullSetup: async (data) => {
+    const response = await apiClient.post("/admin/full-setup", data);
+    return response.data;
+  },
 };
 
 export default apiClient;

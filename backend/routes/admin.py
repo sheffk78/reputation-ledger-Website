@@ -172,6 +172,45 @@ class AdminCreateUserResponse(BaseModel):
     api_key: str  # Auto-generated API key
 
 
+# ============== FULL SETUP MODELS ==============
+
+class FullSetupAgentInput(BaseModel):
+    """Agent to create in full setup"""
+    name: str
+    description: Optional[str] = None
+    is_public: bool = False
+
+
+class FullSetupWebhookInput(BaseModel):
+    """Webhook to create in full setup"""
+    url: str
+    events: List[str] = ["outcome.created"]
+    description: Optional[str] = None
+
+
+class AdminFullSetupRequest(BaseModel):
+    """Request to create user + agents + webhooks in one call"""
+    email: EmailStr
+    password: str = Field(..., min_length=8)
+    agents: List[FullSetupAgentInput] = []
+    webhooks: List[FullSetupWebhookInput] = []
+
+
+class FullSetupAgentResult(BaseModel):
+    """Agent created in full setup"""
+    agent_id: str
+    name: str
+
+
+class AdminFullSetupResponse(BaseModel):
+    """Response from full setup"""
+    user_id: str
+    email: str
+    api_key: str
+    agents: List[FullSetupAgentResult]
+    webhooks_created: int
+
+
 # ============== LOOKUP MODELS ==============
 
 class AdminUserLookupResponse(BaseModel):
@@ -916,7 +955,7 @@ async def admin_create_user(
     existing = await db.users.find_one({"email": data.email}, {"_id": 0, "id": 1})
     if existing:
         raise APIError(
-            code=ErrorCodes.EMAIL_EXISTS,
+            code=ErrorCodes.EMAIL_ALREADY_EXISTS,
             message=f"A user with email '{data.email}' already exists.",
             status_code=409,
             details={"email": data.email, "existing_user_id": existing["id"]}
@@ -963,6 +1002,105 @@ async def admin_create_user(
         is_admin=data.is_admin,
         created_at=now,
         api_key=api_key
+    )
+
+
+@router.post("/full-setup", response_model=AdminFullSetupResponse, status_code=201)
+async def admin_full_setup(
+    data: AdminFullSetupRequest,
+    admin: dict = Depends(get_admin_user)
+):
+    """
+    Create a complete client setup: user + API key + agents + webhooks.
+    
+    Used by admins to provision a new client account in one step.
+    Returns credentials that should be shared with the client.
+    """
+    # Check if email already exists
+    existing = await db.users.find_one({"email": data.email}, {"_id": 0, "id": 1})
+    if existing:
+        raise APIError(
+            code=ErrorCodes.EMAIL_ALREADY_EXISTS,
+            message=f"A user with email '{data.email}' already exists.",
+            status_code=409,
+            details={"email": data.email, "existing_user_id": existing["id"]}
+        )
+    
+    now = datetime.now(timezone.utc).isoformat()
+    user_id = str(uuid.uuid4())
+    
+    # Hash password
+    password_hash = hash_password(data.password)
+    
+    # Create user document
+    user_doc = {
+        "id": user_id,
+        "email": data.email,
+        "password_hash": password_hash,
+        "is_admin": False,
+        "created_at": now,
+        "notification_preferences": {
+            "email_outcome_alerts": True,
+            "email_weekly_summary": True,
+            "email_score_changes": True
+        }
+    }
+    
+    await db.users.insert_one(user_doc)
+    
+    # Generate API key
+    api_key = f"arl_{secrets.token_hex(24)}"
+    api_key_doc = {
+        "id": str(uuid.uuid4()),
+        "user_id": user_id,
+        "key": api_key,
+        "created_at": now,
+        "revoked_at": None,
+        "last_used_at": None
+    }
+    
+    await db.api_keys.insert_one(api_key_doc)
+    
+    # Create agents
+    created_agents = []
+    for agent_input in data.agents:
+        agent_id = str(uuid.uuid4())
+        agent_doc = {
+            "agent_id": agent_id,
+            "user_id": user_id,
+            "name": agent_input.name,
+            "description": agent_input.description,
+            "is_public": agent_input.is_public,
+            "created_at": now
+        }
+        await db.agents.insert_one(agent_doc)
+        created_agents.append(FullSetupAgentResult(
+            agent_id=agent_id,
+            name=agent_input.name
+        ))
+    
+    # Create webhooks
+    webhooks_created = 0
+    for webhook_input in data.webhooks:
+        if webhook_input.url.strip():
+            webhook_doc = {
+                "id": str(uuid.uuid4()),
+                "user_id": user_id,
+                "url": webhook_input.url.strip(),
+                "events": webhook_input.events,
+                "description": webhook_input.description,
+                "created_at": now,
+                "is_active": True
+            }
+            await db.webhooks.insert_one(webhook_doc)
+            webhooks_created += 1
+    
+    return AdminFullSetupResponse(
+        user_id=user_id,
+        email=data.email,
+        api_key=api_key,
+        agents=created_agents,
+        webhooks_created=webhooks_created
     )
 
 

@@ -71,6 +71,19 @@ export default function AdminPage() {
   const [auditLogsLoading, setAuditLogsLoading] = useState(false);
   const [auditEventFilter, setAuditEventFilter] = useState(null);
 
+  // Client provisioning state
+  const [clientDialogOpen, setClientDialogOpen] = useState(false);
+  const [creatingClient, setCreatingClient] = useState(false);
+  const [clientFormData, setClientFormData] = useState({
+    email: "",
+    password: "",
+    agents: [{ name: "", description: "", is_public: false }],
+    webhooks: [],
+  });
+  const [clientFormErrors, setClientFormErrors] = useState({});
+  const [setupResult, setSetupResult] = useState(null);
+  const [setupResultDialogOpen, setSetupResultDialogOpen] = useState(false);
+
   useEffect(() => {
     checkAdminAccess();
   }, []);
@@ -176,6 +189,87 @@ export default function AdminPage() {
       fetchAuditLogs(1, auditEventFilter);
     }
   }, [activeSection]);
+
+  // Handle full setup submission for client provisioning
+  const handleFullSetup = async (e) => {
+    e.preventDefault();
+
+    // Basic validation
+    const errors = {};
+    if (!clientFormData.email) errors.email = "Email is required.";
+    if (!clientFormData.password || clientFormData.password.length < 8) {
+      errors.password = "Password must be at least 8 characters.";
+    }
+
+    // Validate agents have names
+    const validAgents = clientFormData.agents.filter(a => a.name.trim());
+    if (validAgents.length === 0) {
+      errors.agents = "At least one agent with a name is required.";
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setClientFormErrors(errors);
+      return;
+    }
+
+    setCreatingClient(true);
+    setClientFormErrors({});
+
+    try {
+      const payload = {
+        email: clientFormData.email,
+        password: clientFormData.password,
+        agents: validAgents.map(a => ({
+          name: a.name.trim(),
+          description: a.description?.trim() || null,
+          is_public: a.is_public,
+        })),
+        webhooks: clientFormData.webhooks
+          .filter(w => w.url.trim())
+          .map(w => ({
+            url: w.url.trim(),
+            events: w.events,
+            description: w.description?.trim() || null,
+          })),
+      };
+
+      const result = await adminAPI.fullSetup(payload);
+      setSetupResult(result);
+      setClientDialogOpen(false);
+      setSetupResultDialogOpen(true);
+
+      // Refresh users list
+      const usersData = await adminAPI.getUsers(50);
+      setUsers(usersData.users);
+      setUsersTotal(usersData.total);
+
+      // Refresh stats
+      const statsData = await adminAPI.getStats();
+      setStats(statsData);
+
+      toast.success("Client provisioned successfully");
+    } catch (error) {
+      if (error.response?.status === 409) {
+        setClientFormErrors({ email: "A user with this email already exists." });
+      } else {
+        const msg = error.response?.data?.error?.message || "Failed to provision client.";
+        toast.error(msg);
+      }
+    } finally {
+      setCreatingClient(false);
+    }
+  };
+
+  // Reset client form
+  const resetClientForm = () => {
+    setClientFormData({
+      email: "",
+      password: "",
+      agents: [{ name: "", description: "", is_public: false }],
+      webhooks: [],
+    });
+    setClientFormErrors({});
+  };
 
   if (loading) {
     return (
@@ -774,6 +868,527 @@ export default function AdminPage() {
                   </div>
                 </div>
               )}
+            </div>
+          )}
+
+          {/* ========== CLIENTS SECTION ========== */}
+          {activeSection === "clients" && (
+            <div data-testid="admin-clients">
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <h2 className="text-xl font-semibold text-white font-['Space_Grotesk']">
+                    Client Management
+                  </h2>
+                  <p className="text-sm text-gray-500 mt-1">
+                    Provision and manage client accounts
+                  </p>
+                </div>
+                <button
+                  onClick={() => {
+                    resetClientForm();
+                    setClientDialogOpen(true);
+                  }}
+                  className="flex items-center gap-1.5 bg-[#01696F] hover:bg-[#028C94] text-white h-9 px-4 text-[13px] rounded-sm transition-colors"
+                  data-testid="new-client-btn"
+                >
+                  <Plus className="w-4 h-4" />
+                  New Client
+                </button>
+              </div>
+
+              {/* Client list (users table) */}
+              <div className="card-surface p-4 mb-4">
+                <p className="text-xs text-gray-500 mb-3">
+                  All user accounts. Clients provisioned by Kit show <code className="text-[#01696F]">kit@agentictrust.com</code> in audit logs.
+                </p>
+              </div>
+
+              <div className="card-surface overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-white/[0.06]">
+                        <th className="text-left py-3 px-4 text-gray-500 font-medium">Email</th>
+                        <th className="text-left py-3 px-4 text-gray-500 font-medium">Agents</th>
+                        <th className="text-left py-3 px-4 text-gray-500 font-medium">Outcomes</th>
+                        <th className="text-left py-3 px-4 text-gray-500 font-medium">Admin</th>
+                        <th className="text-left py-3 px-4 text-gray-500 font-medium">Created</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {users.map((u) => (
+                        <tr key={u.id} className="border-b border-white/[0.03] hover:bg-white/[0.02]">
+                          <td className="py-3 px-4">
+                            <span className="text-white text-xs">{u.email}</span>
+                            <br />
+                            <code className="text-[10px] text-gray-500">{u.id}</code>
+                          </td>
+                          <td className="py-3 px-4 text-gray-300 text-xs">{u.agent_count}</td>
+                          <td className="py-3 px-4 text-gray-300 text-xs">{u.outcome_count}</td>
+                          <td className="py-3 px-4">
+                            {u.is_admin ? (
+                              <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-amber-500/20 text-amber-400">
+                                admin
+                              </span>
+                            ) : (
+                              <span className="text-gray-500 text-xs">—</span>
+                            )}
+                          </td>
+                          <td className="py-3 px-4 text-gray-400 text-xs whitespace-nowrap">
+                            {new Date(u.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* New Client Dialog */}
+              <Dialog open={clientDialogOpen} onOpenChange={setClientDialogOpen}>
+                <DialogContent className="bg-[#0D1117] border border-white/[0.06] text-white max-w-lg max-h-[85vh] overflow-y-auto">
+                  <DialogHeader>
+                    <DialogTitle className="text-lg font-semibold font-['Space_Grotesk']">
+                      Provision New Client
+                    </DialogTitle>
+                    <DialogDescription className="text-gray-400 text-sm">
+                      Create a user account, API key, agents, and webhooks in one step.
+                    </DialogDescription>
+                  </DialogHeader>
+
+                  <form onSubmit={handleFullSetup} className="space-y-5 mt-4">
+                    {/* Email */}
+                    <div>
+                      <label className="block text-xs text-gray-400 mb-1.5">Client Email *</label>
+                      <input
+                        type="email"
+                        value={clientFormData.email}
+                        onChange={(e) => setClientFormData({ ...clientFormData, email: e.target.value })}
+                        placeholder="client@company.com"
+                        className="w-full bg-white/[0.03] border border-white/[0.08] rounded px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-[#01696F]"
+                        data-testid="client-email-input"
+                      />
+                      {clientFormErrors.email && (
+                        <p className="text-red-400 text-xs mt-1">{clientFormErrors.email}</p>
+                      )}
+                    </div>
+
+                    {/* Password */}
+                    <div>
+                      <label className="block text-xs text-gray-400 mb-1.5">Password *</label>
+                      <input
+                        type="text"
+                        value={clientFormData.password}
+                        onChange={(e) => setClientFormData({ ...clientFormData, password: e.target.value })}
+                        placeholder="Minimum 8 characters"
+                        className="w-full bg-white/[0.03] border border-white/[0.08] rounded px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-[#01696F] font-mono text-[12px]"
+                        data-testid="client-password-input"
+                      />
+                      {clientFormErrors.password && (
+                        <p className="text-red-400 text-xs mt-1">{clientFormErrors.password}</p>
+                      )}
+                      <p className="text-[10px] text-gray-500 mt-1">
+                        Visible for provisioning purposes. Share securely with the client.
+                      </p>
+                    </div>
+
+                    {/* Agents */}
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <label className="text-xs text-gray-400">Agents</label>
+                        <button
+                          type="button"
+                          onClick={() => setClientFormData({
+                            ...clientFormData,
+                            agents: [...clientFormData.agents, { name: "", description: "", is_public: false }]
+                          })}
+                          className="text-[11px] text-[#01696F] hover:text-[#028C94] transition-colors"
+                        >
+                          + Add agent
+                        </button>
+                      </div>
+                      {clientFormErrors.agents && (
+                        <p className="text-red-400 text-xs mb-2">{clientFormErrors.agents}</p>
+                      )}
+                      <div className="space-y-3">
+                        {clientFormData.agents.map((agent, i) => (
+                          <div key={i} className="bg-white/[0.02] border border-white/[0.06] rounded p-3">
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="text-xs text-gray-500">Agent {i + 1}</span>
+                              {clientFormData.agents.length > 1 && (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const updated = [...clientFormData.agents];
+                                    updated.splice(i, 1);
+                                    setClientFormData({ ...clientFormData, agents: updated });
+                                  }}
+                                  className="text-[11px] text-red-400 hover:text-red-300"
+                                >
+                                  Remove
+                                </button>
+                              )}
+                            </div>
+                            <input
+                              type="text"
+                              value={agent.name}
+                              onChange={(e) => {
+                                const updated = [...clientFormData.agents];
+                                updated[i] = { ...updated[i], name: e.target.value };
+                                setClientFormData({ ...clientFormData, agents: updated });
+                              }}
+                              placeholder="Agent name (e.g., support-bot)"
+                              className="w-full bg-white/[0.03] border border-white/[0.08] rounded px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-[#01696F] mb-2"
+                            />
+                            <input
+                              type="text"
+                              value={agent.description}
+                              onChange={(e) => {
+                                const updated = [...clientFormData.agents];
+                                updated[i] = { ...updated[i], description: e.target.value };
+                                setClientFormData({ ...clientFormData, agents: updated });
+                              }}
+                              placeholder="Description (optional)"
+                              className="w-full bg-white/[0.03] border border-white/[0.08] rounded px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-[#01696F] mb-2"
+                            />
+                            <label className="flex items-center gap-2 cursor-pointer">
+                              <input
+                                type="checkbox"
+                                checked={agent.is_public}
+                                onChange={(e) => {
+                                  const updated = [...clientFormData.agents];
+                                  updated[i] = { ...updated[i], is_public: e.target.checked };
+                                  setClientFormData({ ...clientFormData, agents: updated });
+                                }}
+                                className="rounded-sm border-white/10"
+                              />
+                              <span className="text-xs text-gray-400">Public profile</span>
+                            </label>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Webhooks */}
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <label className="text-xs text-gray-400">Webhooks</label>
+                        <button
+                          type="button"
+                          onClick={() => setClientFormData({
+                            ...clientFormData,
+                            webhooks: [...clientFormData.webhooks, { url: "", events: ["outcome.created"], description: "" }]
+                          })}
+                          className="text-[11px] text-[#01696F] hover:text-[#028C94] transition-colors"
+                        >
+                          + Add webhook
+                        </button>
+                      </div>
+                      <div className="space-y-3">
+                        {clientFormData.webhooks.map((webhook, i) => (
+                          <div key={i} className="bg-white/[0.02] border border-white/[0.06] rounded p-3">
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="text-xs text-gray-500">Webhook {i + 1}</span>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const updated = [...clientFormData.webhooks];
+                                  updated.splice(i, 1);
+                                  setClientFormData({ ...clientFormData, webhooks: updated });
+                                }}
+                                className="text-[11px] text-red-400 hover:text-red-300"
+                              >
+                                Remove
+                              </button>
+                            </div>
+                            <input
+                              type="url"
+                              value={webhook.url}
+                              onChange={(e) => {
+                                const updated = [...clientFormData.webhooks];
+                                updated[i] = { ...updated[i], url: e.target.value };
+                                setClientFormData({ ...clientFormData, webhooks: updated });
+                              }}
+                              placeholder="https://company.com/webhook"
+                              className="w-full bg-white/[0.03] border border-white/[0.08] rounded px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-[#01696F]"
+                            />
+                          </div>
+                        ))}
+                        {clientFormData.webhooks.length === 0 && (
+                          <p className="text-xs text-gray-500 py-2">
+                            No webhooks. Click "+ Add webhook" to configure notifications.
+                          </p>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Actions */}
+                    <div className="flex items-center justify-end gap-3 pt-2 border-t border-white/[0.06]">
+                      <button
+                        type="button"
+                        onClick={() => setClientDialogOpen(false)}
+                        className="text-[#9CA3AF] hover:text-white hover:bg-white/5 h-9 px-4 text-[13px] rounded-sm transition-colors"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        disabled={creatingClient}
+                        className="flex items-center gap-1.5 bg-[#01696F] hover:bg-[#028C94] text-white h-9 px-4 text-[13px] rounded-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        data-testid="provision-client-btn"
+                      >
+                        {creatingClient ? (
+                          <>
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                            Provisioning...
+                          </>
+                        ) : (
+                          "Provision Client"
+                        )}
+                      </button>
+                    </div>
+                  </form>
+                </DialogContent>
+              </Dialog>
+
+              {/* Setup Result Dialog */}
+              <Dialog open={setupResultDialogOpen} onOpenChange={setSetupResultDialogOpen}>
+                <DialogContent className="bg-[#0D1117] border border-white/[0.06] text-white max-w-md">
+                  <DialogHeader>
+                    <DialogTitle className="flex items-center gap-2 text-lg font-semibold font-['Space_Grotesk']">
+                      <CheckCircle2 className="w-5 h-5 text-green-500" />
+                      Client Provisioned
+                    </DialogTitle>
+                  </DialogHeader>
+
+                  {setupResult && (
+                    <div className="space-y-4 mt-4">
+                      <div>
+                        <label className="text-xs text-gray-500">Email</label>
+                        <p className="text-white text-sm font-medium">{setupResult.email}</p>
+                      </div>
+
+                      <div>
+                        <label className="text-xs text-gray-500">User ID</label>
+                        <p className="text-gray-300 text-xs font-mono">{setupResult.user_id}</p>
+                      </div>
+
+                      <div>
+                        <label className="text-xs text-gray-500">API Key</label>
+                        <div className="flex items-center gap-2 mt-1">
+                          <code className="flex-1 bg-black/30 px-3 py-2 rounded text-xs text-[#01696F] font-mono break-all">
+                            {setupResult.api_key}
+                          </code>
+                          <button
+                            onClick={async () => {
+                              await navigator.clipboard.writeText(setupResult.api_key);
+                              toast.success("API key copied");
+                            }}
+                            className="p-2 rounded hover:bg-white/5 text-[#6B7280] hover:text-white transition-colors flex-shrink-0"
+                          >
+                            <Copy className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="text-xs text-gray-500">Agents Created</label>
+                        <div className="space-y-1.5 mt-1">
+                          {setupResult.agents.map((agent) => (
+                            <div key={agent.agent_id} className="flex items-center gap-2">
+                              <Bot className="w-3.5 h-3.5 text-[#01696F]" />
+                              <span className="text-white text-sm">{agent.name}</span>
+                              <code className="text-[10px] text-gray-500">{agent.agent_id}</code>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      {setupResult.webhooks_created > 0 && (
+                        <div>
+                          <label className="text-xs text-gray-500">Webhooks</label>
+                          <p className="text-gray-300 text-sm">{setupResult.webhooks_created} configured</p>
+                        </div>
+                      )}
+
+                      <div className="bg-amber-500/10 border border-amber-500/20 rounded p-3 flex items-start gap-2">
+                        <AlertTriangle className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
+                        <p className="text-xs text-amber-200">
+                          Save the API key now. It will not be shown again.
+                        </p>
+                      </div>
+
+                      <button
+                        onClick={() => setSetupResultDialogOpen(false)}
+                        className="w-full bg-[#01696F] hover:bg-[#028C94] text-white h-9 px-4 text-[13px] rounded-sm transition-colors"
+                      >
+                        Done
+                      </button>
+                    </div>
+                  )}
+                </DialogContent>
+              </Dialog>
+            </div>
+          )}
+
+          {/* ========== ADMIN API SECTION ========== */}
+          {activeSection === "admin-api" && (
+            <div data-testid="admin-api-docs">
+              <div className="mb-6">
+                <h2 className="text-xl font-semibold text-white font-['Space_Grotesk']">
+                  Admin API
+                </h2>
+                <p className="text-sm text-gray-500 mt-1">
+                  Programmatic access for internal tooling
+                </p>
+              </div>
+
+              {/* Authentication */}
+              <div className="card-surface p-5 mb-6">
+                <h3 className="text-base font-semibold text-white mb-3 flex items-center gap-2">
+                  <Key className="w-4 h-4 text-[#01696F]" />
+                  Authentication
+                </h3>
+                <p className="text-sm text-gray-400 mb-4">
+                  Admin API endpoints accept either a valid user JWT (from an admin account) or a static Admin API Key via header.
+                </p>
+                <div className="bg-black/30 rounded p-4 font-mono text-sm">
+                  <p className="text-gray-500 mb-2"># Using Admin API Key header</p>
+                  <p className="text-white">
+                    <span className="text-purple-400">curl</span> -X POST <span className="text-green-400">"https://api.repledger.com/api/admin/users"</span> \
+                  </p>
+                  <p className="text-white pl-4">
+                    -H <span className="text-amber-400">"X-Admin-API-Key: your_admin_api_key"</span> \
+                  </p>
+                  <p className="text-white pl-4">
+                    -H <span className="text-amber-400">"Content-Type: application/json"</span> \
+                  </p>
+                  <p className="text-white pl-4">
+                    -d <span className="text-cyan-400">'{`{"email": "client@company.com", "password": "secure123"}`}'</span>
+                  </p>
+                </div>
+                <p className="text-xs text-gray-500 mt-3">
+                  The Admin API Key is set via the <code className="text-[#01696F]">ADMIN_API_KEY</code> environment variable on the backend.
+                </p>
+              </div>
+
+              {/* Endpoints */}
+              <div className="card-surface p-5">
+                <h3 className="text-base font-semibold text-white mb-4 flex items-center gap-2">
+                  <Terminal className="w-4 h-4 text-[#01696F]" />
+                  Admin Endpoints
+                </h3>
+
+                <div className="space-y-4">
+                  {/* POST /admin/users */}
+                  <div className="border border-white/[0.06] rounded p-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="px-2 py-0.5 rounded text-xs font-medium bg-green-500/20 text-green-400">POST</span>
+                      <code className="text-sm text-white">/api/admin/users</code>
+                    </div>
+                    <p className="text-sm text-gray-400 mb-2">
+                      Create a new user with an auto-generated API key.
+                    </p>
+                    <div className="bg-black/20 rounded p-3 text-xs font-mono">
+                      <p className="text-gray-500 mb-1">Request body:</p>
+                      <pre className="text-cyan-400">{`{
+  "email": "client@company.com",
+  "password": "securepassword123",
+  "is_admin": false
+}`}</pre>
+                    </div>
+                  </div>
+
+                  {/* POST /admin/full-setup */}
+                  <div className="border border-white/[0.06] rounded p-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="px-2 py-0.5 rounded text-xs font-medium bg-green-500/20 text-green-400">POST</span>
+                      <code className="text-sm text-white">/api/admin/full-setup</code>
+                    </div>
+                    <p className="text-sm text-gray-400 mb-2">
+                      Create user + API key + agents + webhooks in one call.
+                    </p>
+                    <div className="bg-black/20 rounded p-3 text-xs font-mono">
+                      <p className="text-gray-500 mb-1">Request body:</p>
+                      <pre className="text-cyan-400">{`{
+  "email": "client@company.com",
+  "password": "securepassword123",
+  "agents": [
+    { "name": "support-bot", "description": "Customer support", "is_public": true }
+  ],
+  "webhooks": [
+    { "url": "https://company.com/webhook", "events": ["outcome.created"] }
+  ]
+}`}</pre>
+                    </div>
+                  </div>
+
+                  {/* GET /admin/lookup/user */}
+                  <div className="border border-white/[0.06] rounded p-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="px-2 py-0.5 rounded text-xs font-medium bg-blue-500/20 text-blue-400">GET</span>
+                      <code className="text-sm text-white">/api/admin/lookup/user?email=...</code>
+                    </div>
+                    <p className="text-sm text-gray-400">
+                      Look up a user by email address. Returns user ID and basic info.
+                    </p>
+                  </div>
+
+                  {/* GET /admin/lookup/agent */}
+                  <div className="border border-white/[0.06] rounded p-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="px-2 py-0.5 rounded text-xs font-medium bg-blue-500/20 text-blue-400">GET</span>
+                      <code className="text-sm text-white">/api/admin/lookup/agent?agent_id=...</code>
+                    </div>
+                    <p className="text-sm text-gray-400">
+                      Look up an agent by ID or name. Returns agent details and score.
+                    </p>
+                  </div>
+
+                  {/* GET /admin/stats */}
+                  <div className="border border-white/[0.06] rounded p-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="px-2 py-0.5 rounded text-xs font-medium bg-blue-500/20 text-blue-400">GET</span>
+                      <code className="text-sm text-white">/api/admin/stats</code>
+                    </div>
+                    <p className="text-sm text-gray-400">
+                      Get platform-wide statistics: total users, agents, outcomes, and recent activity.
+                    </p>
+                  </div>
+
+                  {/* GET /admin/users */}
+                  <div className="border border-white/[0.06] rounded p-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="px-2 py-0.5 rounded text-xs font-medium bg-blue-500/20 text-blue-400">GET</span>
+                      <code className="text-sm text-white">/api/admin/users</code>
+                    </div>
+                    <p className="text-sm text-gray-400">
+                      List all users with pagination. Query params: <code className="text-[#01696F]">limit</code>, <code className="text-[#01696F]">skip</code>
+                    </p>
+                  </div>
+
+                  {/* GET /admin/agents */}
+                  <div className="border border-white/[0.06] rounded p-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="px-2 py-0.5 rounded text-xs font-medium bg-blue-500/20 text-blue-400">GET</span>
+                      <code className="text-sm text-white">/api/admin/agents</code>
+                    </div>
+                    <p className="text-sm text-gray-400">
+                      List all agents with filtering. Query params: <code className="text-[#01696F]">limit</code>, <code className="text-[#01696F]">skip</code>, <code className="text-[#01696F]">tier</code>, <code className="text-[#01696F]">is_public</code>
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mt-6 pt-4 border-t border-white/[0.06]">
+                  <p className="text-xs text-gray-500">
+                    For complete API documentation, visit the{" "}
+                    <Link to="/docs" className="text-[#01696F] hover:text-[#028C94] transition-colors">
+                      API Docs
+                    </Link>
+                    {" "}page.
+                  </p>
+                </div>
+              </div>
             </div>
           )}
         </div>
