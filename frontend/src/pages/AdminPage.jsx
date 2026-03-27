@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { adminAPI } from "../lib/api";
+import { toast } from "sonner";
 import { 
   Users, 
   Bot, 
@@ -19,17 +20,32 @@ import {
   Key,
   CheckCircle2,
   XCircle,
-  MessageSquare
+  MessageSquare,
+  Briefcase,
+  Terminal,
+  Plus,
+  Copy,
+  Trash2,
+  ExternalLink
 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "../components/ui/dialog";
 
 // Navigation items
 const NAV_ITEMS = [
   { id: "overview", label: "Overview", icon: LayoutDashboard },
+  { id: "clients", label: "Clients", icon: Briefcase },
   { id: "users", label: "Users", icon: Users },
   { id: "agents", label: "Agents", icon: Bot },
   { id: "api-keys", label: "API Keys", icon: Key },
   { id: "feedback", label: "Feedback", icon: MessageSquare, isLink: true, href: "/admin/feedback" },
   { id: "logs", label: "Logs", icon: FileText },
+  { id: "admin-api", label: "Admin API", icon: Terminal },
 ];
 
 export default function AdminPage() {
