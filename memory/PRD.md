@@ -574,3 +574,18 @@ db.users.updateOne({email: "admin@example.com"}, {$set: {is_admin: true}})
 - Tests 34-37: Blog link visible in Blog page header, may need verification on other pages
 
 **Test Report**: `/app/test_reports/test_c_blog_playground_results.json`
+
+## SSR Meta Tag Injection (Added March 27, 2026)
+
+Server-side rendering endpoints added for SEO meta tag injection:
+- `GET /api/ssr/blog/{slug}` - Returns HTML with pre-populated OG/Twitter/JSON-LD meta tags for blog posts
+- `GET /api/ssr/agent/{agent_id}` - Returns HTML with meta tags for public agent profiles
+
+These endpoints return fully-formed HTML with:
+- Open Graph tags (og:title, og:description, og:image, og:url, og:type)
+- Twitter Card tags (twitter:card, twitter:title, twitter:description, twitter:image)
+- Article-specific meta tags (article:published_time, article:author, article:tag)
+- JSON-LD structured data (Article schema with author, publisher, dates)
+- Canonical URLs
+
+**Usage**: Configure reverse proxy (nginx/Cloudflare) to route crawler user-agents to `/api/ssr/*` endpoints for proper social media previews.
