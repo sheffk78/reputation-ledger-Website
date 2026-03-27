@@ -22,55 +22,25 @@ const API_URL = process.env.REACT_APP_BACKEND_URL;
 // Available endpoints
 const ENDPOINTS = [
   {
-    id: "list-agents",
-    method: "GET",
-    path: "/api/v1/agents",
-    name: "List Agents",
-    description: "Get all agents for the authenticated user",
-    params: [],
-    requiresAgent: false
-  },
-  {
-    id: "get-agent",
-    method: "GET",
-    path: "/api/v1/agents/{agent_id}",
-    name: "Get Agent",
-    description: "Get details for a specific agent",
-    params: [],
-    requiresAgent: true
-  },
-  {
-    id: "get-score",
-    method: "GET",
-    path: "/api/v1/agents/{agent_id}/score",
-    name: "Get Score",
-    description: "Get the reputation score and tier for an agent",
-    params: [],
-    requiresAgent: true
-  },
-  {
-    id: "list-outcomes",
-    method: "GET",
-    path: "/api/v1/agents/{agent_id}/outcomes",
-    name: "List Outcomes",
-    description: "Get outcome history for an agent",
-    params: [
-      { name: "limit", type: "number", default: 20, description: "Number of outcomes to return" },
-      { name: "result", type: "select", options: ["", "success", "failure", "partial", "timeout"], description: "Filter by result type" }
-    ],
-    requiresAgent: true
-  },
-  {
     id: "create-agent",
     method: "POST",
     path: "/api/v1/agents",
-    name: "Create Agent",
+    name: "Register Agent",
     description: "Register a new agent",
     params: [
       { name: "name", type: "text", required: true, description: "Agent name" },
       { name: "description", type: "text", description: "Agent description" },
       { name: "owner_handle", type: "text", description: "Owner handle (e.g., @myteam)" }
     ],
+    requiresAgent: false
+  },
+  {
+    id: "list-agents",
+    method: "GET",
+    path: "/api/v1/agents",
+    name: "List Agents",
+    description: "Get all agents for the authenticated user",
+    params: [],
     requiresAgent: false
   },
   {
@@ -87,14 +57,69 @@ const ENDPOINTS = [
     requiresAgent: true
   },
   {
+    id: "get-score",
+    method: "GET",
+    path: "/api/v1/agents/{agent_id}/score",
+    name: "Get Score",
+    description: "Get the reputation score and tier for an agent",
+    params: [],
+    requiresAgent: true
+  },
+  {
     id: "get-badge",
     method: "GET",
     path: "/api/v1/agents/{agent_id}/badge.svg",
-    name: "Get Badge (SVG)",
+    name: "Get Badge",
     description: "Get the embeddable SVG badge (public endpoint)",
     params: [],
     requiresAgent: true,
     isSvg: true
+  },
+  {
+    id: "submit-flag",
+    method: "POST",
+    path: "/api/v1/agents/{agent_id}/flags",
+    name: "Submit Flag",
+    description: "Flag an agent for review",
+    params: [
+      { name: "reason", type: "text", required: true, description: "Reason for flagging" },
+      { name: "notes", type: "text", description: "Additional notes" },
+      { name: "outcome_id", type: "text", description: "Specific outcome ID (optional)" }
+    ],
+    requiresAgent: true
+  },
+  {
+    id: "list-outcomes",
+    method: "GET",
+    path: "/api/v1/agents/{agent_id}/outcomes",
+    name: "List Outcomes",
+    description: "Get outcome history for an agent",
+    params: [
+      { name: "limit", type: "number", default: 20, description: "Number of outcomes to return" },
+      { name: "result", type: "select", options: ["", "success", "failure", "partial", "timeout"], description: "Filter by result type" }
+    ],
+    requiresAgent: true
+  },
+  {
+    id: "create-webhook",
+    method: "POST",
+    path: "/api/webhooks",
+    name: "Create Webhook",
+    description: "Create a webhook subscription",
+    params: [
+      { name: "url", type: "text", required: true, description: "Webhook URL (https://)" },
+      { name: "event_type", type: "select", required: true, options: ["outcome.created", "score.changed", "tier.changed"], description: "Event to subscribe to" }
+    ],
+    requiresAgent: false
+  },
+  {
+    id: "list-webhooks",
+    method: "GET",
+    path: "/api/webhooks",
+    name: "List Webhooks",
+    description: "Get all webhook subscriptions",
+    params: [],
+    requiresAgent: false
   }
 ];
 
@@ -338,19 +363,39 @@ export default function PlaygroundPage() {
       </header>
 
       {/* Main Content - Split Panel */}
-      <main className="flex-1 flex">
+      <main className="flex-1 flex flex-col">
+        {/* Warning Banner */}
+        <div className="bg-amber-500/10 border-b border-amber-500/20 px-6 py-2">
+          <p className="text-xs text-amber-400 text-center">
+            All requests use your live API key and affect real data.
+          </p>
+        </div>
+        
+        <div className="flex-1 flex">
         {/* Left Panel - Request Builder */}
-        <div className="w-1/2 border-r border-white/[0.06] flex flex-col">
+        <div className="w-2/5 border-r border-white/[0.06] flex flex-col">
           {/* API Key Section */}
           <div className="p-4 border-b border-white/[0.06] bg-[#0C1116]/50">
             <div className="flex items-center justify-between mb-2">
               <span className="text-xs text-gray-500 uppercase tracking-wider">API Key</span>
-              <button
-                onClick={() => setShowApiKey(!showApiKey)}
-                className="text-gray-500 hover:text-white transition-colors"
-              >
-                {showApiKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={async () => {
+                    await copyToClipboard(apiKey);
+                    toast.success("API key copied");
+                  }}
+                  className="text-gray-500 hover:text-white transition-colors"
+                  title="Copy API key"
+                >
+                  <Copy className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => setShowApiKey(!showApiKey)}
+                  className="text-gray-500 hover:text-white transition-colors"
+                >
+                  {showApiKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
             </div>
             <code className="text-sm text-[#01696F] font-mono">
               {showApiKey ? apiKey : `${apiKey?.substring(0, 8)}${'•'.repeat(24)}${apiKey?.substring(apiKey.length - 4)}`}
@@ -501,7 +546,7 @@ export default function PlaygroundPage() {
         </div>
 
         {/* Right Panel - Response Viewer */}
-        <div className="w-1/2 flex flex-col bg-[#0C1116]/30">
+        <div className="w-3/5 flex flex-col bg-[#0C1116]/30">
           <div className="p-4 border-b border-white/[0.06] flex items-center justify-between">
             <div className="flex items-center gap-3">
               <span className="text-xs text-gray-500 uppercase tracking-wider">Response</span>
@@ -561,6 +606,7 @@ export default function PlaygroundPage() {
               </pre>
             )}
           </div>
+        </div>
         </div>
       </main>
     </div>
