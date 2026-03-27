@@ -715,8 +715,9 @@ For testing organization linking without real AAV/Safe-Spend services:
 - `POST /api/mock/aav/api/v1/internal/events` - Receive cross-tool events (mock AAV)
 - `GET /api/mock/aav/api/v1/internal/events/received` - Inspect received events
 
-**Environment Variable**:
+**Environment Variables**:
 - `AAV_MOCK_MODE=true` - Enable mock AAV mode for org linking
+- `INTERNAL_SUBSCRIBERS=http://127.0.0.1:8001/api/mock/aav/api/v1/internal/events` - Configure event delivery
 
 **Tested & Verified**:
 - ✅ Mock link token creation
@@ -726,3 +727,37 @@ For testing organization linking without real AAV/Safe-Spend services:
 - ✅ All user agents receive `organization_id`
 - ✅ Settings page shows "Connected" status
 - ✅ Dashboard shows "Ecosystem Integration" card
+
+### Cross-Tool Event Emission (Verified March 27, 2026)
+Events are emitted to `INTERNAL_SUBSCRIBERS` when agent scores change significantly:
+
+**Event Types**:
+- `arl.score.changed` - Emitted when score changes by ≥5 points
+- `arl.tier.changed` - Emitted when tier boundary is crossed
+- `arl.agent.flagged` - Emitted when an agent is flagged
+
+**Event Payload Structure**:
+```json
+{
+  "id": "evt_at_...",
+  "source": "arl",
+  "source_version": "1.0.0",
+  "event_type": "arl.tier.changed",
+  "org_id": "org_...",
+  "uaid": "agt_...",
+  "timestamp": "2026-03-27T22:23:44.126872+00:00",
+  "data": {
+    "old_tier": "Unrated",
+    "new_tier": "Gold",
+    "score": 100.0
+  }
+}
+```
+
+**Verified Scenarios**:
+- ✅ Tier upgrade (Unrated → Gold) emits `arl.tier.changed`
+- ✅ Tier downgrade (Gold → Silver) emits `arl.tier.changed`
+- ✅ Score drop ≥5 points emits `arl.score.changed` with change delta
+- ✅ Events include `org_id` when agent is linked to organization
+- ✅ HMAC-SHA256 signature verified on receiver side
+
