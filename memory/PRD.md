@@ -436,7 +436,11 @@ db.users.updateOne({email: "admin@example.com"}, {$set: {is_admin: true}})
 │   ├── auth.py            # /api/auth/* routes
 │   ├── blog.py            # /api/blog/* and /api/admin/blog/* routes
 │   ├── agents.py          # /api/v1/agents/* routes (incl. outcomes, flags)
-│   └── webhooks.py        # /api/v1/webhooks/* routes
+│   ├── webhooks.py        # /api/v1/webhooks/* routes
+│   ├── internal.py        # /api/v1/internal/* cross-tool events
+│   ├── organizations.py   # /api/v1/org/* org linking and batch scores
+│   ├── mock_aav.py        # Mock AAV endpoints for testing
+│   └── ssr.py             # Server-side rendering for crawlers
 ├── services/
 │   ├── __init__.py
 │   ├── audit_service.py    # Audit log emission
@@ -446,6 +450,26 @@ db.users.updateOne({email: "admin@example.com"}, {$set: {is_admin: true}})
 └── utils/
     ├── __init__.py
     └── password.py        # Password hashing utilities
+
+/app/frontend/src/
+├── components/
+│   ├── dashboard/                  # Dashboard section components (refactored March 2026)
+│   │   ├── index.js               # Barrel export
+│   │   ├── AgentsSection.jsx      # Agents table, create dialog, demo agent
+│   │   ├── ApiKeySection.jsx      # API key display with visibility toggle
+│   │   ├── ApiQuickstartPanel.jsx # Collapsible quickstart guide
+│   │   ├── CodeSnippet.jsx        # Code block with copy button
+│   │   ├── SkeletonBlock.jsx      # Loading skeleton + FieldError
+│   │   ├── TierBadge.jsx          # Tier badge component
+│   │   ├── UsageStatsSection.jsx  # 4 stat cards
+│   │   ├── WebhooksSection.jsx    # Webhooks table and dialogs
+│   │   └── WhatsNewSection.jsx    # Changelog section
+│   ├── CrossToolComponents.jsx    # Cross-tool integration UI
+│   ├── FeedbackModal.jsx          # User feedback form
+│   ├── PlanCard.jsx               # Billing plan card
+│   └── ui/                        # Shadcn UI components
+└── pages/
+    └── DashboardPage.jsx          # Main dashboard (~235 lines, refactored from 1308)
 ```
 
 ## Routes
