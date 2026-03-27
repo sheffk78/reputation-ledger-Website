@@ -12,6 +12,7 @@ Build a Phase 1 MVP of Agent Reputation Ledger (RepLedger) - a track record API 
 - Developer documentation
 - Email notifications (welcome, password reset, outcome alerts)
 - Webhooks for real-time outcome event notifications
+- **Cross-tool integration** with AAV and Safe-Spend via internal events
 
 ## User Personas
 1. **Independent Agent Builders** - Build on OpenClaw, n8n, CrewAI; need to prove agent reliability
@@ -28,6 +29,7 @@ Build a Phase 1 MVP of Agent Reputation Ledger (RepLedger) - a track record API 
 - Public SVG badge endpoint
 - Email notifications via Postmark
 - Webhook subscriptions for outcome events
+- **Cross-tool identity mapping** (organization_id, aav_certificate_id, safe_spend_escrow_id)
 
 ## What's Been Implemented
 
@@ -612,3 +614,57 @@ The backend now **automatically detects crawler user agents** and serves SSR con
 **Files**:
 - `/app/backend/routes/ssr.py` - SSR routes and crawler-aware routes
 - `/app/backend/middleware/crawler_ssr.py` - Crawler detection utilities + nginx/Cloudflare config examples
+
+## ARL Cross-Tool Integration (Added March 27, 2026)
+
+### Universal Agent ID & Cross-Tool Identity
+
+The Agent model now supports cross-tool identity mapping:
+- `organization_id`: Links agent to AgenticTrust organization (org_XXXX format)
+- `aav_certificate_id`: Links to AAV verification certificate
+- `safe_spend_escrow_id`: Links to Safe-Spend escrow account
+
+### Cross-Reference Lookup Endpoints
+- `GET /api/v1/internal/agents/by-certificate/{certificate_id}` - Find agent by AAV cert
+- `GET /api/v1/internal/agents/by-escrow/{escrow_id}` - Find agent by escrow ID
+
+### Internal Event Ingestion (AAV + Safe-Spend)
+- `POST /api/v1/internal/events` - Receive events from sister tools
+- HMAC-SHA256 authentication via `X-AgenticTrust-Signature` header
+- Auto-logs outcomes for: `aav.verification.authorized/denied`, `safe_spend.spend.approved/denied/expired`
+
+### Organization Linking
+- `POST /api/v1/org/link` - Link user and all agents to organization via AAV link token
+- Validates token with AAV (or uses mock in dev mode)
+
+### Batch Score Endpoint
+- `POST /api/v1/agents/scores/batch` - Get scores for up to 100 agents in one request
+- `GET /api/v1/organizations/{org_id}/score-summary` - Aggregated org score summary
+
+### Control Plane Readiness
+- `GET /api/v1/org/{org_id}/summary` - Tool summary for agentictrust.app control plane
+- `GET /api/v1/agents/{agent_id}/card-data` - Standardized agent card format
+
+### Score Change Events
+- `arl.score.changed` - Emitted when score changes by >= 5 points
+- `arl.tier.changed` - Emitted when tier boundary crossed
+- `arl.agent.flagged` - Emitted when agent is flagged
+
+### Frontend Updates
+- **Agent Detail Page**: Cross-Tool Status section (shows AAV cert / Safe-Spend escrow if linked)
+- **Agent Detail Page**: Outcome Sources chart (shows manual vs AAV vs Safe-Spend breakdown)
+- **Dashboard**: Ecosystem Integration card (shows org link status, conditional)
+- **Settings Page**: Organization section with link token input
+- **Outcome Tables**: Source badges (Manual/AAV/Safe-Spend)
+
+### Environment Variables Added
+- `INTERNAL_WEBHOOK_SECRET` - HMAC secret for internal events
+- `AAV_API_URL` - AAV service URL (optional)
+- `SAFE_SPEND_API_URL` - Safe-Spend service URL (optional)
+- `INTERNAL_SUBSCRIBERS` - Comma-separated URLs to deliver cross-tool events
+- `PUBLIC_URL` - Public URL for badge/profile links
+
+### Files Created
+- `/app/backend/routes/internal.py` - Internal events and cross-reference endpoints
+- `/app/backend/routes/organizations.py` - Org linking, batch scores, control plane endpoints
+- `/app/frontend/src/components/CrossToolComponents.jsx` - Cross-tool UI components

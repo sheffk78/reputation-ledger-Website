@@ -1,11 +1,14 @@
 from pydantic import BaseModel, Field
-from typing import Optional
+from typing import Optional, Dict, List
 
 
 class AgentCreate(BaseModel):
     name: str = Field(min_length=1, max_length=100)
     description: Optional[str] = None
     owner_handle: Optional[str] = None
+    organization_id: Optional[str] = None  # Cross-tool: org_XXXX format
+    aav_certificate_id: Optional[str] = None  # Cross-tool: AAV certificate linkage
+    safe_spend_escrow_id: Optional[str] = None  # Cross-tool: Safe-Spend escrow linkage
 
 
 class AgentCreateResponse(BaseModel):
@@ -14,6 +17,9 @@ class AgentCreateResponse(BaseModel):
     name: str
     description: Optional[str] = None
     owner_handle: Optional[str] = None
+    organization_id: Optional[str] = None
+    aav_certificate_id: Optional[str] = None
+    safe_spend_escrow_id: Optional[str] = None
     created_at: str
 
 
@@ -23,6 +29,9 @@ class AgentListResponse(BaseModel):
     name: str
     description: Optional[str] = None
     owner_handle: Optional[str] = None
+    organization_id: Optional[str] = None
+    aav_certificate_id: Optional[str] = None
+    safe_spend_escrow_id: Optional[str] = None
     created_at: str
     score: float = 0
     tier: str = "Unrated"
@@ -42,6 +51,9 @@ class AgentPublicProfile(BaseModel):
     name: str
     description: Optional[str] = None
     owner_handle: Optional[str] = None
+    organization_id: Optional[str] = None
+    aav_certificate_id: Optional[str] = None
+    safe_spend_escrow_id: Optional[str] = None
     score: float
     tier: str
     outcome_count: int

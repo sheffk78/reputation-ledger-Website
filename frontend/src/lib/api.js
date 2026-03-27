@@ -350,4 +350,22 @@ export const billingAPI = {
   },
 };
 
+// Organization API
+export const organizationsAPI = {
+  linkOrg: async (linkToken) => {
+    const response = await apiClientV1.post("/org/link", { link_token: linkToken });
+    return response.data;
+  },
+  
+  getOrgSummary: async (orgId) => {
+    const response = await apiClientV1.get(`/organizations/${orgId}/score-summary`);
+    return response.data;
+  },
+  
+  getBatchScores: async (uaids) => {
+    const response = await apiClientV1.post("/agents/scores/batch", { uaids });
+    return response.data;
+  },
+};
+
 export default apiClient;

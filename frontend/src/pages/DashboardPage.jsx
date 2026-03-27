@@ -58,6 +58,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { changelog } from "../data/changelog";
+import { EcosystemIntegrationCard } from "../components/CrossToolComponents";
 
 const LOGO_URL = "https://customer-assets.emergentagent.com/job_ac636d4a-6ca2-497e-8615-5b0c10a94a77/artifacts/vcawrcg8_repledger-logo-dark.svg";
 const BASE_URL = "https://arl.agentauthority.dev";
@@ -828,6 +829,9 @@ export default function DashboardPage() {
 
           {/* Plan Card */}
           <PlanCard />
+          
+          {/* Ecosystem Integration Card (conditional - only shows if org is linked) */}
+          <EcosystemIntegrationCard user={user} agents={agents} />
 
           {/* Agents Section */}
           <section>

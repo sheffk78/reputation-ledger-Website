@@ -28,6 +28,8 @@ from routes.sandbox import router as sandbox_router
 from routes.billing import router as billing_router
 from routes.stripe_webhook import router as stripe_webhook_router
 from routes.ssr import router as ssr_router, crawler_router as ssr_crawler_router
+from routes.internal import router as internal_router
+from routes.organizations import router as organizations_router
 
 # Configure logging
 logging.basicConfig(
@@ -293,6 +295,8 @@ api_router.include_router(ssr_crawler_router)
 # V1 API routes
 v1_router.include_router(agents_router)  # /api/v1/agents/*
 v1_router.include_router(webhooks_router)  # /api/v1/webhooks/*
+v1_router.include_router(internal_router)  # /api/v1/internal/* (cross-tool events)
+v1_router.include_router(organizations_router)  # /api/v1/org/*, /api/v1/organizations/*
 
 # Include main routers in app
 app.include_router(api_router)

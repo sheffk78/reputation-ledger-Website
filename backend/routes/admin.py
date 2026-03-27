@@ -179,6 +179,9 @@ class FullSetupAgentInput(BaseModel):
     name: str
     description: Optional[str] = None
     is_public: bool = False
+    organization_id: Optional[str] = None
+    aav_certificate_id: Optional[str] = None
+    safe_spend_escrow_id: Optional[str] = None
 
 
 class FullSetupWebhookInput(BaseModel):
@@ -192,6 +195,7 @@ class AdminFullSetupRequest(BaseModel):
     """Request to create user + agents + webhooks in one call"""
     email: EmailStr
     password: str = Field(..., min_length=8)
+    organization_id: Optional[str] = None  # Org to link user and agents to
     agents: List[FullSetupAgentInput] = []
     webhooks: List[FullSetupWebhookInput] = []
 
@@ -200,6 +204,9 @@ class FullSetupAgentResult(BaseModel):
     """Agent created in full setup"""
     agent_id: str
     name: str
+    organization_id: Optional[str] = None
+    aav_certificate_id: Optional[str] = None
+    safe_spend_escrow_id: Optional[str] = None
 
 
 class AdminFullSetupResponse(BaseModel):
@@ -207,6 +214,7 @@ class AdminFullSetupResponse(BaseModel):
     user_id: str
     email: str
     api_key: str
+    organization_id: Optional[str] = None
     agents: List[FullSetupAgentResult]
     webhooks_created: int
 
@@ -1015,6 +1023,7 @@ async def admin_full_setup(
     
     Used by admins to provision a new client account in one step.
     Returns credentials that should be shared with the client.
+    Supports cross-tool fields: organization_id, aav_certificate_id, safe_spend_escrow_id.
     """
     # Check if email already exists
     existing = await db.users.find_one({"email": data.email}, {"_id": 0, "id": 1})
@@ -1032,12 +1041,13 @@ async def admin_full_setup(
     # Hash password
     password_hash = hash_password(data.password)
     
-    # Create user document
+    # Create user document with organization_id
     user_doc = {
         "id": user_id,
         "email": data.email,
         "password_hash": password_hash,
         "is_admin": False,
+        "organization_id": data.organization_id,  # Cross-tool linkage
         "created_at": now,
         "notification_preferences": {
             "email_outcome_alerts": True,
@@ -1061,22 +1071,31 @@ async def admin_full_setup(
     
     await db.api_keys.insert_one(api_key_doc)
     
-    # Create agents
+    # Create agents with cross-tool fields
     created_agents = []
     for agent_input in data.agents:
-        agent_id = str(uuid.uuid4())
+        agent_id = f"agt_{secrets.token_hex(12)}"  # Use proper agt_ format
+        # Use agent-specific org_id or fall back to user's org_id
+        agent_org_id = agent_input.organization_id or data.organization_id
+        
         agent_doc = {
             "agent_id": agent_id,
             "user_id": user_id,
             "name": agent_input.name,
             "description": agent_input.description,
             "is_public": agent_input.is_public,
+            "organization_id": agent_org_id,
+            "aav_certificate_id": agent_input.aav_certificate_id,
+            "safe_spend_escrow_id": agent_input.safe_spend_escrow_id,
             "created_at": now
         }
         await db.agents.insert_one(agent_doc)
         created_agents.append(FullSetupAgentResult(
             agent_id=agent_id,
-            name=agent_input.name
+            name=agent_input.name,
+            organization_id=agent_org_id,
+            aav_certificate_id=agent_input.aav_certificate_id,
+            safe_spend_escrow_id=agent_input.safe_spend_escrow_id
         ))
     
     # Create webhooks
@@ -1099,6 +1118,7 @@ async def admin_full_setup(
         user_id=user_id,
         email=data.email,
         api_key=api_key,
+        organization_id=data.organization_id,
         agents=created_agents,
         webhooks_created=webhooks_created
     )

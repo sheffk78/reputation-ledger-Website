@@ -52,12 +52,18 @@ async def create_agent(
     agent_id = f"agt_{secrets.token_hex(12)}"
     now = datetime.now(timezone.utc).isoformat()
     
+    # Use user's organization_id if not explicitly provided
+    org_id = data.organization_id or user.get("organization_id")
+    
     agent_doc = {
         "agent_id": agent_id,
         "user_id": user["id"],
         "name": data.name,
         "description": data.description,
         "owner_handle": data.owner_handle,
+        "organization_id": org_id,
+        "aav_certificate_id": data.aav_certificate_id,
+        "safe_spend_escrow_id": data.safe_spend_escrow_id,
         "created_at": now,
         "is_public": False  # Default to private
     }
@@ -75,17 +81,25 @@ async def create_agent(
         name=data.name,
         description=data.description,
         owner_handle=data.owner_handle,
+        organization_id=org_id,
+        aav_certificate_id=data.aav_certificate_id,
+        safe_spend_escrow_id=data.safe_spend_escrow_id,
         created_at=now
     )
 
 
 @router.get("", response_model=List[AgentListResponse])
-async def list_agents(user: dict = Depends(get_user_from_api_key)):
-    """List all agents for the authenticated user with computed scores"""
-    agents = await db.agents.find(
-        {"user_id": user["id"]}, 
-        {"_id": 0}
-    ).sort("created_at", -1).to_list(1000)
+async def list_agents(
+    user: dict = Depends(get_user_from_api_key),
+    organization_id: Optional[str] = None
+):
+    """List all agents for the authenticated user with computed scores.
+    Optionally filter by organization_id."""
+    query = {"user_id": user["id"]}
+    if organization_id:
+        query["organization_id"] = organization_id
+    
+    agents = await db.agents.find(query, {"_id": 0}).sort("created_at", -1).to_list(1000)
     
     result = []
     for a in agents:
@@ -102,6 +116,9 @@ async def list_agents(user: dict = Depends(get_user_from_api_key)):
             name=a["name"],
             description=a.get("description"),
             owner_handle=a.get("owner_handle"),
+            organization_id=a.get("organization_id"),
+            aav_certificate_id=a.get("aav_certificate_id"),
+            safe_spend_escrow_id=a.get("safe_spend_escrow_id"),
             created_at=a["created_at"],
             score=score,
             tier=tier,
@@ -259,6 +276,9 @@ async def get_agent(agent_id: str, user: dict = Depends(get_user_from_api_key)):
         name=agent["name"],
         description=agent.get("description"),
         owner_handle=agent.get("owner_handle"),
+        organization_id=agent.get("organization_id"),
+        aav_certificate_id=agent.get("aav_certificate_id"),
+        safe_spend_escrow_id=agent.get("safe_spend_escrow_id"),
         created_at=agent["created_at"],
         score=score,
         tier=tier,
@@ -356,6 +376,9 @@ async def toggle_agent_public(
         name=agent["name"],
         description=agent.get("description"),
         owner_handle=agent.get("owner_handle"),
+        organization_id=agent.get("organization_id"),
+        aav_certificate_id=agent.get("aav_certificate_id"),
+        safe_spend_escrow_id=agent.get("safe_spend_escrow_id"),
         created_at=agent["created_at"],
         score=score,
         tier=tier,
@@ -435,6 +458,9 @@ async def create_outcome(
         "result": data.result,
         "task_type": data.task_type,
         "submitter_type": data.submitter_type,
+        "source": data.source or "manual",
+        "source_event_id": data.source_event_id,
+        "metadata": data.metadata,
         "created_at": now
     }
     
@@ -472,6 +498,7 @@ async def create_outcome(
             "result": data.result,
             "task_type": data.task_type,
             "submitter_type": data.submitter_type,
+            "source": data.source or "manual",
             "score": new_score,
             "tier": new_tier,
             "created_at": now
@@ -495,6 +522,9 @@ async def create_outcome(
         result=data.result,
         task_type=data.task_type,
         submitter_type=data.submitter_type,
+        source=data.source or "manual",
+        source_event_id=data.source_event_id,
+        metadata=data.metadata,
         created_at=now
     )
 
@@ -505,9 +535,10 @@ async def list_outcomes(
     page: int = 1,
     limit: int = 20,
     result: Optional[str] = None,
+    source: Optional[str] = None,
     user: dict = Depends(get_user_from_api_key)
 ):
-    """List outcomes for an agent with pagination and optional result filter"""
+    """List outcomes for an agent with pagination and optional filters"""
     if page < 1:
         page = 1
     if limit < 1:
@@ -535,10 +566,12 @@ async def list_outcomes(
             details={"agent_id": agent_id}
         )
     
-    # Build query with optional result filter
+    # Build query with optional filters
     query = {"agent_id": agent_id}
     if result and result in ["success", "failure", "partial", "timeout"]:
         query["result"] = result
+    if source and source in ["manual", "aav", "safe_spend"]:
+        query["source"] = source
     
     total = await db.outcomes.count_documents(query)
     skip = (page - 1) * limit
@@ -549,7 +582,17 @@ async def list_outcomes(
     ).sort("created_at", -1).skip(skip).limit(limit).to_list(limit)
     
     return PaginatedOutcomesResponse(
-        data=[OutcomeResponse(**o) for o in outcomes],
+        data=[OutcomeResponse(
+            id=o["id"],
+            agent_id=o["agent_id"],
+            result=o["result"],
+            task_type=o["task_type"],
+            submitter_type=o["submitter_type"],
+            source=o.get("source", "manual"),
+            source_event_id=o.get("source_event_id"),
+            metadata=o.get("metadata"),
+            created_at=o["created_at"]
+        ) for o in outcomes],
         page=page,
         limit=limit,
         total=total

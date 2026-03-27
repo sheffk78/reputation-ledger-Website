@@ -2,8 +2,9 @@ import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { settingsAPI } from "../lib/api";
-import { ArrowLeft, LogOut, Bell, Mail, Loader2, Check } from "lucide-react";
+import { ArrowLeft, LogOut, Bell, Mail, Loader2, Check, Building2, Link2 } from "lucide-react";
 import { toast } from "sonner";
+import { OrganizationLinkForm } from "../components/CrossToolComponents";
 
 const LOGO_URL = "https://customer-assets.emergentagent.com/job_ac636d4a-6ca2-497e-8615-5b0c10a94a77/artifacts/vcawrcg8_repledger-logo-dark.svg";
 
@@ -171,6 +172,33 @@ export default function SettingsPage() {
               </div>
             </div>
           </div>
+          
+          {/* Organization Section */}
+          <OrganizationLinkForm 
+            user={user} 
+            onLink={async (linkToken) => {
+              // Call the org link API
+              const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/v1/org/link`, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${localStorage.getItem('token')}`
+                },
+                body: JSON.stringify({ link_token: linkToken })
+              });
+              
+              if (!response.ok) {
+                const data = await response.json();
+                throw new Error(data.detail || 'Failed to link organization');
+              }
+              
+              const data = await response.json();
+              toast.success(`Linked to ${data.organization_id}! ${data.agents_updated} agents updated.`);
+              
+              // Reload the page to reflect the new org
+              window.location.reload();
+            }} 
+          />
         </div>
       </main>
     </div>

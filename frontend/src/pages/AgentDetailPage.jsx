@@ -16,6 +16,7 @@ import {
 } from "../components/ui/dialog";
 import { ArrowLeft, RefreshCw, LogOut, Copy, Check, ExternalLink, ChevronLeft, ChevronRight, Flag, AlertTriangle, X, Loader2, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import { CrossToolStatus, OutcomeSourcesChart, OutcomeSourceBadge } from "../components/CrossToolComponents";
 
 const LOGO_URL = "https://customer-assets.emergentagent.com/job_ac636d4a-6ca2-497e-8615-5b0c10a94a77/artifacts/vcawrcg8_repledger-logo-dark.svg";
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
@@ -487,6 +488,12 @@ export default function AgentDetailPage() {
             )}
           </div>
 
+          {/* Cross-Tool Status (conditional - only shows if AAV or Safe-Spend linked) */}
+          <CrossToolStatus agent={agent} />
+          
+          {/* Outcome Sources Chart (conditional - only shows if multiple sources) */}
+          <OutcomeSourcesChart outcomes={outcomes} />
+
           {/* Score Breakdown Card */}
           {scoreData && scoreData.breakdown && (
             <div className="card-surface p-5" data-testid="score-breakdown-card">
@@ -697,7 +704,8 @@ export default function AgentDetailPage() {
                         <th>Timestamp</th>
                         <th>Task Type</th>
                         <th>Result</th>
-                        <th className="hidden sm:table-cell">Submitter</th>
+                        <th className="hidden sm:table-cell">Source</th>
+                        <th className="hidden md:table-cell">Submitter</th>
                         <th className="w-[60px]"></th>
                       </tr>
                     </thead>
@@ -718,6 +726,9 @@ export default function AgentDetailPage() {
                             </span>
                           </td>
                           <td className="hidden sm:table-cell">
+                            <OutcomeSourceBadge source={outcome.source} />
+                          </td>
+                          <td className="hidden md:table-cell">
                             <span className="text-[#9CA3AF] text-[13px] capitalize">
                               {outcome.submitter_type}
                             </span>

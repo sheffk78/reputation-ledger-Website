@@ -1,4 +1,4 @@
-from typing import List, Tuple, Dict
+from typing import List, Tuple, Dict, Optional
 
 
 def calculate_score_and_tier(outcomes: List[dict]) -> Tuple[float, str, float, Dict[str, int]]:
@@ -45,6 +45,98 @@ def calculate_score_and_tier(outcomes: List[dict]) -> Tuple[float, str, float, D
         tier = "Gold"  # Score >= 90 but < 50 outcomes
     
     return score, tier, round(success_rate, 1), breakdown
+
+
+def detect_score_changes(
+    old_score: float,
+    old_tier: str,
+    new_score: float,
+    new_tier: str
+) -> Dict[str, bool]:
+    """
+    Detect if score or tier changed significantly.
+    
+    Returns dict with:
+    - score_changed: True if score changed by >= 5 points
+    - tier_changed: True if tier boundary crossed
+    """
+    score_changed = abs(new_score - old_score) >= 5.0
+    tier_changed = old_tier != new_tier
+    
+    return {
+        "score_changed": score_changed,
+        "tier_changed": tier_changed
+    }
+
+
+async def check_and_emit_score_events(
+    agent_id: str,
+    old_score: float,
+    old_tier: str,
+    new_score: float,
+    new_tier: str,
+    organization_id: Optional[str] = None
+):
+    """
+    Check for significant score changes and emit cross-tool events.
+    
+    Event types emitted:
+    - arl.score.changed: When score changes by >= 5 points
+    - arl.tier.changed: When tier boundary crossed
+    """
+    from routes.internal import emit_cross_tool_event
+    
+    changes = detect_score_changes(old_score, old_tier, new_score, new_tier)
+    
+    if changes["score_changed"]:
+        await emit_cross_tool_event(
+            event_type="arl.score.changed",
+            uaid=agent_id,
+            org_id=organization_id,
+            data={
+                "old_score": old_score,
+                "new_score": new_score,
+                "old_tier": old_tier,
+                "new_tier": new_tier,
+                "change": round(new_score - old_score, 1)
+            }
+        )
+    
+    if changes["tier_changed"]:
+        await emit_cross_tool_event(
+            event_type="arl.tier.changed",
+            uaid=agent_id,
+            org_id=organization_id,
+            data={
+                "old_tier": old_tier,
+                "new_tier": new_tier,
+                "score": new_score
+            }
+        )
+
+
+async def emit_agent_flagged_event(
+    agent_id: str,
+    flag_id: str,
+    reason: str,
+    organization_id: Optional[str] = None
+):
+    """
+    Emit event when an agent is flagged.
+    
+    Event type: arl.agent.flagged
+    """
+    from routes.internal import emit_cross_tool_event
+    
+    await emit_cross_tool_event(
+        event_type="arl.agent.flagged",
+        uaid=agent_id,
+        org_id=organization_id,
+        data={
+            "flag_id": flag_id,
+            "reason": reason
+        }
+    )
 
 
 def generate_badge_svg(tier: str, score: float) -> str:
