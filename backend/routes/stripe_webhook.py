@@ -3,7 +3,7 @@ Stripe webhook handler for RepLedger.
 
 Listens for subscription lifecycle events and updates user plans accordingly.
 Register this webhook in Stripe Dashboard pointing to:
-    https://agentauthority.dev/api/stripe/webhook
+    https://reputationledger.dev/api/stripe/webhook
 
 Required events:
     - checkout.session.completed
