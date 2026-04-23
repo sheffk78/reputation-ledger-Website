@@ -20,5 +20,6 @@ COPY nginx.conf /etc/nginx/conf.d/default.conf
 COPY start.sh /start.sh
 RUN chmod +x /start.sh
 
-EXPOSE 80
-CMD ["/start.sh"]
+# Default PORT, Railway will override it
+ENV PORT=80
+CMD /start.sh
