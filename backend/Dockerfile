@@ -14,6 +14,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy application code
 COPY . .
 
-# Use shell form CMD so Railway's $PORT env var is available
-ENV PORT=8000
-CMD uvicorn server:app --host 0.0.0.0 --port $PORT
+# Railway sets PORT dynamically - start script reads it
+RUN echo '#!/bin/sh\nexec uvicorn server:app --host 0.0.0.0 --port ${PORT:-8000}' > /app/run.sh && chmod +x /app/run.sh
+
+EXPOSE 8000
+CMD ["/app/run.sh"]
