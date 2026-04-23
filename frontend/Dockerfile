@@ -17,9 +17,8 @@ RUN yarn build
 FROM nginx:alpine
 COPY --from=builder /app/build /usr/share/nginx/html
 COPY nginx.conf /etc/nginx/conf.d/default.conf
-
-# Start script to handle $PORT
-RUN echo '#!/bin/sh\nsed -i "s/listen 80/listen ${PORT:-80}/" /etc/nginx/conf.d/default.conf\nnginx -g "daemon off;"' > /start.sh && chmod +x /start.sh
+COPY start.sh /start.sh
+RUN chmod +x /start.sh
 
 EXPOSE 80
 CMD ["/start.sh"]
