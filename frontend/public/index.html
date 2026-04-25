@@ -4,11 +4,27 @@
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta name="theme-color" content="#01696F" />
-        <meta name="description" content="RepLedger - Agent Reputation Tracking System. Track, score, and verify AI agent performance." />
+        <meta name="description" content="RepLedger — Agent Reputation Tracking System. Track, score, and verify AI agent performance with evidence-backed reputation scores." />
+        <meta name="keywords" content="AI agent reputation, agent trust scores, AI agent monitoring, agent performance tracking, agentic trust" />
+        <meta property="og:title" content="RepLedger | Agent Reputation" />
+        <meta property="og:description" content="Every agent earns its record. Track, score, and verify AI agent performance." />
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content="https://arl.agentictrust.app" />
+        <meta property="og:site_name" content="RepLedger" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="RepLedger | Agent Reputation" />
+        <meta name="twitter:description" content="Every agent earns its record. Track, score, and verify AI agent performance." />
         <link rel="icon" type="image/svg+xml" href="%PUBLIC_URL%/favicon.svg" />
+        <link rel="apple-touch-icon" sizes="180x180" href="%PUBLIC_URL%/apple-touch-icon.png" />
+        <link rel="icon" type="image/png" sizes="32x32" href="%PUBLIC_URL%/favicon-32x32.png" />
+        <link rel="icon" type="image/png" sizes="16x16" href="%PUBLIC_URL%/favicon-16x16.png" />
+        <link rel="manifest" href="%PUBLIC_URL%/site.webmanifest" />
+        <meta name="apple-mobile-web-app-title" content="RepLedger" />
+        <meta name="application-name" content="RepLedger" />
+        <link rel="canonical" href="https://arl.agentictrust.app" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@600&display=swap" rel="stylesheet" />
+        <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
         <title>RepLedger | Agent Reputation</title>
         <!-- Google Analytics -->
         <script async src="https://www.googletagmanager.com/gtag/js?id=G-EM37MRSR0H"></script>
@@ -20,6 +36,43 @@
         </script>
         <script>window.addEventListener("error",function(e){if(e.error instanceof DOMException&&e.error.name==="DataCloneError"&&e.message&&e.message.includes("PerformanceServerTiming")){e.stopImmediatePropagation();e.preventDefault()}},true);</script>
         <script src="https://assets.emergent.sh/scripts/emergent-main.js"></script>
+        <style>
+            /* Subtle grain texture overlay per design guidelines */
+            body::before {
+                content: '';
+                position: fixed;
+                top: 0; left: 0; right: 0; bottom: 0;
+                opacity: 0.03;
+                z-index: 9999;
+                pointer-events: none;
+                background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+                background-repeat: repeat;
+                background-size: 256px 256px;
+            }
+            @media (prefers-reduced-motion: reduce) {
+                * { transition: none !important; animation: none !important; }
+            }
+        </style>
+        <script type="application/ld+json">
+        {
+            "@context": "https://schema.org",
+            "@type": ["Organization", "SoftwareApplication"],
+            "@id": "https://arl.agentictrust.app/#organization",
+            "name": "RepLedger",
+            "legalName": "AgenticTrust",
+            "url": "https://arl.agentictrust.app",
+            "description": "Agent Reputation Tracking System. Track, score, and verify AI agent performance with evidence-backed reputation scores.",
+            "applicationCategory": "DeveloperApplication",
+            "operatingSystem": "Web",
+            "foundingDate": "2025",
+            "logo": {
+                "@type": "ImageObject",
+                "url": "https://customer-assets.emergentagent.com/job_ac636d4a-6ca2-497e-8615-5b0c10a94a77/artifacts/vcawrcg8_repledger-logo-dark.svg"
+            },
+            "sameAs": ["https://x.com/AgenticTrustKit"],
+            "knowsAbout": ["AI agent reputation", "agent trust scores", "agent performance tracking", "reputation ledgers", "AI governance", "agentic trust", "agent monitoring", "evidence-backed scoring", "tier badges", "agent verification"]
+        }
+        </script>
     </head>
     <body>
         <noscript>You need to enable JavaScript to run this app.</noscript>

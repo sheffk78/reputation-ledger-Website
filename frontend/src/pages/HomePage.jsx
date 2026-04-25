@@ -2,6 +2,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { Button } from "../components/ui/button";
 import { ArrowRight, CheckCircle2, Shield, FileText, Users, Building2 } from "lucide-react";
+import { useScrollAnimation } from "../hooks/useScrollAnimation";
 
 const LOGO_URL = "https://customer-assets.emergentagent.com/job_ac636d4a-6ca2-497e-8615-5b0c10a94a77/artifacts/vcawrcg8_repledger-logo-dark.svg";
 
@@ -12,6 +13,24 @@ const mockOutcomes = [
   { task: "summarization", result: "failure", time: "12m ago" },
   { task: "code_review", result: "success", time: "18m ago" },
 ];
+
+// Animated section wrapper
+function AnimatedSection({ children, className = "", delay = 0 }) {
+  const [ref, isVisible] = useScrollAnimation({ threshold: 0.1 });
+  return (
+    <div
+      ref={ref}
+      className={`${className} transition-all duration-500 ${
+        isVisible
+          ? "opacity-100 translate-y-0"
+          : "opacity-0 translate-y-5"
+      }`}
+      style={{ transitionDelay: `${delay}ms` }}
+    >
+      {children}
+    </div>
+  );
+}
 
 export default function HomePage() {
   return (

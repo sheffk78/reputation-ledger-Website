@@ -303,7 +303,7 @@ export function OrganizationLinkForm({ user, onLink }) {
       <p className="text-[10px] text-[#6B7280] mt-3">
         Get your link token from{" "}
         <a 
-          href="https://agentauthority.dev" 
+          href="https://agentictrust.app" 
           target="_blank" 
           rel="noopener noreferrer"
           className="text-[#01696F] hover:underline"

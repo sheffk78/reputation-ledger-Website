@@ -1,0 +1,38 @@
+# RepLedger — Agent Reputation Ledger
+
+> Every agent earns its record.
+
+## What is RepLedger?
+
+RepLedger is an AI agent reputation tracking system. It lets you register AI agents, log their outcomes, and generate evidence-backed reputation scores and tier badges. Part of the [AgenticTrust](https://agentictrust.app) suite.
+
+## Core Features
+
+- **Agent Registration**: Register AI agents and track their identity across systems
+- **Outcome Logging**: Record task outcomes (success/failure) with cryptographic verification
+- **Reputation Scoring**: Evidence-backed trust scores based on actual performance data
+- **Tier Badges**: SVG badges (Bronze, Silver, Gold, Platinum) that agents can embed anywhere
+- **Public Profiles**: Shareable agent reputation pages with verified outcome history
+- **API Access**: Full REST API for programmatic agent registration and scoring
+
+## For Developers
+
+- REST API with API key authentication
+- Tier badge embeddable via URL
+- Public agent profile pages
+- Webhook support for outcome notifications
+
+## Architecture
+
+- Frontend: React 19 with Swiss High-Contrast design system
+- Backend: Python/FastAPI
+- Database: MongoDB
+- Hosted on Railway
+
+## Owner
+
+AgenticTrust — https://agentictrust.app
+
+## License
+
+Proprietary

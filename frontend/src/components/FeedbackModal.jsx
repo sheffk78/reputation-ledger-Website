@@ -61,7 +61,7 @@ export default function FeedbackModal({ isOpen, onClose }) {
       />
       
       {/* Modal */}
-      <div className="relative bg-[#0C1116] border border-white/10 rounded-xl w-full max-w-md mx-4 shadow-2xl">
+      <div className="relative bg-[#0C1116] border border-white/10 rounded-sm w-full max-w-md mx-4 shadow-2xl">
         {/* Header */}
         <div className="flex items-center justify-between p-5 border-b border-white/[0.06]">
           <div className="flex items-center gap-3">

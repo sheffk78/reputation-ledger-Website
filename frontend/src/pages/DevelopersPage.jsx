@@ -6,7 +6,7 @@ import { copyToClipboard } from "../lib/utils";
 import { toast } from "sonner";
 
 const LOGO_URL = "https://customer-assets.emergentagent.com/job_ac636d4a-6ca2-497e-8615-5b0c10a94a77/artifacts/vcawrcg8_repledger-logo-dark.svg";
-const BASE_URL = "https://arl.agentauthority.dev";
+const BASE_URL = "https://arl.agentictrust.app";
 
 // Code block component with copy button
 function CodeBlock({ code, language = "bash" }) {

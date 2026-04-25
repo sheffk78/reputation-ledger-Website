@@ -3,10 +3,16 @@ import { useParams, Link } from "react-router-dom";
 import { agentsAPI } from "../lib/api";
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
-const BASE_URL = "https://reputationledger.dev";
+const BASE_URL = "https://arl.agentictrust.app";
 const LOGO_URL = "https://customer-assets.emergentagent.com/job_ac636d4a-6ca2-497e-8615-5b0c10a94a77/artifacts/vcawrcg8_repledger-logo-dark.svg";
 
 // Tier badge colors
+
+// Helper: safely get badge URL for an agent (used in JSON-LD and render)
+function getBadgeUrl(agentId) {
+  return `${process.env.REACT_APP_BACKEND_URL}/api/v1/agents/${agentId}/badge.svg`;
+}
+
 const tierColors = {
   Unrated: "bg-gray-600 text-gray-200",
   Bronze: "bg-amber-700 text-amber-100",
@@ -99,7 +105,7 @@ export default function PublicAgentPage() {
         "url": BASE_URL
       },
       "url": profileUrl,
-      "image": badgeUrl
+      "image": agentId ? getBadgeUrl(agentId) : undefined
     };
 
     let scriptTag = document.querySelector('script[type="application/ld+json"][data-agent-profile]');
@@ -211,7 +217,7 @@ export default function PublicAgentPage() {
     );
   }
 
-  const badgeUrl = `${API_URL}/api/v1/agents/${agent.agent_id}/badge.svg`;
+  const badgeUrl = getBadgeUrl(agent.agent_id);
 
   return (
     <div className="min-h-screen bg-[#050709]">

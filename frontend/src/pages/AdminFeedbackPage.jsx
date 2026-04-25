@@ -279,7 +279,7 @@ export default function AdminFeedbackPage() {
             className="absolute inset-0 bg-black/60 backdrop-blur-sm"
             onClick={() => setSelectedFeedback(null)}
           />
-          <div className="relative bg-[#0C1116] border border-white/10 rounded-xl w-full max-w-lg mx-4 shadow-2xl">
+          <div className="relative bg-[#0C1116] border border-white/10 rounded-sm w-full max-w-lg mx-4 shadow-2xl">
             <div className="flex items-center justify-between p-5 border-b border-white/[0.06]">
               <h3 className="text-lg font-semibold text-white font-['Space_Grotesk']">
                 Feedback Details

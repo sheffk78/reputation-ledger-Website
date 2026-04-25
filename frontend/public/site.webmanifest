@@ -1,0 +1,14 @@
+{
+  "name": "RepLedger",
+  "short_name": "RepLedger",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ],
+  "theme_color": "#050709",
+  "background_color": "#050709",
+  "display": "standalone"
+}
