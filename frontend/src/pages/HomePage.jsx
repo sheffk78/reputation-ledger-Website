@@ -91,7 +91,7 @@ export default function HomePage() {
         <div className="container-app relative">
           <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
             {/* Left: Copy */}
-            <div className="text-center lg:text-left">
+            <div className="text-center lg:text-left animate-[fadeInUp_0.6s_ease-out]">
               <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-sm bg-[#01696F]/10 border border-[#01696F]/20 text-[11px] font-medium text-[#01696F] uppercase tracking-wider mb-6">
                 <Shield className="w-3.5 h-3.5" />
                 AgenticTrust Stack
@@ -128,8 +128,8 @@ export default function HomePage() {
             </div>
 
             {/* Right: Mock UI Card */}
-            <div className="hidden lg:block">
-              <div className="bg-[#0C1116] border border-white/[0.08] rounded-sm p-6 shadow-2xl">
+            <div className="hidden lg:block animate-[fadeInUp_0.6s_ease-out_0.15s_both]">
+              <div className="bg-[#0C1116] border border-white/[0.08] rounded-sm p-6 shadow-2xl hover:border-[#01696F]/30 transition-border duration-300">
                 {/* Agent header */}
                 <div className="flex items-center justify-between mb-6">
                   <div>
@@ -172,7 +172,7 @@ export default function HomePage() {
       </section>
 
       {/* How It Works Section */}
-      <section id="how-it-works" className="py-16 sm:py-24 border-t border-white/[0.04]">
+      <AnimatedSection id="how-it-works" className="py-16 sm:py-24 border-t border-white/[0.04]">
         <div className="container-app">
           <div className="text-center mb-12 sm:mb-16">
             <h2 className="text-[24px] sm:text-[28px] font-semibold text-white tracking-tight mb-3">
@@ -185,8 +185,8 @@ export default function HomePage() {
 
           <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-8">
             {/* Step 1 */}
-            <div className="relative">
-              <div className="w-10 h-10 rounded-sm bg-[#01696F]/15 flex items-center justify-center mb-5">
+            <AnimatedSection delay={0} className="relative group">
+              <div className="w-10 h-10 rounded-sm bg-[#01696F]/15 flex items-center justify-center mb-5 group-hover:bg-[#01696F]/25 transition-colors duration-300">
                 <span className="text-[#01696F] font-mono font-bold text-[14px]">1</span>
               </div>
               <h3 className="text-[15px] sm:text-[16px] font-semibold text-white mb-3">Register your agent</h3>
@@ -196,9 +196,8 @@ export default function HomePage() {
               </p>
             </div>
 
-            {/* Step 2 */}
-            <div className="relative">
-              <div className="w-10 h-10 rounded-sm bg-[#01696F]/15 flex items-center justify-center mb-5">
+            <AnimatedSection delay={100} className="relative group">
+              <div className="w-10 h-10 rounded-sm bg-[#01696F]/15 flex items-center justify-center mb-5 group-hover:bg-[#01696F]/25 transition-colors duration-300">
                 <span className="text-[#01696F] font-mono font-bold text-[14px]">2</span>
               </div>
               <h3 className="text-[15px] sm:text-[16px] font-semibold text-white mb-3">Log outcomes to the ledger</h3>
@@ -208,9 +207,8 @@ export default function HomePage() {
               </p>
             </div>
 
-            {/* Step 3 */}
-            <div className="relative sm:col-span-2 md:col-span-1">
-              <div className="w-10 h-10 rounded-sm bg-[#01696F]/15 flex items-center justify-center mb-5">
+            <AnimatedSection delay={200} className="relative sm:col-span-2 md:col-span-1 group">
+              <div className="w-10 h-10 rounded-sm bg-[#01696F]/15 flex items-center justify-center mb-5 group-hover:bg-[#01696F]/25 transition-colors duration-300">
                 <span className="text-[#01696F] font-mono font-bold text-[14px]">3</span>
               </div>
               <h3 className="text-[15px] sm:text-[16px] font-semibold text-white mb-3">Get a score and badge</h3>
@@ -221,10 +219,10 @@ export default function HomePage() {
             </div>
           </div>
         </div>
-      </section>
+      </AnimatedSection>
 
       {/* Who It's For Section */}
-      <section id="who-its-for" className="py-16 sm:py-24 border-t border-white/[0.04]">
+      <AnimatedSection id="who-its-for" className="py-16 sm:py-24 border-t border-white/[0.04]">
         <div className="container-app">
           <div className="text-center mb-12 sm:mb-16">
             <h2 className="text-[24px] sm:text-[28px] font-semibold text-white tracking-tight mb-3">
@@ -234,7 +232,7 @@ export default function HomePage() {
 
           <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-6 sm:gap-8">
             {/* Card 1 */}
-            <div className="bg-[#0C1116] border border-white/[0.08] rounded-sm p-5 sm:p-6">
+            <AnimatedSection delay={0} className="bg-[#0C1116] border border-white/[0.08] rounded-sm p-5 sm:p-6 hover:border-[#01696F]/30 transition-border duration-300 hover:-translate-y-1">
               <div className="w-10 h-10 rounded-sm bg-[#01696F]/15 flex items-center justify-center mb-5">
                 <FileText className="w-5 h-5 text-[#01696F]" />
               </div>
@@ -246,7 +244,7 @@ export default function HomePage() {
             </div>
 
             {/* Card 2 */}
-            <div className="bg-[#0C1116] border border-white/[0.08] rounded-sm p-5 sm:p-6">
+            <AnimatedSection delay={100} className="bg-[#0C1116] border border-white/[0.08] rounded-sm p-5 sm:p-6 hover:border-[#01696F]/30 transition-border duration-300 hover:-translate-y-1">
               <div className="w-10 h-10 rounded-sm bg-[#01696F]/15 flex items-center justify-center mb-5">
                 <Users className="w-5 h-5 text-[#01696F]" />
               </div>
@@ -258,7 +256,7 @@ export default function HomePage() {
             </div>
 
             {/* Card 3 */}
-            <div className="bg-[#0C1116] border border-white/[0.08] rounded-sm p-5 sm:p-6 sm:col-span-2 md:col-span-1">
+            <AnimatedSection delay={200} className="bg-[#0C1116] border border-white/[0.08] rounded-sm p-5 sm:p-6 sm:col-span-2 md:col-span-1 hover:border-[#01696F]/30 transition-border duration-300 hover:-translate-y-1">
               <div className="w-10 h-10 rounded-sm bg-[#01696F]/15 flex items-center justify-center mb-5">
                 <Building2 className="w-5 h-5 text-[#01696F]" />
               </div>
@@ -270,10 +268,10 @@ export default function HomePage() {
             </div>
           </div>
         </div>
-      </section>
+      </AnimatedSection>
 
       {/* Why Not Reviews Section */}
-      <section className="py-24 border-t border-white/[0.04]">
+      <AnimatedSection className="py-24 border-t border-white/[0.04]">
         <div className="container-app">
           <div className="max-w-2xl mx-auto">
             <h2 className="text-[24px] font-semibold text-white tracking-tight mb-8 text-center">
@@ -308,7 +306,7 @@ export default function HomePage() {
       </section>
 
       {/* Final CTA Section */}
-      <section className="py-24 border-t border-white/[0.04]">
+      <AnimatedSection className="py-24 border-t border-white/[0.04]">
         <div className="container-app text-center">
           <h2 className="text-[28px] font-semibold text-white tracking-tight mb-4">
             Give your agents a real track record
@@ -336,9 +334,9 @@ export default function HomePage() {
             </Link>
           </div>
         </div>
-      </section>
+      </AnimatedSection>
 
-      {/* Footer */}
+      {/* Footer */
       <footer className="py-8 border-t border-white/[0.04]">
         <div className="container-app flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
