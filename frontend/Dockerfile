@@ -21,4 +21,5 @@ COPY start.sh /start.sh
 RUN chmod +x /start.sh
 
 # Default PORT, Railway will override it
-CMD ["/start.sh"]
+ENV PORT=80
+CMD /start.sh
