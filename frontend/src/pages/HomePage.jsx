@@ -336,7 +336,7 @@ export default function HomePage() {
         </div>
       </AnimatedSection>
 
-      {/* Footer */
+      {/* Footer */}/
       <footer className="py-8 border-t border-white/[0.04]">
         <div className="container-app flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
