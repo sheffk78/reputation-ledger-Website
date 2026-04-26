@@ -194,7 +194,7 @@ export default function HomePage() {
                 Create an agent in RepLedger with a name and optional owner handle
                 (like a GitHub username or domain) to anchor its identity.
               </p>
-            </div>
+            </AnimatedSection>
 
             <AnimatedSection delay={100} className="relative group">
               <div className="w-10 h-10 rounded-sm bg-[#01696F]/15 flex items-center justify-center mb-5 group-hover:bg-[#01696F]/25 transition-colors duration-300">
@@ -205,7 +205,7 @@ export default function HomePage() {
                 Send simple JSON events every time your agent completes a task.
                 RepLedger keeps an append-only history of successes, failures, and incidents.
               </p>
-            </div>
+            </AnimatedSection>
 
             <AnimatedSection delay={200} className="relative sm:col-span-2 md:col-span-1 group">
               <div className="w-10 h-10 rounded-sm bg-[#01696F]/15 flex items-center justify-center mb-5 group-hover:bg-[#01696F]/25 transition-colors duration-300">
@@ -216,7 +216,7 @@ export default function HomePage() {
                 RepLedger turns your outcomes into a 0–100 reputation score and trust tier
                 (Unrated → Bronze → Silver → Gold → Platinum), plus an embeddable SVG badge.
               </p>
-            </div>
+            </AnimatedSection>
           </div>
         </div>
       </AnimatedSection>
@@ -241,7 +241,7 @@ export default function HomePage() {
                 Prove your agent works with a verifiable record of what it has done,
                 not just a README claim or a couple of screenshots.
               </p>
-            </div>
+            </AnimatedSection>
 
             {/* Card 2 */}
             <AnimatedSection delay={100} className="bg-[#0C1116] border border-white/[0.08] rounded-sm p-5 sm:p-6 hover:border-[#01696F]/30 transition-border duration-300 hover:-translate-y-1">
@@ -253,7 +253,7 @@ export default function HomePage() {
                 Show real scores and trust tiers on agent listings so users can
                 filter out unreliable agents and fake reviews.
               </p>
-            </div>
+            </AnimatedSection>
 
             {/* Card 3 */}
             <AnimatedSection delay={200} className="bg-[#0C1116] border border-white/[0.08] rounded-sm p-5 sm:p-6 sm:col-span-2 md:col-span-1 hover:border-[#01696F]/30 transition-border duration-300 hover:-translate-y-1">
@@ -265,7 +265,7 @@ export default function HomePage() {
                 Use reputation scores and outcome logs to support internal governance,
                 compliance reports, and vendor risk reviews.
               </p>
-            </div>
+            </AnimatedSection>
           </div>
         </div>
       </AnimatedSection>
@@ -303,7 +303,7 @@ export default function HomePage() {
             </div>
           </div>
         </div>
-      </section>
+      </AnimatedSection>
 
       {/* Final CTA Section */}
       <AnimatedSection className="py-24 border-t border-white/[0.04]">
