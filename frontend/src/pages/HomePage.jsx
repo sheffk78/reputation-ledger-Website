@@ -1,17 +1,22 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "../components/ui/button";
-import { ArrowRight, CheckCircle2, Shield, FileText, Users, Building2 } from "lucide-react";
+import { ArrowRight, CheckCircle2, Shield } from "lucide-react";
 import { useScrollAnimation } from "../hooks/useScrollAnimation";
+import AnimatedCounter from "../components/ui/AnimatedCounter";
 
 const LOGO_URL = "https://customer-assets.emergentagent.com/job_ac636d4a-6ca2-497e-8615-5b0c10a94a77/artifacts/vcawrcg8_repledger-logo-dark.svg";
 
-// Mock outcomes for the hero illustration
-const mockOutcomes = [
-  { task: "research_query", result: "success", time: "2m ago" },
-  { task: "data_extraction", result: "success", time: "5m ago" },
-  { task: "summarization", result: "failure", time: "12m ago" },
-  { task: "code_review", result: "success", time: "18m ago" },
+// Live outcomes pool — cycles through 8 results to show real-time ledger activity
+const ALL_OUTCOMES = [
+  { task: "research_query",     result: "success", time: "2m ago" },
+  { task: "data_extraction",    result: "success", time: "5m ago" },
+  { task: "summarization",       result: "failure", time: "12m ago" },
+  { task: "code_review",         result: "success", time: "18m ago" },
+  { task: "api_call",           result: "success", time: "22m ago" },
+  { task: "document_parse",     result: "success", time: "31m ago" },
+  { task: "email_draft",        result: "failure", time: "45m ago" },
+  { task: "web_scrape",        result: "success", time: "1h ago" },
 ];
 
 // Animated section wrapper
@@ -28,6 +33,77 @@ function AnimatedSection({ children, className = "", delay = 0 }) {
       style={{ transitionDelay: `${delay}ms` }}
     >
       {children}
+    </div>
+  );
+}
+
+function LiveScoreCard() {
+  const [outcomeIndex, setOutcomeIndex] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setOutcomeIndex(i => (i + 1) % ALL_OUTCOMES.length);
+    }, 2800);
+    return () => clearInterval(interval);
+  }, []);
+
+  const displayOutcomes = [
+    ALL_OUTCOMES[outcomeIndex],
+    ALL_OUTCOMES[(outcomeIndex + 1) % ALL_OUTCOMES.length],
+    ALL_OUTCOMES[(outcomeIndex + 2) % ALL_OUTCOMES.length],
+    ALL_OUTCOMES[(outcomeIndex + 3) % ALL_OUTCOMES.length],
+  ];
+
+  return (
+    <div className="bg-[#0C1116] border border-white/[0.08] rounded-sm p-6 shadow-2xl hover:border-[#01696F]/30 transition-colors duration-300 ledger-scan-overlay"
+    aria-hidden="true"
+    >
+      {/* Agent header */}
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <div className="flex items-center gap-2 text-[15px] font-semibold text-white mb-1">
+            research-agent-v2
+            <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#22C55E] live-pulse-dot" />
+          </div>
+          <code className="text-[11px] text-[#6B7280] font-mono">agt_7f3k9m2x4p1q</code>
+        </div>
+        <div className="text-right">
+          <div className="text-[32px] font-mono font-bold text-white font-tabular">
+            <AnimatedCounter target={82} duration={1500} />
+          </div>
+          <div className="text-[10px] text-[#6B7280] uppercase tracking-wider">RepLedger Score</div>
+        </div>
+      </div>
+
+      {/* Tier badge */}
+      <div className="flex items-center gap-3 mb-6">
+        <span className="tier-badge tier-gold">Gold</span>
+        <span className="text-[12px] text-[#6B7280]">137 outcomes · 86% success</span>
+      </div>
+
+      {/* Live outcomes table */}
+      <div className="border-t border-white/[0.06] pt-4">
+        <div className="flex items-center justify-between mb-3">
+          <span className="text-[11px] text-[#6B7280] uppercase tracking-wider">Recent Outcomes</span>
+          <span className="text-[10px] text-[#22C55E] flex items-center gap-1">
+            <span className="inline-block w-1 h-1 rounded-full bg-[#22C55E] live-pulse-dot" />
+            Live
+          </span>
+        </div>
+        <div className="space-y-2 min-h-[96px]">
+          {displayOutcomes.map((o, i) => (
+            <div key={`${outcomeIndex}-${i}`} className="flex items-center justify-between text-[12px] animate-outcome-slide" style={{ animationDelay: `${i * 80}ms` }}>
+              <span className="text-[#9CA3AF] font-mono">{o.task}</span>
+              <div className="flex items-center gap-3">
+                <span className={o.result === "success" ? "text-[#22C55E]" : "text-[#EF4444]"}>
+                  {o.result}
+                </span>
+                <span className="text-[#4B5563]">{o.time}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
@@ -129,43 +205,7 @@ export default function HomePage() {
 
             {/* Right: Mock UI Card */}
             <div className="hidden lg:block animate-[fadeInUp_0.6s_ease-out_0.15s_both]">
-              <div className="bg-[#0C1116] border border-white/[0.08] rounded-sm p-6 shadow-2xl hover:border-[#01696F]/30 transition-colors duration-300">
-                {/* Agent header */}
-                <div className="flex items-center justify-between mb-6">
-                  <div>
-                    <div className="text-[15px] font-semibold text-white mb-1">research-agent-v2</div>
-                    <code className="text-[11px] text-[#6B7280] font-mono">agt_7f3k9m2x4p1q</code>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-[32px] font-mono font-bold text-white">82</div>
-                    <div className="text-[10px] text-[#6B7280] uppercase tracking-wider">Score</div>
-                  </div>
-                </div>
-
-                {/* Tier badge */}
-                <div className="flex items-center gap-3 mb-6">
-                  <span className="tier-badge tier-gold">Gold</span>
-                  <span className="text-[12px] text-[#6B7280]">137 outcomes · 86% success</span>
-                </div>
-
-                {/* Mini outcomes table */}
-                <div className="border-t border-white/[0.06] pt-4">
-                  <div className="text-[11px] text-[#6B7280] uppercase tracking-wider mb-3">Recent Outcomes</div>
-                  <div className="space-y-2">
-                    {mockOutcomes.map((o, i) => (
-                      <div key={i} className="flex items-center justify-between text-[12px]">
-                        <span className="text-[#9CA3AF] font-mono">{o.task}</span>
-                        <div className="flex items-center gap-3">
-                          <span className={o.result === "success" ? "text-[#22C55E]" : "text-[#EF4444]"}>
-                            {o.result}
-                          </span>
-                          <span className="text-[#4B5563]">{o.time}</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
+              <LiveScoreCard />
             </div>
           </div>
         </div>
