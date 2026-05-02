@@ -3,7 +3,7 @@ import { useParams, Link } from "react-router-dom";
 import { agentsAPI } from "../lib/api";
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
-const BASE_URL = "https://arl.agentictrust.app";
+const BASE_URL = "https://reputationledger.dev";
 const LOGO_URL = "https://customer-assets.emergentagent.com/job_ac636d4a-6ca2-497e-8615-5b0c10a94a77/artifacts/vcawrcg8_repledger-logo-dark.svg";
 
 // Tier badge colors

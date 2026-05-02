@@ -1,37 +1,37 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://arl.agentictrust.app/</loc>
+    <loc>https://reputationledger.dev/</loc>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://arl.agentictrust.app/pricing</loc>
+    <loc>https://reputationledger.dev/pricing</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://arl.agentictrust.app/docs</loc>
+    <loc>https://reputationledger.dev/docs</loc>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://arl.agentictrust.app/developers</loc>
+    <loc>https://reputationledger.dev/developers</loc>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://arl.agentictrust.app/playground</loc>
+    <loc>https://reputationledger.dev/playground</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://arl.agentictrust.app/blog</loc>
+    <loc>https://reputationledger.dev/blog</loc>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://arl.agentictrust.app/changelog</loc>
+    <loc>https://reputationledger.dev/changelog</loc>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
   </url>

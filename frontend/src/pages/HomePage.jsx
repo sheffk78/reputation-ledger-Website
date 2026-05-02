@@ -129,7 +129,7 @@ export default function HomePage() {
 
             {/* Right: Mock UI Card */}
             <div className="hidden lg:block animate-[fadeInUp_0.6s_ease-out_0.15s_both]">
-              <div className="bg-[#0C1116] border border-white/[0.08] rounded-sm p-6 shadow-2xl hover:border-[#01696F]/30 transition-border duration-300">
+              <div className="bg-[#0C1116] border border-white/[0.08] rounded-sm p-6 shadow-2xl hover:border-[#01696F]/30 transition-colors duration-300">
                 {/* Agent header */}
                 <div className="flex items-center justify-between mb-6">
                   <div>
@@ -232,7 +232,7 @@ export default function HomePage() {
 
           <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-6 sm:gap-8">
             {/* Card 1 */}
-            <AnimatedSection delay={0} className="bg-[#0C1116] border border-white/[0.08] rounded-sm p-5 sm:p-6 hover:border-[#01696F]/30 transition-border duration-300 hover:-translate-y-1">
+            <AnimatedSection delay={0} className="bg-[#0C1116] border border-white/[0.08] rounded-sm p-5 sm:p-6 hover:border-[#01696F]/30 transition-colors duration-300 hover:-translate-y-1">
               <div className="w-10 h-10 rounded-sm bg-[#01696F]/15 flex items-center justify-center mb-5">
                 <FileText className="w-5 h-5 text-[#01696F]" />
               </div>
@@ -244,7 +244,7 @@ export default function HomePage() {
             </AnimatedSection>
 
             {/* Card 2 */}
-            <AnimatedSection delay={100} className="bg-[#0C1116] border border-white/[0.08] rounded-sm p-5 sm:p-6 hover:border-[#01696F]/30 transition-border duration-300 hover:-translate-y-1">
+            <AnimatedSection delay={100} className="bg-[#0C1116] border border-white/[0.08] rounded-sm p-5 sm:p-6 hover:border-[#01696F]/30 transition-colors duration-300 hover:-translate-y-1">
               <div className="w-10 h-10 rounded-sm bg-[#01696F]/15 flex items-center justify-center mb-5">
                 <Users className="w-5 h-5 text-[#01696F]" />
               </div>
@@ -256,7 +256,7 @@ export default function HomePage() {
             </AnimatedSection>
 
             {/* Card 3 */}
-            <AnimatedSection delay={200} className="bg-[#0C1116] border border-white/[0.08] rounded-sm p-5 sm:p-6 sm:col-span-2 md:col-span-1 hover:border-[#01696F]/30 transition-border duration-300 hover:-translate-y-1">
+            <AnimatedSection delay={200} className="bg-[#0C1116] border border-white/[0.08] rounded-sm p-5 sm:p-6 sm:col-span-2 md:col-span-1 hover:border-[#01696F]/30 transition-colors duration-300 hover:-translate-y-1">
               <div className="w-10 h-10 rounded-sm bg-[#01696F]/15 flex items-center justify-center mb-5">
                 <Building2 className="w-5 h-5 text-[#01696F]" />
               </div>

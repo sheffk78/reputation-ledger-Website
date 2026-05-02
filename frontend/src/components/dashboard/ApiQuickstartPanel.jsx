@@ -6,7 +6,7 @@ import { BookOpen, ChevronDown, ChevronUp, ChevronRight, Eye, EyeOff, Terminal }
 import { toast } from "sonner";
 import { CodeSnippet } from "./CodeSnippet";
 
-const BASE_URL = "https://arl.agentictrust.app";
+const BASE_URL = "https://reputationledger.dev";
 
 export function ApiQuickstartPanel({ apiKey }) {
   const [isExpanded, setIsExpanded] = useState(() => {
