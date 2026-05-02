@@ -1,6 +1,6 @@
 {
   "build": {
-    "builder": "DOCKERFILE",
+    "builder": "RAILPACK",
     "dockerfilePath": "Dockerfile"
   },
   "deploy": {
