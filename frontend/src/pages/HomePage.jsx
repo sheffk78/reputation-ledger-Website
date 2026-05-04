@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "../components/ui/button";
-import { ArrowRight, CheckCircle2, Shield } from "lucide-react";
+import { ArrowRight, Building2, CheckCircle2, FileText, Shield, Users } from "lucide-react";
 import { useScrollAnimation } from "../hooks/useScrollAnimation";
 import AnimatedCounter from "../components/ui/AnimatedCounter";
 
