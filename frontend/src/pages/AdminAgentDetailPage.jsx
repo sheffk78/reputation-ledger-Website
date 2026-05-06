@@ -60,32 +60,31 @@ export default function AdminAgentDetailPage() {
   const [editDescription, setEditDescription] = useState("");
 
   useEffect(() => {
+    const loadAgentData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        
+        await adminAPI.verifyAccess();
+        const data = await adminAPI.getAgent(agentId);
+        setAgentData(data);
+      } catch (err) {
+        console.error("Failed to load agent:", err);
+        if (err.response?.status === 403) {
+          setAccessDenied(true);
+        } else if (err.response?.status === 401) {
+          navigate("/login");
+        } else if (err.response?.status === 404) {
+          setError("Agent not found");
+        } else {
+          setError("Failed to load agent details");
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
     loadAgentData();
   }, [agentId]);
-
-  const loadAgentData = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      
-      await adminAPI.verifyAccess();
-      const data = await adminAPI.getAgent(agentId);
-      setAgentData(data);
-    } catch (err) {
-      console.error("Failed to load agent:", err);
-      if (err.response?.status === 403) {
-        setAccessDenied(true);
-      } else if (err.response?.status === 401) {
-        navigate("/login");
-      } else if (err.response?.status === 404) {
-        setError("Agent not found");
-      } else {
-        setError("Failed to load agent details");
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleLogout = () => {
     logout();
