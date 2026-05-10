@@ -25,6 +25,7 @@ import ChangelogPage from "./pages/ChangelogPage";
 import DocsPage from "./pages/DocsPage";
 import BlogPage from "./pages/BlogPage";
 import BlogPostPage from "./pages/BlogPostPage";
+import NotFoundPage from "./pages/NotFoundPage";
 
 // Protected route wrapper
 function ProtectedRoute({ children }) {
@@ -169,7 +170,7 @@ function AppRoutes() {
       <Route path="/playground" element={<PlaygroundPage />} />
 
       {/* Catch all */}
-      <Route path="*" element={<Navigate to="/" replace />} />
+      <Route path="*" element={<NotFoundPage />} />
     </Routes>
   );
 }
