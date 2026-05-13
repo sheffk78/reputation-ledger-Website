@@ -4,6 +4,7 @@ import { CheckCircle2, ChevronDown, ChevronUp, Loader2 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { billingAPI } from "../lib/api";
 import { toast } from "sonner";
+import Footer from "../components/Footer";
 
 const LOGO_URL = "https://customer-assets.emergentagent.com/job_ac636d4a-6ca2-497e-8615-5b0c10a94a77/artifacts/vcawrcg8_repledger-logo-dark.svg";
 
@@ -346,31 +347,7 @@ export default function PricingPage() {
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-white/[0.06] py-8 px-6">
-        <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-6 bg-gradient-to-br from-[#01696F] to-[#014F52] rounded flex items-center justify-center">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M2 17L12 22L22 17" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M2 12L12 17L22 12" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-            </div>
-            <span className="text-sm text-gray-500">© 2026 RepLedger</span>
-          </div>
-          <div className="flex items-center gap-6">
-            <Link to="/docs" className="text-sm text-gray-500 hover:text-white transition-colors">
-              Documentation
-            </Link>
-            <Link to="/changelog" className="text-sm text-gray-500 hover:text-white transition-colors">
-              Changelog
-            </Link>
-            <a href="mailto:hello@agentictrust.com" className="text-sm text-gray-500 hover:text-white transition-colors">
-              Contact
-            </a>
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }

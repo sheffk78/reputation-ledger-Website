@@ -3,6 +3,7 @@ import { Link, useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, Clock, User, Calendar } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import Footer from "../components/Footer";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const BASE_URL = "https://reputationledger.dev";
@@ -278,24 +279,7 @@ export default function BlogPostPage() {
       </article>
 
       {/* Footer */}
-      <footer className="border-t border-white/[0.06] py-8 px-6 mt-12">
-        <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-[13px] text-[#6B7280]">
-            &copy; {new Date().getFullYear()} AgenticTrust. All rights reserved.
-          </p>
-          <div className="flex items-center gap-6">
-            <Link to="/blog" className="text-[13px] text-[#6B7280] hover:text-white transition-colors">
-              Blog
-            </Link>
-            <Link to="/docs" className="text-[13px] text-[#6B7280] hover:text-white transition-colors">
-              Docs
-            </Link>
-            <Link to="/pricing" className="text-[13px] text-[#6B7280] hover:text-white transition-colors">
-              Pricing
-            </Link>
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }

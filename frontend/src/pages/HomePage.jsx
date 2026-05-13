@@ -4,6 +4,7 @@ import { Button } from "../components/ui/button";
 import { ArrowRight, Building2, CheckCircle2, FileText, Shield, Users } from "lucide-react";
 import { useScrollAnimation } from "../hooks/useScrollAnimation";
 import AnimatedCounter from "../components/ui/AnimatedCounter";
+import Footer from "../components/Footer";
 
 const LOGO_URL = "https://customer-assets.emergentagent.com/job_ac636d4a-6ca2-497e-8615-5b0c10a94a77/artifacts/vcawrcg8_repledger-logo-dark.svg";
 
@@ -376,32 +377,8 @@ export default function HomePage() {
         </div>
       </AnimatedSection>
 
-      {/* Footer */}/
-      <footer className="py-8 border-t border-white/[0.04]">
-        <div className="container-app flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <img src={LOGO_URL} alt="RepLedger" className="h-5" />
-            <span className="text-[12px] text-[#4B5563]">Part of the AgenticTrust stack</span>
-          </div>
-          <div className="flex items-center gap-6">
-            <Link to="/developers" className="text-[12px] text-[#6B7280] hover:text-white transition-colors">
-              Developers
-            </Link>
-            <Link to="/docs" className="text-[12px] text-[#6B7280] hover:text-white transition-colors">
-              Docs
-            </Link>
-            <Link to="/changelog" className="text-[12px] text-[#6B7280] hover:text-white transition-colors">
-              Changelog
-            </Link>
-            <Link to="/login" className="text-[12px] text-[#6B7280] hover:text-white transition-colors">
-              Sign in
-            </Link>
-            <Link to="/signup" className="text-[12px] text-[#6B7280] hover:text-white transition-colors">
-              Start free
-            </Link>
-          </div>
-        </div>
-      </footer>
+      {/* Footer */}
+      <Footer />
     </div>
   );
 }

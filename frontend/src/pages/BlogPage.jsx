@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Clock, User, ArrowLeft, ArrowRight, Rss } from "lucide-react";
+import Footer from "../components/Footer";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const LOGO_URL = "https://customer-assets.emergentagent.com/job_ac636d4a-6ca2-497e-8615-5b0c10a94a77/artifacts/vcawrcg8_repledger-logo-dark.svg";
@@ -224,30 +225,7 @@ export default function BlogPage() {
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-white/[0.06] py-8 px-6">
-        <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-[13px] text-[#6B7280]">
-            &copy; {new Date().getFullYear()} AgenticTrust. All rights reserved.
-          </p>
-          <div className="flex items-center gap-6">
-            <Link to="/docs" className="text-[13px] text-[#6B7280] hover:text-white transition-colors">
-              Docs
-            </Link>
-            <Link to="/pricing" className="text-[13px] text-[#6B7280] hover:text-white transition-colors">
-              Pricing
-            </Link>
-            <Link to="/changelog" className="text-[13px] text-[#6B7280] hover:text-white transition-colors">
-              Changelog
-            </Link>
-            <a 
-              href="mailto:hello@agentictrust.com" 
-              className="text-[13px] text-[#6B7280] hover:text-white transition-colors"
-            >
-              Contact
-            </a>
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }

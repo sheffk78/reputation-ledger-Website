@@ -4,6 +4,7 @@ import { Button } from "../components/ui/button";
 import { ArrowRight, Copy, Check } from "lucide-react";
 import { copyToClipboard } from "../lib/utils";
 import { toast } from "sonner";
+import Footer from "../components/Footer";
 
 const LOGO_URL = "https://customer-assets.emergentagent.com/job_ac636d4a-6ca2-497e-8615-5b0c10a94a77/artifacts/vcawrcg8_repledger-logo-dark.svg";
 const BASE_URL = "https://reputationledger.dev";
@@ -388,25 +389,7 @@ export default function DevelopersPage() {
       </main>
 
       {/* Footer */}
-      <footer className="py-8 border-t border-white/[0.04]">
-        <div className="container-app flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <img src={LOGO_URL} alt="RepLedger" className="h-5" />
-            <span className="text-[12px] text-[#4B5563]">Part of the AgenticTrust stack</span>
-          </div>
-          <div className="flex items-center gap-6">
-            <Link to="/" className="text-[12px] text-[#6B7280] hover:text-white transition-colors">
-              Home
-            </Link>
-            <Link to="/login" className="text-[12px] text-[#6B7280] hover:text-white transition-colors">
-              Sign in
-            </Link>
-            <Link to="/signup" className="text-[12px] text-[#6B7280] hover:text-white transition-colors">
-              Start free
-            </Link>
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }
