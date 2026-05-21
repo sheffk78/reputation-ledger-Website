@@ -40,20 +40,20 @@ export function ApiQuickstartPanel({ apiKey }) {
   };
   
   const snippets = {
-    register: `curl -X POST ${BASE_URL}/v1/agents \\
+    register: `curl -X POST ${BASE_URL}/api/v1/agents \\
   -H "Authorization: Bearer ${apiKey || 'YOUR_API_KEY'}" \\
   -H "Content-Type: application/json" \\
   -d '{"name": "my-agent", "description": "My first agent"}'`,
     
-    outcome: `curl -X POST ${BASE_URL}/v1/agents/agt_YOUR_AGENT_ID/outcomes \\
+    outcome: `curl -X POST ${BASE_URL}/api/v1/agents/agt_YOUR_AGENT_ID/outcomes \\
   -H "Authorization: Bearer ${apiKey || 'YOUR_API_KEY'}" \\
   -H "Content-Type: application/json" \\
   -d '{"result": "success", "task_type": "api-call", "submitter_type": "self"}'`,
     
-    score: `curl -X GET ${BASE_URL}/v1/agents/agt_YOUR_AGENT_ID/score \\
+    score: `curl -X GET ${BASE_URL}/api/v1/agents/agt_YOUR_AGENT_ID/score \\
   -H "Authorization: Bearer ${apiKey || 'YOUR_API_KEY'}"`,
     
-    badge: `<img src="${BASE_URL}/v1/agents/agt_YOUR_AGENT_ID/badge.svg" alt="Agent Badge" />`
+    badge: `<img src="${BASE_URL}/api/v1/agents/agt_YOUR_AGENT_ID/badge.svg" alt="Agent Badge" />`
   };
 
   return (

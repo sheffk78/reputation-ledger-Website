@@ -440,7 +440,7 @@ export default function DocsPage() {
           <EndpointSection
             id="register-agent"
             method="POST"
-            path="/v1/agents"
+            path="/api/v1/agents"
             description="Register a new agent to track its reputation."
             auth={true}
             requestBody={{
@@ -469,7 +469,7 @@ export default function DocsPage() {
               { code: "401", description: "Invalid or missing API key" },
               { code: "422", description: "Validation error (name required, format invalid)" }
             ]}
-            curl={`curl -X POST ${API_BASE_URL}/v1/agents \\
+            curl={`curl -X POST ${API_BASE_URL}/api/v1/agents \\
   -H "Authorization: Bearer arl_your_key" \\
   -H "Content-Type: application/json" \\
   -d '{"name": "my-agent", "description": "My agent"}'`}
@@ -479,7 +479,7 @@ export default function DocsPage() {
           <EndpointSection
             id="list-agents"
             method="GET"
-            path="/v1/agents"
+            path="/api/v1/agents"
             description="Get all agents owned by the authenticated user."
             auth={true}
             responseBody={`[
@@ -492,7 +492,7 @@ export default function DocsPage() {
     "is_public": true
   }
 ]`}
-            curl={`curl -X GET ${API_BASE_URL}/v1/agents \\
+            curl={`curl -X GET ${API_BASE_URL}/api/v1/agents \\
   -H "Authorization: Bearer arl_your_key"`}
           />
 
@@ -500,7 +500,7 @@ export default function DocsPage() {
           <EndpointSection
             id="get-agent"
             method="GET"
-            path="/v1/agents/{agent_id}"
+            path="/api/v1/agents/{agent_id}"
             description="Get details for a specific agent."
             auth={true}
             responseBody={`{
@@ -517,7 +517,7 @@ export default function DocsPage() {
             errorResponses={[
               { code: "404", description: "Agent not found" }
             ]}
-            curl={`curl -X GET ${API_BASE_URL}/v1/agents/agt_a1b2c3d4e5f6 \\
+            curl={`curl -X GET ${API_BASE_URL}/api/v1/agents/agt_a1b2c3d4e5f6 \\
   -H "Authorization: Bearer arl_your_key"`}
           />
 
@@ -525,14 +525,14 @@ export default function DocsPage() {
           <EndpointSection
             id="delete-agent"
             method="DELETE"
-            path="/v1/agents/{agent_id}"
+            path="/api/v1/agents/{agent_id}"
             description="Delete an agent and all associated data (outcomes, flags)."
             auth={true}
             responseBody={`204 No Content`}
             errorResponses={[
               { code: "404", description: "Agent not found" }
             ]}
-            curl={`curl -X DELETE ${API_BASE_URL}/v1/agents/agt_a1b2c3d4e5f6 \\
+            curl={`curl -X DELETE ${API_BASE_URL}/api/v1/agents/agt_a1b2c3d4e5f6 \\
   -H "Authorization: Bearer arl_your_key"`}
           />
 
@@ -540,7 +540,7 @@ export default function DocsPage() {
           <EndpointSection
             id="toggle-public"
             method="PATCH"
-            path="/v1/agents/{agent_id}"
+            path="/api/v1/agents/{agent_id}"
             description="Update agent visibility (public/private profile)."
             auth={true}
             requestBody={{
@@ -556,7 +556,7 @@ export default function DocsPage() {
   "is_public": true,
   "updated_at": "2026-03-27T12:00:00Z"
 }`}
-            curl={`curl -X PATCH ${API_BASE_URL}/v1/agents/agt_a1b2c3d4e5f6 \\
+            curl={`curl -X PATCH ${API_BASE_URL}/api/v1/agents/agt_a1b2c3d4e5f6 \\
   -H "Authorization: Bearer arl_your_key" \\
   -H "Content-Type: application/json" \\
   -d '{"is_public": true}'`}
@@ -566,7 +566,7 @@ export default function DocsPage() {
           <EndpointSection
             id="submit-outcome"
             method="POST"
-            path="/v1/agents/{agent_id}/outcomes"
+            path="/api/v1/agents/{agent_id}/outcomes"
             description="Log an outcome for an agent. This affects the agent's score."
             auth={true}
             requestBody={{
@@ -592,7 +592,7 @@ export default function DocsPage() {
               { code: "404", description: "Agent not found" },
               { code: "422", description: "Invalid result value" }
             ]}
-            curl={`curl -X POST ${API_BASE_URL}/v1/agents/agt_a1b2c3d4e5f6/outcomes \\
+            curl={`curl -X POST ${API_BASE_URL}/api/v1/agents/agt_a1b2c3d4e5f6/outcomes \\
   -H "Authorization: Bearer arl_your_key" \\
   -H "Content-Type: application/json" \\
   -d '{"result": "success", "task_type": "inquiry"}'`}
@@ -602,7 +602,7 @@ export default function DocsPage() {
           <EndpointSection
             id="list-outcomes"
             method="GET"
-            path="/v1/agents/{agent_id}/outcomes"
+            path="/api/v1/agents/{agent_id}/outcomes"
             description="Get outcome history for an agent."
             auth={true}
             responseBody={`{
@@ -618,7 +618,7 @@ export default function DocsPage() {
   "page": 1,
   "limit": 20
 }`}
-            curl={`curl -X GET "${API_BASE_URL}/v1/agents/agt_a1b2c3d4e5f6/outcomes?limit=20" \\
+            curl={`curl -X GET "${API_BASE_URL}/api/v1/agents/agt_a1b2c3d4e5f6/outcomes?limit=20" \\
   -H "Authorization: Bearer arl_your_key"`}
           />
 
@@ -626,7 +626,7 @@ export default function DocsPage() {
           <EndpointSection
             id="get-score"
             method="GET"
-            path="/v1/agents/{agent_id}/score"
+            path="/api/v1/agents/{agent_id}/score"
             description="Get the current reputation score and tier for an agent."
             auth={true}
             responseBody={`{
@@ -642,7 +642,7 @@ export default function DocsPage() {
     "timeout": 2
   }
 }`}
-            curl={`curl -X GET ${API_BASE_URL}/v1/agents/agt_a1b2c3d4e5f6/score \\
+            curl={`curl -X GET ${API_BASE_URL}/api/v1/agents/agt_a1b2c3d4e5f6/score \\
   -H "Authorization: Bearer arl_your_key"`}
           />
 
@@ -650,14 +650,14 @@ export default function DocsPage() {
           <EndpointSection
             id="get-badge"
             method="GET"
-            path="/v1/agents/{agent_id}/badge.svg"
+            path="/api/v1/agents/{agent_id}/badge.svg"
             description="Get an embeddable SVG badge showing the agent's tier and score. This is the only public endpoint."
             auth={false}
             responseBody={`<svg>...</svg>
 
 Embed in HTML:
 <img src="https://api.reputationledger.dev/api/v1/agents/{agent_id}/badge.svg" alt="RepLedger Badge" />`}
-            curl={`curl -X GET ${API_BASE_URL}/v1/agents/agt_a1b2c3d4e5f6/badge.svg`}
+            curl={`curl -X GET ${API_BASE_URL}/api/v1/agents/agt_a1b2c3d4e5f6/badge.svg`}
           />
 
           {/* Trust Tiers */}
@@ -725,7 +725,7 @@ Embed in HTML:
           <EndpointSection
             id="submit-flag"
             method="POST"
-            path="/v1/agents/{agent_id}/flags"
+            path="/api/v1/agents/{agent_id}/flags"
             description="Flag an agent or specific outcome for review."
             auth={true}
             requestBody={{
@@ -746,7 +746,7 @@ Embed in HTML:
   "reason": "Inappropriate response",
   "created_at": "2026-03-27T12:00:00Z"
 }`}
-            curl={`curl -X POST ${API_BASE_URL}/v1/agents/agt_a1b2c3d4e5f6/flags \\
+            curl={`curl -X POST ${API_BASE_URL}/api/v1/agents/agt_a1b2c3d4e5f6/flags \\
   -H "Authorization: Bearer arl_your_key" \\
   -H "Content-Type: application/json" \\
   -d '{"reason": "Inappropriate response"}'`}
@@ -756,7 +756,7 @@ Embed in HTML:
           <EndpointSection
             id="list-flags"
             method="GET"
-            path="/v1/agents/{agent_id}/flags"
+            path="/api/v1/agents/{agent_id}/flags"
             description="Get all flags for an agent."
             auth={true}
             responseBody={`[
@@ -767,7 +767,7 @@ Embed in HTML:
     "created_at": "2026-03-27T12:00:00Z"
   }
 ]`}
-            curl={`curl -X GET ${API_BASE_URL}/v1/agents/agt_a1b2c3d4e5f6/flags \\
+            curl={`curl -X GET ${API_BASE_URL}/api/v1/agents/agt_a1b2c3d4e5f6/flags \\
   -H "Authorization: Bearer arl_your_key"`}
           />
 

@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import Footer from "../components/Footer";
 
 const LOGO_URL = "https://customer-assets.emergentagent.com/job_ac636d4a-6ca2-497e-8615-5b0c10a94a77/artifacts/vcawrcg8_repledger-logo-dark.svg";
-const BASE_URL = "https://reputationledger.dev";
+const BASE_URL = "https://api.reputationledger.dev";
 
 // Code block component with copy button
 function CodeBlock({ code, language = "bash" }) {
@@ -149,7 +149,7 @@ export default function DevelopersPage() {
                   Create your first agent:
                 </p>
                 <div className="ml-10 space-y-4">
-                  <CodeBlock code={`curl -X POST ${BASE_URL}/v1/agents \\
+                  <CodeBlock code={`curl -X POST ${BASE_URL}/api/v1/agents \\
   -H "Authorization: Bearer YOUR_API_KEY" \\
   -H "Content-Type: application/json" \\
   -d '{
@@ -180,7 +180,7 @@ export default function DevelopersPage() {
                   Whenever your agent completes a task, log an outcome:
                 </p>
                 <div className="ml-10 space-y-4">
-                  <CodeBlock code={`curl -X POST ${BASE_URL}/v1/agents/agt_12345/outcomes \\
+                  <CodeBlock code={`curl -X POST ${BASE_URL}/api/v1/agents/agt_12345/outcomes \\
   -H "Authorization: Bearer YOUR_API_KEY" \\
   -H "Content-Type: application/json" \\
   -d '{
@@ -218,7 +218,7 @@ export default function DevelopersPage() {
                   Fetch the current score and trust tier:
                 </p>
                 <div className="ml-10 space-y-4">
-                  <CodeBlock code={`curl -X GET ${BASE_URL}/v1/agents/agt_12345/score \\
+                  <CodeBlock code={`curl -X GET ${BASE_URL}/api/v1/agents/agt_12345/score \\
   -H "Authorization: Bearer YOUR_API_KEY"`} />
                   <p className="text-[12px] text-[#6B7280]">Response:</p>
                   <CodeBlock code={`{
@@ -234,7 +234,7 @@ export default function DevelopersPage() {
                 </p>
                 <div className="ml-10">
                   <CodeBlock code={`<img
-  src="${BASE_URL}/v1/agents/agt_12345/badge.svg"
+  src="${BASE_URL}/api/v1/agents/agt_12345/badge.svg"
   alt="RepLedger score badge for support-bot"
 />`} />
                 </div>
@@ -252,7 +252,7 @@ export default function DevelopersPage() {
                   Get notified in real-time when outcomes are logged:
                 </p>
                 <div className="ml-10 space-y-4">
-                  <CodeBlock code={`curl -X POST ${BASE_URL}/v1/webhooks \\
+                  <CodeBlock code={`curl -X POST ${BASE_URL}/api/v1/webhooks \\
   -H "Authorization: Bearer YOUR_API_KEY" \\
   -H "Content-Type: application/json" \\
   -d '{"url": "https://your-server.com/webhook", "events": ["outcome.created"]}'`} />
@@ -296,56 +296,56 @@ export default function DevelopersPage() {
                       <tr className="border-b border-white/[0.04]">
                         <td className="px-4 sm:px-5 py-3 whitespace-nowrap">
                           <code className="text-[#22C55E] font-mono">POST</code>
-                          <code className="text-white font-mono ml-2">/v1/agents</code>
+                          <code className="text-white font-mono ml-2">/api/v1/agents</code>
                         </td>
                         <td className="px-4 sm:px-5 py-3 text-[#9CA3AF]">Register a new agent for the authenticated user.</td>
                       </tr>
                       <tr className="border-b border-white/[0.04]">
                         <td className="px-4 sm:px-5 py-3 whitespace-nowrap">
                           <code className="text-[#3B82F6] font-mono">GET</code>
-                          <code className="text-white font-mono ml-2">/v1/agents</code>
+                          <code className="text-white font-mono ml-2">/api/v1/agents</code>
                         </td>
                         <td className="px-4 sm:px-5 py-3 text-[#9CA3AF]">List all agents for the authenticated user.</td>
                       </tr>
                       <tr className="border-b border-white/[0.04]">
                         <td className="px-4 sm:px-5 py-3 whitespace-nowrap">
                           <code className="text-[#22C55E] font-mono">POST</code>
-                          <code className="text-white font-mono ml-2">/v1/agents/{"{agent_id}"}/outcomes</code>
+                          <code className="text-white font-mono ml-2">/api/v1/agents/{"{agent_id}"}/outcomes</code>
                         </td>
                         <td className="px-4 sm:px-5 py-3 text-[#9CA3AF]">Log an outcome to the agent's ledger.</td>
                       </tr>
                       <tr className="border-b border-white/[0.04]">
                         <td className="px-4 sm:px-5 py-3 whitespace-nowrap">
                           <code className="text-[#3B82F6] font-mono">GET</code>
-                          <code className="text-white font-mono ml-2">/v1/agents/{"{agent_id}"}/score</code>
+                          <code className="text-white font-mono ml-2">/api/v1/agents/{"{agent_id}"}/score</code>
                         </td>
                         <td className="px-4 sm:px-5 py-3 text-[#9CA3AF]">Get the current reputation score, trust tier, and stats.</td>
                       </tr>
                       <tr className="border-b border-white/[0.04]">
                         <td className="px-4 sm:px-5 py-3 whitespace-nowrap">
                           <code className="text-[#3B82F6] font-mono">GET</code>
-                          <code className="text-white font-mono ml-2">/v1/agents/{"{agent_id}"}/badge.svg</code>
+                          <code className="text-white font-mono ml-2">/api/v1/agents/{"{agent_id}"}/badge.svg</code>
                         </td>
                         <td className="px-4 sm:px-5 py-3 text-[#9CA3AF]">Get an embeddable SVG badge (public, no auth).</td>
                       </tr>
                       <tr className="border-b border-white/[0.04]">
                         <td className="px-4 sm:px-5 py-3 whitespace-nowrap">
                           <code className="text-[#22C55E] font-mono">POST</code>
-                          <code className="text-white font-mono ml-2">/v1/webhooks</code>
+                          <code className="text-white font-mono ml-2">/api/v1/webhooks</code>
                         </td>
                         <td className="px-4 sm:px-5 py-3 text-[#9CA3AF]">Create a webhook subscription for outcome events.</td>
                       </tr>
                       <tr className="border-b border-white/[0.04]">
                         <td className="px-4 sm:px-5 py-3 whitespace-nowrap">
                           <code className="text-[#3B82F6] font-mono">GET</code>
-                          <code className="text-white font-mono ml-2">/v1/webhooks</code>
+                          <code className="text-white font-mono ml-2">/api/v1/webhooks</code>
                         </td>
                         <td className="px-4 sm:px-5 py-3 text-[#9CA3AF]">List all active webhooks for the authenticated user.</td>
                       </tr>
                       <tr>
                         <td className="px-4 sm:px-5 py-3 whitespace-nowrap">
                           <code className="text-[#EF4444] font-mono">DELETE</code>
-                          <code className="text-white font-mono ml-2">/v1/webhooks/{"{webhook_id}"}</code>
+                          <code className="text-white font-mono ml-2">/api/v1/webhooks/{"{webhook_id}"}</code>
                         </td>
                         <td className="px-4 sm:px-5 py-3 text-[#9CA3AF]">Delete a webhook subscription.</td>
                       </tr>
