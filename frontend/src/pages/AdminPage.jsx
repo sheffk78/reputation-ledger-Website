@@ -1255,7 +1255,7 @@ export default function AdminPage() {
                 <div className="bg-black/30 rounded p-4 font-mono text-sm">
                   <p className="text-gray-500 mb-2"># Using Admin API Key header</p>
                   <p className="text-white">
-                    <span className="text-purple-400">curl</span> -X POST <span className="text-green-400">"https://api.repledger.com/api/admin/users"</span> \
+                    <span className="text-purple-400">curl</span> -X POST <span className="text-green-400">"https://api.reputationledger.dev/api/admin/users"</span> \
                   </p>
                   <p className="text-white pl-4">
                     -H <span className="text-amber-400">"X-Admin-API-Key: your_admin_api_key"</span> \

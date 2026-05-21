@@ -4,7 +4,7 @@ import { Copy, Check, Menu, X, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import { copyToClipboard } from "../lib/utils";
 
-const API_BASE_URL = "https://api.repledger.io";
+const API_BASE_URL = "https://api.reputationledger.dev";
 const LOGO_URL = "https://customer-assets.emergentagent.com/job_ac636d4a-6ca2-497e-8615-5b0c10a94a77/artifacts/vcawrcg8_repledger-logo-dark.svg";
 
 // Sidebar navigation structure
@@ -656,7 +656,7 @@ export default function DocsPage() {
             responseBody={`<svg>...</svg>
 
 Embed in HTML:
-<img src="https://api.repledger.io/v1/agents/{agent_id}/badge.svg" alt="RepLedger Badge" />`}
+<img src="https://api.reputationledger.dev/api/v1/agents/{agent_id}/badge.svg" alt="RepLedger Badge" />`}
             curl={`curl -X GET ${API_BASE_URL}/v1/agents/agt_a1b2c3d4e5f6/badge.svg`}
           />
 
