@@ -84,6 +84,7 @@ export default function AdminAgentDetailPage() {
       }
     };
     loadAgentData();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [agentId]);
 
   const handleLogout = () => {

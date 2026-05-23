@@ -9,7 +9,7 @@ export function CodeSnippet({ code, onCopy, copiedId, snippetId }) {
         <code>{code}</code>
       </pre>
       <button
-        onClick={() => onCopy(code, snippetId)}
+        onClick={() => onCopy(snippetId)}
         className="absolute top-2 right-2 p-1.5 rounded-sm bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-white/10"
         data-testid={`copy-snippet-${snippetId}`}
       >

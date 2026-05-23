@@ -142,7 +142,7 @@ export function CrossToolStatus({ agent }) {
             <div className="flex items-center gap-3">
               <Wallet className="w-4 h-4 text-[#5EEAD4]" />
               <div>
-                <div className="text-[12px] font-medium text-white">Safe-Spend Escrow</div>
+                <div className="text-[12px] font-medium text-white">Safe-Spend Account</div>
                 <code className="text-[10px] text-[#5EEAD4] font-mono">
                   {agent.safe_spend_escrow_id}
                 </code>
@@ -208,7 +208,7 @@ export function EcosystemIntegrationCard({ user, agents = [] }) {
           <div className="flex items-center justify-between p-3 bg-[#134E4A]/20 rounded-sm">
             <div className="flex items-center gap-2">
               <Wallet className="w-3.5 h-3.5 text-[#5EEAD4]" />
-              <span className="text-[12px] text-[#5EEAD4]">Safe-Spend Escrows</span>
+              <span className="text-[12px] text-[#5EEAD4]">Safe-Spend Accounts</span>
             </div>
             <span className="text-[12px] font-medium text-white">{safeSpendCount} agent{safeSpendCount !== 1 ? 's' : ''}</span>
           </div>

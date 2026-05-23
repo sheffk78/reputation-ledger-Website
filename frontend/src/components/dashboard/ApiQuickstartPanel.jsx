@@ -17,12 +17,53 @@ export function ApiQuickstartPanel({ apiKey }) {
   const [copiedSnippet, setCopiedSnippet] = useState(null);
   
   const maskedKey = apiKey ? `${apiKey.substring(0, 8)}${'•'.repeat(32)}${apiKey.substring(apiKey.length - 4)}` : '';
+  // Never show the full key in curl examples — always use the masked version for display,
+  // and a placeholder for copyable snippets so users substitute their own key.
   const displayKey = showKey ? apiKey : maskedKey;
+
+  // Build snippet variants: display (masked key) and copyable (placeholder key)
+  const displaySnippets = {
+    register: `curl -X POST ${BASE_URL}/api/v1/agents \\
+  -H "Authorization: Bearer ${maskedKey || 'YOUR_API_KEY'}" \\
+  -H "Content-Type: application/json" \\
+  -d '{"name": "my-agent", "description": "My first agent"}'`,
+    
+    outcome: `curl -X POST ${BASE_URL}/api/v1/agents/agt_YOUR_AGENT_ID/outcomes \\
+  -H "Authorization: Bearer ${maskedKey || 'YOUR_API_KEY'}" \\
+  -H "Content-Type: application/json" \\
+  -d '{"result": "success", "task_type": "api-call", "submitter_type": "self"}'`,
+    
+    score: `curl -X GET ${BASE_URL}/api/v1/agents/agt_YOUR_AGENT_ID/score \\
+  -H "Authorization: Bearer ${maskedKey || 'YOUR_API_KEY'}"`,
+    
+    badge: `<img src="${BASE_URL}/api/v1/agents/agt_YOUR_AGENT_ID/badge.svg" alt="Agent Badge" />`
+  };
+
+  const copySnippets = {
+    register: `curl -X POST ${BASE_URL}/api/v1/agents \\
+  -H "Authorization: Bearer YOUR_API_KEY" \\
+  -H "Content-Type: application/json" \\
+  -d '{"name": "my-agent", "description": "My first agent"}'`,
+    
+    outcome: `curl -X POST ${BASE_URL}/api/v1/agents/agt_YOUR_AGENT_ID/outcomes \\
+  -H "Authorization: Bearer YOUR_API_KEY" \\
+  -H "Content-Type: application/json" \\
+  -d '{"result": "success", "task_type": "api-call", "submitter_type": "self"}'`,
+    
+    score: `curl -X GET ${BASE_URL}/api/v1/agents/agt_YOUR_AGENT_ID/score \\
+  -H "Authorization: Bearer YOUR_API_KEY"`,
+    
+    badge: `<img src="${BASE_URL}/api/v1/agents/agt_YOUR_AGENT_ID/badge.svg" alt="Agent Badge" />`
+  };
+
+  const snippets = { ...displaySnippets };
   
-  const handleCopySnippet = async (code, snippetId) => {
-    await copyToClipboard(code);
+  const handleCopySnippet = async (snippetId) => {
+    // Always copy the placeholder version (YOUR_API_KEY) so the real key never
+    // leaves the page through clipboard in a curl snippet.
+    await copyToClipboard(copySnippets[snippetId]);
     setCopiedSnippet(snippetId);
-    toast.success("Copied to clipboard");
+    toast.success("Copied to clipboard — replace YOUR_API_KEY with your actual key");
     // Track badge copy event
     if (snippetId === "badge") {
       trackEvent(EventNames.BADGE_COPIED);
@@ -37,23 +78,6 @@ export function ApiQuickstartPanel({ apiKey }) {
     if (newExpanded) {
       trackEvent(EventNames.QUICKSTART_OPENED);
     }
-  };
-  
-  const snippets = {
-    register: `curl -X POST ${BASE_URL}/api/v1/agents \\
-  -H "Authorization: Bearer ${apiKey || 'YOUR_API_KEY'}" \\
-  -H "Content-Type: application/json" \\
-  -d '{"name": "my-agent", "description": "My first agent"}'`,
-    
-    outcome: `curl -X POST ${BASE_URL}/api/v1/agents/agt_YOUR_AGENT_ID/outcomes \\
-  -H "Authorization: Bearer ${apiKey || 'YOUR_API_KEY'}" \\
-  -H "Content-Type: application/json" \\
-  -d '{"result": "success", "task_type": "api-call", "submitter_type": "self"}'`,
-    
-    score: `curl -X GET ${BASE_URL}/api/v1/agents/agt_YOUR_AGENT_ID/score \\
-  -H "Authorization: Bearer ${apiKey || 'YOUR_API_KEY'}"`,
-    
-    badge: `<img src="${BASE_URL}/api/v1/agents/agt_YOUR_AGENT_ID/badge.svg" alt="Agent Badge" />`
   };
 
   return (
