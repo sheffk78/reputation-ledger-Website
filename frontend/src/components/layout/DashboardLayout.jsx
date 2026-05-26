@@ -10,7 +10,7 @@ import {
   ChevronRight
 } from "lucide-react";
 
-const LOGO_URL = "https://customer-assets.emergentagent.com/job_ac636d4a-6ca2-497e-8615-5b0c10a94a77/artifacts/vcawrcg8_repledger-logo-dark.svg";
+const LOGO_URL = "/repledger-logo-dark.svg";
 
 const navItems = [
   { path: "/dashboard", label: "Overview", icon: LayoutDashboard },

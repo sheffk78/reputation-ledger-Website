@@ -4,7 +4,7 @@ import { Clock, User, ArrowLeft, ArrowRight, Rss } from "lucide-react";
 import Footer from "../components/Footer";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
-const LOGO_URL = "https://customer-assets.emergentagent.com/job_ac636d4a-6ca2-497e-8615-5b0c10a94a77/artifacts/vcawrcg8_repledger-logo-dark.svg";
+const LOGO_URL = "/repledger-logo-dark.svg";
 
 export default function BlogPage() {
   const [posts, setPosts] = useState([]);
@@ -29,6 +29,22 @@ export default function BlogPage() {
     
     return () => {
       document.head.removeChild(link);
+    };
+  }, []);
+
+  // Add og:image meta tag
+  useEffect(() => {
+    let meta = document.querySelector('meta[property="og:image"]');
+    if (!meta) {
+      meta = document.createElement("meta");
+      meta.setAttribute("property", "og:image");
+      document.head.appendChild(meta);
+    }
+    meta.setAttribute("content", "https://reputationledger.dev/og-image.png");
+
+    return () => {
+      const tag = document.querySelector('meta[property="og:image"]');
+      if (tag) tag.remove();
     };
   }, []);
 

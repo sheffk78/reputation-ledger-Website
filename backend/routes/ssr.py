@@ -107,7 +107,7 @@ def create_json_ld_article(post: dict) -> str:
             "name": "RepLedger",
             "logo": {
                 "@type": "ImageObject",
-                "url": "https://customer-assets.emergentagent.com/job_ac636d4a-6ca2-497e-8615-5b0c10a94a77/artifacts/vcawrcg8_repledger-logo-dark.svg"
+                "url": "/repledger-logo-dark.svg"
             }
         },
         "datePublished": post.get("published_at", ""),

@@ -4,7 +4,7 @@ import { authAPI } from "../lib/api";
 import { ArrowLeft, Mail, Loader2, CheckCircle } from "lucide-react";
 import { toast } from "sonner";
 
-const LOGO_URL = "https://customer-assets.emergentagent.com/job_ac636d4a-6ca2-497e-8615-5b0c10a94a77/artifacts/vcawrcg8_repledger-logo-dark.svg";
+const LOGO_URL = "/repledger-logo-dark.svg";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");

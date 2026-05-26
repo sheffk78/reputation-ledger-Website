@@ -6,7 +6,7 @@ import { useScrollAnimation } from "../hooks/useScrollAnimation";
 import AnimatedCounter from "../components/ui/AnimatedCounter";
 import Footer from "../components/Footer";
 
-const LOGO_URL = "https://customer-assets.emergentagent.com/job_ac636d4a-6ca2-497e-8615-5b0c10a94a77/artifacts/vcawrcg8_repledger-logo-dark.svg";
+const LOGO_URL = "/repledger-logo-dark.svg";
 
 // Live outcomes pool — cycles through 8 results to show real-time ledger activity
 const ALL_OUTCOMES = [

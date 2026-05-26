@@ -7,7 +7,7 @@ import Footer from "../components/Footer";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const BASE_URL = "https://reputationledger.dev";
-const LOGO_URL = "https://customer-assets.emergentagent.com/job_ac636d4a-6ca2-497e-8615-5b0c10a94a77/artifacts/vcawrcg8_repledger-logo-dark.svg";
+const LOGO_URL = "/repledger-logo-dark.svg";
 
 export default function BlogPostPage() {
   const { slug } = useParams();
@@ -47,17 +47,13 @@ export default function BlogPostPage() {
     setMetaTag("og:title", post.meta_title, true);
     setMetaTag("og:description", post.meta_description, true);
     setMetaTag("og:url", `${BASE_URL}/blog/${post.slug}`, true);
-    if (post.social_image_url || post.cover_image_url) {
-      setMetaTag("og:image", post.social_image_url || post.cover_image_url, true);
-    }
+    setMetaTag("og:image", post.social_image_url || post.cover_image_url || "https://reputationledger.dev/og-image.png", true);
     
     // Twitter
     setMetaTag("twitter:card", "summary_large_image");
     setMetaTag("twitter:title", post.meta_title);
     setMetaTag("twitter:description", post.meta_description);
-    if (post.social_image_url || post.cover_image_url) {
-      setMetaTag("twitter:image", post.social_image_url || post.cover_image_url);
-    }
+    setMetaTag("twitter:image", post.social_image_url || post.cover_image_url || "https://reputationledger.dev/og-image.png");
 
     // Canonical URL
     let canonical = document.querySelector('link[rel="canonical"]');
@@ -74,7 +70,7 @@ export default function BlogPostPage() {
       "@type": "Article",
       "headline": post.title,
       "description": post.meta_description,
-      "image": post.social_image_url || post.cover_image_url,
+      "image": post.social_image_url || post.cover_image_url || "https://reputationledger.dev/og-image.png",
       "author": {
         "@type": "Person",
         "name": post.author

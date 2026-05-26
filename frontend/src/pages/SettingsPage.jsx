@@ -6,7 +6,7 @@ import { ArrowLeft, LogOut, Bell, Mail, Loader2, Check, Building2, Link2 } from 
 import { toast } from "sonner";
 import { OrganizationLinkForm } from "../components/CrossToolComponents";
 
-const LOGO_URL = "https://customer-assets.emergentagent.com/job_ac636d4a-6ca2-497e-8615-5b0c10a94a77/artifacts/vcawrcg8_repledger-logo-dark.svg";
+const LOGO_URL = "/repledger-logo-dark.svg";
 
 export default function SettingsPage() {
   const { user, logout } = useAuth();

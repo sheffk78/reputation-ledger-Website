@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 64" width="256" height="64">
+  <!-- RepLedger — Horizontal Logo (Dark Background) -->
+  <g id="icon">
+    <!-- Ledger body -->
+    <rect x="4" y="2" width="56" height="60" rx="5" ry="5" fill="#01696F"/>
+    <!-- Spine -->
+    <rect x="4" y="2" width="11" height="60" rx="5" ry="5" fill="#0BA9B5"/>
+    <rect x="10" y="2" width="5" height="60" fill="#0BA9B5"/>
+    <!-- Ledger rows -->
+    <line x1="22" y1="20" x2="52" y2="20" stroke="#0BA9B5" stroke-width="1.5" opacity="0.3"/>
+    <line x1="22" y1="32" x2="52" y2="32" stroke="#0BA9B5" stroke-width="1.5" opacity="0.3"/>
+    <!-- Trend line -->
+    <polyline points="22,52 32,40 39,44 52,26" fill="none" stroke="#FFFFFF" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+    <!-- Peak dot -->
+    <circle cx="52" cy="26" r="3.5" fill="#FFFFFF"/>
+  </g>
+  <g id="wordmark">
+    <text x="80" y="43" font-family="'Space Grotesk', 'Inter', -apple-system, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif" font-weight="500" font-size="36" fill="#0BA9B5">Rep</text>
+    <text x="140" y="43" font-family="'Space Grotesk', 'Inter', -apple-system, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif" font-weight="700" font-size="36" fill="#FFFFFF">Ledger</text>
+  </g>
+</svg>

@@ -6,7 +6,7 @@ import { copyToClipboard } from "../lib/utils";
 import { toast } from "sonner";
 import Footer from "../components/Footer";
 
-const LOGO_URL = "https://customer-assets.emergentagent.com/job_ac636d4a-6ca2-497e-8615-5b0c10a94a77/artifacts/vcawrcg8_repledger-logo-dark.svg";
+const LOGO_URL = "/repledger-logo-dark.svg";
 const BASE_URL = "https://api.reputationledger.dev";
 
 // Code block component with copy button

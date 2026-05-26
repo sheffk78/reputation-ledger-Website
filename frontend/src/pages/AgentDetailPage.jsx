@@ -18,7 +18,7 @@ import { ArrowLeft, RefreshCw, LogOut, Copy, Check, ExternalLink, ChevronLeft, C
 import { toast } from "sonner";
 import { CrossToolStatus, OutcomeSourcesChart, OutcomeSourceBadge } from "../components/CrossToolComponents";
 
-const LOGO_URL = "https://customer-assets.emergentagent.com/job_ac636d4a-6ca2-497e-8615-5b0c10a94a77/artifacts/vcawrcg8_repledger-logo-dark.svg";
+const LOGO_URL = "/repledger-logo-dark.svg";
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const PAGE_SIZE = 20;
 
