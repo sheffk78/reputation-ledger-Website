@@ -79,7 +79,7 @@ const PRICING_TIERS = [
       "Dedicated support"
     ],
     cta: "Contact Sales",
-    ctaLink: "mailto:hello@agentictrust.com",
+    ctaLink: "mailto:support@agentictrust.app",
     highlighted: false
   }
 ];

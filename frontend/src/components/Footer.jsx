@@ -99,7 +99,7 @@ export default function Footer() {
             Pricing
           </Link>
           <a
-            href="mailto:hello@agentictrust.com"
+            href="mailto:support@agentictrust.app"
             className="text-[13px] text-[#6B7280] hover:text-white transition-colors"
           >
             Contact
