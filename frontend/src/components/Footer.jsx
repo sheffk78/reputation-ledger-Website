@@ -4,9 +4,9 @@ const LOGO_URL =
   "https://customer-assets.emergentagent.com/job_ac636d4a_6ca2-497e-8615-5b0c10a94a77/artifacts/vcawrcg8_repledger-logo-dark.svg";
 
 const ECOSYSTEM_LINKS = [
-  { href: "https://safe-spend.dev", label: "Spending Controls" },
-  { href: "https://agentauthority.dev", label: "Agent Governance" },
-  { href: "https://agentictrust.app", label: "Our Platform" },
+  { href: "https://safe-spend.dev", label: "Safe-Spend" },
+  { href: "https://agentauthority.dev", label: "Agent Authority Vault" },
+  { href: "https://agentictrust.app", label: "AgenticTrust" },
 ];
 
 export default function Footer() {
