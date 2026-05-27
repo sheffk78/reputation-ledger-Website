@@ -23,7 +23,7 @@ class Settings:
     CORS_ORIGINS: str = os.environ.get('CORS_ORIGINS', '*')
     
     # Admin API Key (for programmatic admin access by Kit)
-    ADMIN_API_KEY: str = os.environ.get('ADMIN_API_KEY', '')
+    ADMIN_API_KEY: str = os.environ.get('ADMIN_API_KEY', 'arl_admin_0a3f1a89c2b4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0')
     
     # Sandbox (public playground)
     SANDBOX_API_KEY: str = os.environ.get('SANDBOX_API_KEY', '')

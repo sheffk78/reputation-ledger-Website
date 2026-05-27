@@ -333,6 +333,178 @@ async def startup_db_indexes():
     except Exception as e:
         print(f"Warning: Could not create indexes: {e}")
 
+    # Seed blog posts if none exist
+    try:
+        from routes.blog import slugify, generate_excerpt, count_words
+        post_count = await db.blog_posts.count_documents({"status": "published"})
+        if post_count == 0:
+            import uuid, math
+            from datetime import datetime, timezone
+
+            seed_posts = [
+                {
+                    "title": "Why Agent Reputation Is the Missing Layer in AI Infrastructure",
+                    "content": """Everyone building AI agents talks about capabilities. Model size. Tool use. Context windows. Reasoning chains. But almost nobody talks about what happens when agents start making decisions that affect your business, your customers, and your money.
+
+That conversation is overdue.
+
+## The capability trap
+
+The current generation of AI agents can do remarkable things. They can browse the web, write code, send emails, process payments, and chain complex multi-step workflows together. The demos are impressive.
+
+But capabilities without accountability are a liability.
+
+When an agent makes a bad call — sends the wrong email, processes the wrong payment, acts on stale data — someone has to answer for it. Right now, nobody can. There is no system that tracks what an agent did, whether it was appropriate, or whether it should be trusted to do it again.
+
+## What reputation actually means for agents
+
+Reputation for AI agents is not a sentiment score. It is not a thumbs-up from a user. It is a verifiable, auditable record of outcomes.
+
+A reputation system answers three questions:
+
+1. **What did this agent do?** Every action, every decision, every outcome — logged and structured.
+2. **Was it any good?** Not opinions. Measurable outcomes. Did the payment go through? Was the email accurate? Did the task complete within expected parameters?
+3. **Should I trust it next time?** Based on historical performance, not marketing claims.
+
+Without these answers, every agent interaction is a cold start. You are guessing every time.
+
+## Why the market needs this now
+
+Three trends are converging:
+
+- **Agents are getting more autonomous.** They are not just responding to prompts anymore. They are initiating actions, chaining workflows, and operating with minimal human oversight.
+- **Agents are interacting with other agents.** Multi-agent systems are becoming real. Your agent will need to decide whether to trust another agent's output — and it will need data to make that call.
+- **Regulation is coming.** The EU AI Act is already law. Other jurisdictions are following. Organizations will need to prove they can track, audit, and explain what their AI systems did.
+
+The infrastructure for tracking agent reputation does not exist yet. That is the gap RepLedger fills.
+
+## The RepLedger approach
+
+RepLedger is building the reputation layer for AI agents. Not a review site. Not a leaderboard. A structured, verifiable, queryable record of agent performance and trustworthiness.
+
+Every agent gets a reputation profile. Every action creates an outcome record. Every interaction contributes to a trust score that is transparent, auditable, and machine-readable.
+
+This is infrastructure, not a feature. The agents that will win are the ones that can prove they should be trusted.
+
+---
+
+If you are building AI agents and care about trust, accountability, and the infrastructure layer that makes both possible — [start building with RepLedger](https://reputationledger.dev/docs).""",
+                    "author": "Kenneth Kohler",
+                    "tags": ["reputation", "AI agents", "trust", "infrastructure"],
+                    "meta_title": "Why Agent Reputation Is the Missing Layer in AI Infrastructure",
+                    "meta_description": "Capabilities without accountability are a liability. Here is why every AI agent needs a verifiable reputation layer — and why the market needs it now."
+                },
+                {
+                    "title": "How to Measure Agent Trustworthiness: A Practical Framework",
+                    "content": """You built an agent. It works. Most of the time. But "most of the time" is not a standard. It is a hope.
+
+To know whether an agent is trustworthy, you need a framework that turns subjective impressions into structured, comparable signals. Here is a practical approach.
+
+## Start with outcomes, not opinions
+
+The foundation of agent reputation is the outcome record. Every time an agent completes a task, you record:
+
+- **What it was asked to do** — the task type (payment processing, data retrieval, code generation, etc.)
+- **What actually happened** — success, failure, partial completion, or timeout
+- **Who is reporting** — the agent itself (self-reported) or a human operator (operator-reported)
+
+This is the atomic unit of reputation. Everything else builds on top of it.
+
+## The three pillars of agent trustworthiness
+
+### 1. Consistency
+
+An agent that succeeds sometimes and fails unpredictably is less trustworthy than one that fails consistently. Consistency means the variance between outcomes is low. You can rely on it.
+
+Measure it: Track the standard deviation of outcomes over time. Narrow variance = high consistency.
+
+### 2. Volume
+
+One successful outcome means nothing. A hundred outcomes, 94% successful — that tells you something. Volume gives statistical significance to the consistency measurement.
+
+Measure it: Total outcome count over a rolling time window. Require a minimum threshold before calculating trust scores.
+
+### 3. Recency
+
+An agent that was reliable six months ago but has been degrading is not trustworthy now. Recent performance matters more than historical performance.
+
+Measure it: Apply a time-weighted decay to older outcomes. Recent outcomes carry more weight.
+
+## The RepLedger scoring model
+
+RepLedger combines these three pillars into a single score:
+
+- **Weighted success rate** — success outcomes contribute positively, failures negatively, with time decay
+- **Tier classification** — agents are classified into tiers (Elite, Trusted, Developing, New) based on score thresholds
+- **Transparent breakdown** — every score comes with a breakdown showing exactly how it was calculated
+
+The score is not a black box. Anyone can see the inputs, the calculation, and the result.
+
+## Why self-reporting is not enough
+
+Agents can report their own outcomes. But self-reported data is inherently suspect. An agent that reports 100% success might be accurate — or it might be omitting failures.
+
+RepLedger supports both self-reported and operator-reported outcomes. Operator-reported outcomes carry higher weight in the scoring model because they come from independent verification.
+
+## Building the trust infrastructure
+
+Measuring trustworthiness is only useful if the measurement is:
+
+1. **Verifiable** — anyone can check the underlying data
+2. **Comparable** — scores are calculated the same way for every agent
+3. **Machine-readable** — other agents and systems can programmatically query trust scores
+
+This is what RepLedger provides. Not a rating, but an infrastructure for trust.
+
+---
+
+Ready to start tracking your agents' reputation? [Read the docs](https://reputationledger.dev/docs) or [check out the API playground](https://reputationledger.dev/playground).""",
+                    "author": "Kenneth Kohler",
+                    "tags": ["trustworthiness", "scoring", "framework", "outcomes"],
+                    "meta_title": "How to Measure Agent Trustworthiness: A Practical Framework",
+                    "meta_description": "A practical framework for measuring AI agent trustworthiness using consistency, volume, and recency — and how RepLedger turns these into structured trust scores."
+                },
+            ]
+
+            now = datetime.now(timezone.utc).isoformat()
+            for i, post in enumerate(seed_posts):
+                slug = slugify(post["title"])
+                # Ensure unique slug
+                existing = await db.blog_posts.find_one({"slug": slug})
+                if existing:
+                    continue
+
+                word_count = count_words(post["content"])
+                reading_time = max(1, math.ceil(word_count / 230))
+                excerpt = generate_excerpt(post["content"])
+
+                doc = {
+                    "id": f"post_{uuid.uuid4().hex[:16]}",
+                    "slug": slug,
+                    "title": post["title"],
+                    "content": post["content"],
+                    "excerpt": excerpt,
+                    "author": post["author"],
+                    "status": "published",
+                    "tags": post["tags"],
+                    "cover_image_url": None,
+                    "social_image_url": None,
+                    "meta_title": post.get("meta_title", post["title"]),
+                    "meta_description": post.get("meta_description", excerpt),
+                    "canonical_url": f"https://reputationledger.dev/blog/{slug}",
+                    "word_count": word_count,
+                    "reading_time": reading_time,
+                    "created_at": now,
+                    "updated_at": now,
+                    "published_at": now,
+                }
+                await db.blog_posts.insert_one(doc)
+                print(f"Seeded blog post: {slug}")
+
+            print("Blog seed complete")
+    except Exception as e:
+        print(f"Warning: Could not seed blog posts: {e}")
+
 
 @app.on_event("shutdown")
 async def shutdown_db_client():
