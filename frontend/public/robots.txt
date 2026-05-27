@@ -1,5 +1,5 @@
 # RepLedger - Agent Reputation Ledger
-# https://arl.agentictrust.app
+# https://reputationledger.dev
 
 User-agent: *
 Allow: /
@@ -36,4 +36,4 @@ Disallow: /settings
 Disallow: /admin
 Disallow: /api/
 
-Sitemap: https://arl.agentictrust.app/sitemap.xml
+Sitemap: https://reputationledger.dev/sitemap.xml
