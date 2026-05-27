@@ -78,7 +78,7 @@ export default function Footer() {
           </div>
         </div>
 
-        {/* Right — internal nav */}
+        {/* Right — internal nav + legal */}
         <div className="flex items-center gap-6">
           <Link
             to="/docs"
@@ -104,6 +104,19 @@ export default function Footer() {
           >
             Contact
           </a>
+          <span className="text-[#374151]">|</span>
+          <Link
+            to="/terms"
+            className="text-[13px] text-[#6B7280] hover:text-white transition-colors"
+          >
+            Terms
+          </Link>
+          <Link
+            to="/privacy"
+            className="text-[13px] text-[#6B7280] hover:text-white transition-colors"
+          >
+            Privacy
+          </Link>
         </div>
       </div>
     </footer>
