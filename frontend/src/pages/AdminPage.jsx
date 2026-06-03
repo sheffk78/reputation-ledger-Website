@@ -899,7 +899,7 @@ export default function AdminPage() {
               {/* Client list (users table) */}
               <div className="card-surface p-4 mb-4">
                 <p className="text-xs text-gray-500 mb-3">
-                  All user accounts. Clients provisioned by Kit show <code className="text-[#01696F]">kit@agentictrust.com</code> in audit logs.
+                  All user accounts. Clients provisioned by Kit show <code className="text-[#01696F]">kit@agentictrust.app</code> in audit logs.
                 </p>
               </div>
 
