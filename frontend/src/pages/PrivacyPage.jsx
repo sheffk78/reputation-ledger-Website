@@ -1,10 +1,14 @@
-import Navbar from '../components/Navbar';
-import Footer from '../components/Footer';
+import { Link } from "react-router-dom";
+import Footer from "../components/Footer";
 
 export default function PrivacyPage() {
   return (
     <div className="min-h-screen bg-[#0C1116] text-[#F9FAFB]" data-testid="privacy-page">
-      <Navbar />
+      <nav className="border-b border-white/10 bg-[#0C1116]/80 backdrop-blur-sm sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+          <Link to="/" className="text-xl font-bold text-white hover:text-[#01696F] transition-colors">RepLedger</Link>
+        </div>
+      </nav>
 
       <div className="max-w-4xl mx-auto px-6 py-16">
         <h1 className="text-4xl md:text-5xl font-bold mb-4">
